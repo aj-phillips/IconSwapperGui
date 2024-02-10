@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34330.188
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IconSwapperGui", "IconSwapperGui.csproj", "{CE59053A-4E53-4EC3-BA7C-F13FC50DABA3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CE59053A-4E53-4EC3-BA7C-F13FC50DABA3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CE59053A-4E53-4EC3-BA7C-F13FC50DABA3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CE59053A-4E53-4EC3-BA7C-F13FC50DABA3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CE59053A-4E53-4EC3-BA7C-F13FC50DABA3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5EE39FDF-050D-4CFA-8277-41D78F727882}
+	EndGlobalSection
+EndGlobal
