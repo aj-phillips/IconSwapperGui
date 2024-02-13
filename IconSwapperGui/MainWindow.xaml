@@ -132,9 +132,11 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="Made with ❤ by Adam"/>
+                    <TextBlock Name="creditsTxt" HorizontalAlignment="Center" VerticalAlignment="Center" Text="Made with ❤ by Adam" MouseDown="CreditsTxt_OnMouseDown" />
                 </Grid>
             </GroupBox>
+            <TextBlock Grid.Column="1" Name="loveTxt" HorizontalAlignment="Center" TextAlignment="Center" Visibility="Hidden" VerticalAlignment="Center" TextWrapping="Wrap" Margin="5,0,5,5"
+                        Text="Happy valentines day baby! You are the most important person in the world to me and I will always love you so much. Without you, I'd be lost in the dark without a light. Thank you for being in my life and I can't wait to spend my life with you!"></TextBlock>
             <GroupBox Grid.Column="2">
                 <GroupBox.Header>
                     <TextBlock Text="Actions"/>

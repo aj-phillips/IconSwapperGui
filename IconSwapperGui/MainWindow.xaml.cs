@@ -30,5 +30,10 @@ namespace IconSwapperGui
 
             DataContext = viewModel;
         }
+
+        private void CreditsTxt_OnMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            loveTxt.Visibility = Visibility.Visible;
+        }
     }
 }
