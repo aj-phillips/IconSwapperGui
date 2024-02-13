@@ -97,8 +97,9 @@
         </Grid>
         <Grid Grid.Row="1" Grid.Column="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="1*"/>
                 <ColumnDefinition Width="3*"/>
+                <ColumnDefinition Width="1*"/>
             </Grid.ColumnDefinitions>
             <!-- This is for the made with love section and action buttons -->
             <GroupBox Grid.Column="0" Grid.Row="0">
@@ -124,10 +125,18 @@
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="5">
                         <Button Name="chooseApplicationShortcutFolderButton" Margin="0,0,10,0" Content="Choose Application Shortcut Folder" Command="{Binding ChooseApplicationShortcutFolderCommand}"/>
                         <Button Name="chooseIconFolderButton" Margin="0,0,10,0" Content="Choose Icon Folder" Command="{Binding ChooseIconFolderCommand}"/>
-                        <Button Name="swapButton" Width="100px" Content="Swap Icons" Command="{Binding SwapCommand}"/>
                     </StackPanel>
                 </Grid>
             </GroupBox>
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <!-- Three buttons, one for choosing application shortcut folder, one for choosing icon folder, and one for swapping -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
+                    <Button Name="swapButton" Width="125px" Content="Swap Icons" Command="{Binding SwapCommand}"/>
+                </StackPanel>
+            </Grid>
         </Grid>
     </Grid>
 </Window>
