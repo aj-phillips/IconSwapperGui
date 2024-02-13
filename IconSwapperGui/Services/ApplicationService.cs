@@ -1,5 +1,8 @@
 ﻿using IconSwapperGui.Models;
+using IWshRuntimeLibrary;
 using System.IO;
+using System.Windows;
+using Application = IconSwapperGui.Models.Application;
 
 namespace IconSwapperGui.Services;
 
@@ -11,22 +14,24 @@ public class ApplicationService : IApplicationService
 
         try
         {
-            if (Directory.Exists(folderPath))
+            if (!Directory.Exists(folderPath)) return applications;
+
+            string[] shortcutFiles = Directory.GetFiles(folderPath, "*.lnk");
+            foreach (var file in shortcutFiles)
             {
-                var shortcutFiles = Directory.GetFiles(folderPath, "*.lnk");
+                WshShell shell = new WshShell();
+                IWshShortcut shortcut = (IWshShortcut)shell.CreateShortcut(file);
 
-                foreach (var file in shortcutFiles)
-                {
-                    var appName = Path.GetFileNameWithoutExtension(file);
-                    var app = new Application(appName, file);
+                string targetPath = shortcut.TargetPath;
 
-                    applications.Add(app);
-                }
+                var app = new Application(Path.GetFileNameWithoutExtension(file), targetPath);
+                applications.Add(app);
             }
         }
         catch (IOException ex)
         {
-            Console.WriteLine($"An error occurred while accessing {folderPath}: {ex.Message}");
+            MessageBox.Show($"An error occurred while accessing {folderPath}: {ex.Message}",
+                "Error Accessing Folder", MessageBoxButton.OK, MessageBoxImage.Error);
         }
 
         return applications;

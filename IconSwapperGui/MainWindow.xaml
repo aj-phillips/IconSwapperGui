@@ -4,8 +4,12 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:IconSwapperGui"
+        xmlns:utilities="clr-namespace:IconSwapperGui.Utilities"
         mc:Ignorable="d"
         Title="Icon Swapper" Height="450" Width="800" ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <utilities:IconPathToImageConverter x:Key="IconPathToImageConverter"/>
+    </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="5*"/>
@@ -28,11 +32,13 @@
                 <Grid HorizontalAlignment="Stretch">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
+                        <RowDefinition Height="10*"/>
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <ListBox Name="applicationsListBox" ItemsSource="{Binding Applications}" SelectedItem="{Binding SelectedApplication, Mode=TwoWay}">
+                    <Button Name="chooseApplicationShortcutFolderButton" Content="Choose Shortcut Folder" Command="{Binding ChooseApplicationShortcutFolderCommand}" Margin="0,5,0,0"/>
+                    <ListBox Grid.Row="1" Name="applicationsListBox" ItemsSource="{Binding Applications}" SelectedItem="{Binding SelectedApplication, Mode=TwoWay}" Margin="0,5,0,0">
                         <ListBox.Resources>
                             <Style TargetType="ListBoxItem">
                                 <Setter Property="Background" Value="Transparent"/>
@@ -49,7 +55,7 @@
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
-                                    <Image Source="{Binding ImagePath}" Width="25" Height="25"/>
+                                    <Image Source="{Binding Path, Converter={StaticResource IconPathToImageConverter}}" Width="25" Height="25"/>
                                     <TextBlock Text="{Binding Name}" Margin="10,0,0,0" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </DataTemplate>
@@ -65,8 +71,20 @@
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
+                        <RowDefinition Height="10*"/>
                     </Grid.RowDefinitions>
-                    <ListBox Name="iconsListBox" ItemsSource="{Binding Icons}" SelectedItem="{Binding SelectedIcon, Mode=TwoWay}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                            <Label Content="Search:"/>
+                            <TextBox Width="220px" Name="searchTextBox" VerticalContentAlignment="Center" Text="{Binding FilterString, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+                        <Button Grid.Column="1" Name="chooseIconFolderButton" Margin="0,5,0,0" Content="Choose Icon Folder" Command="{Binding ChooseIconFolderCommand}"/>
+                    </Grid>
+                    <ListBox Grid.Row="1" Name="iconsListBox" ItemsSource="{Binding FilteredIcons}" SelectedItem="{Binding SelectedIcon, Mode=TwoWay}" Margin="0,5,0,0">
                         <ListBox.Resources>
                             <Style TargetType="ListBoxItem">
                                 <Setter Property="Background" Value="Transparent"/>
@@ -81,7 +99,7 @@
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
-                                    <Image Source="{Binding ImagePath}" Width="75" Height="75"/>
+                                    <Image Source="{Binding Path, Converter={StaticResource IconPathToImageConverter}}" Width="75" Height="75"/>
                                     <TextBlock Text="{Binding Name}" TextAlignment="Center"/>
                                 </StackPanel>
                             </DataTemplate>
@@ -97,9 +115,9 @@
         </Grid>
         <Grid Grid.Row="1" Grid.Column="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1*"/>
-                <ColumnDefinition Width="3*"/>
-                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <!-- This is for the made with love section and action buttons -->
             <GroupBox Grid.Column="0" Grid.Row="0">
@@ -113,7 +131,7 @@
                     <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="Made with ❤ by Adam"/>
                 </Grid>
             </GroupBox>
-            <GroupBox Grid.Column="1" Grid.Row="0">
+            <GroupBox Grid.Column="2">
                 <GroupBox.Header>
                     <TextBlock Text="Actions"/>
                 </GroupBox.Header>
@@ -123,20 +141,10 @@
                     </Grid.RowDefinitions>
                     <!-- Three buttons, one for choosing application shortcut folder, one for choosing icon folder, and one for swapping -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="5">
-                        <Button Name="chooseApplicationShortcutFolderButton" Margin="0,0,10,0" Content="Choose Application Shortcut Folder" Command="{Binding ChooseApplicationShortcutFolderCommand}"/>
-                        <Button Name="chooseIconFolderButton" Margin="0,0,10,0" Content="Choose Icon Folder" Command="{Binding ChooseIconFolderCommand}"/>
+                        <Button Name="swapButton" Width="125px" Content="Swap Icon" Command="{Binding SwapCommand}"/>
                     </StackPanel>
                 </Grid>
             </GroupBox>
-            <Grid Grid.Column="2">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-                <!-- Three buttons, one for choosing application shortcut folder, one for choosing icon folder, and one for swapping -->
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
-                    <Button Name="swapButton" Width="125px" Content="Swap Icons" Command="{Binding SwapCommand}"/>
-                </StackPanel>
-            </Grid>
         </Grid>
     </Grid>
 </Window>

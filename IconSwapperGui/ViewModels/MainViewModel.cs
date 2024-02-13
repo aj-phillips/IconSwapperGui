@@ -13,8 +13,41 @@ public class MainViewModel : INotifyPropertyChanged
     private readonly IApplicationService _applicationService;
     private readonly IIconService _iconService;
 
-    public ObservableCollection<Application> Applications { get; } = new ObservableCollection<Application>();
-    public ObservableCollection<Icon> Icons { get; } = new ObservableCollection<Icon>();
+    private ObservableCollection<Application> _applications;
+    private ObservableCollection<Icon> _icons;
+    private ObservableCollection<Icon> _filteredIcons;
+    private string _filterString;
+
+    public ObservableCollection<Application> Applications
+    {
+        get => _applications;
+        set
+        {
+            _applications = value;
+            OnPropertyChanged(nameof(Applications));
+        }
+    }
+
+    public ObservableCollection<Icon> Icons
+    {
+        get => _icons;
+        set
+        {
+            _icons = value;
+            OnPropertyChanged(nameof(Icons));
+            FilterIcons();
+        }
+    }
+
+    public ObservableCollection<Icon> FilteredIcons
+    {
+        get => _filteredIcons;
+        private set
+        {
+            _filteredIcons = value;
+            OnPropertyChanged(nameof(FilteredIcons));
+        }
+    }
 
     private Application? _selectedApplication;
 
@@ -40,6 +73,9 @@ public class MainViewModel : INotifyPropertyChanged
 
     public MainViewModel(IApplicationService applicationService, IIconService iconService)
     {
+        Icons = new ObservableCollection<Icon>();
+        FilteredIcons = new ObservableCollection<Icon>();
+
         _applicationService = applicationService;
         _iconService = iconService;
 
@@ -50,8 +86,6 @@ public class MainViewModel : INotifyPropertyChanged
 
     private void ChooseApplicationShortcutFolder()
     {
-        // Use a dialog to let the user choose a folder
-        // Use _applicationService to populate Applications based on the chosen folder
         OpenFolderDialog openFolderDialog = new OpenFolderDialog();
 
         if (openFolderDialog.ShowDialog() == true)
@@ -61,6 +95,8 @@ public class MainViewModel : INotifyPropertyChanged
 
             foreach (var application in applications)
             {
+                if (Applications.Any(x => x.Path == application.Path)) continue;
+
                 Applications.Add(application);
             }
         }
@@ -68,13 +104,51 @@ public class MainViewModel : INotifyPropertyChanged
 
     private void ChooseIconFolder()
     {
-        // Use a dialog to let the user choose a folder
-        // Use _iconService to populate Icons based on the chosen folder
+        OpenFolderDialog openFolderDialog = new OpenFolderDialog();
+
+        if (openFolderDialog.ShowDialog() == true)
+        {
+            string folderPath = openFolderDialog.FolderName;
+            var icons = _iconService.GetIcons(folderPath);
+
+            foreach (var icon in icons)
+            {
+                if (Icons.Any(x => x.Path == icon.Path)) continue;
+
+                Icons.Add(icon);
+            }
+
+            FilterIcons();
+        }
     }
 
     private void SwapIcons()
     {
         // Implement the logic to swap icons for the selected application
+    }
+
+    public void FilterIcons()
+    {
+        if (string.IsNullOrEmpty(_filterString))
+        {
+            FilteredIcons = new ObservableCollection<Icon>(Icons);
+        }
+        else
+        {
+            var filtered = Icons.Where(icon => icon.Name.Contains(_filterString, StringComparison.OrdinalIgnoreCase)).ToList();
+            FilteredIcons = new ObservableCollection<Icon>(filtered);
+        }
+    }
+
+    public string FilterString
+    {
+        get => _filterString;
+        set
+        {
+            _filterString = value;
+            OnPropertyChanged(nameof(FilterString));
+            FilterIcons();
+        }
     }
 
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)

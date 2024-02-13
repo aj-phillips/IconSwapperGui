@@ -4,7 +4,6 @@ public class Icon
 {
     public string Name { get; set; }
     public string Path { get; set; }
-    public string? ImagePath { get; set; }
 
     public Icon(string name, string path)
     {
