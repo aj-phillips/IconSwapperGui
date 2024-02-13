@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:IconSwapperGui"
         xmlns:utilities="clr-namespace:IconSwapperGui.Utilities"
         mc:Ignorable="d"
-        Title="Icon Swapper" Height="450" Width="800" ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
+        Title="Icon Swapper" Height="450" Width="800" ResizeMode="NoResize" WindowStartupLocation="CenterScreen" UseLayoutRounding="True">
     <Window.Resources>
         <utilities:IconPathToImageConverter x:Key="IconPathToImageConverter"/>
     </Window.Resources>
@@ -55,7 +55,7 @@
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
-                                    <Image Source="{Binding Path, Converter={StaticResource IconPathToImageConverter}}" Width="25" Height="25"/>
+                                    <Image Source="{Binding TargetPath, Converter={StaticResource IconPathToImageConverter}}" Width="25" Height="25"/>
                                     <TextBlock Text="{Binding Name}" Margin="10,0,0,0" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </DataTemplate>
@@ -84,11 +84,15 @@
                         </StackPanel>
                         <Button Grid.Column="1" Name="chooseIconFolderButton" Margin="0,5,0,0" Content="Choose Icon Folder" Command="{Binding ChooseIconFolderCommand}"/>
                     </Grid>
-                    <ListBox Grid.Row="1" Name="iconsListBox" ItemsSource="{Binding FilteredIcons}" SelectedItem="{Binding SelectedIcon, Mode=TwoWay}" Margin="0,5,0,0">
+                    <ListBox Grid.Row="1" Name="iconsListBox" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ItemsSource="{Binding FilteredIcons}" SelectedItem="{Binding SelectedIcon, Mode=TwoWay}" Margin="0,5,0,0">
                         <ListBox.Resources>
                             <Style TargetType="ListBoxItem">
                                 <Setter Property="Background" Value="Transparent"/>
                                 <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="HorizontalAlignment" Value="Center"/>
+                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                <Setter Property="VerticalContentAlignment" Value="Center"/>
                                 <Style.Triggers>
                                     <Trigger Property="IsSelected" Value="True">
                                         <Setter Property="Background" Value="LightGray"/>
@@ -98,15 +102,15 @@
                         </ListBox.Resources>
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
-                                    <Image Source="{Binding Path, Converter={StaticResource IconPathToImageConverter}}" Width="75" Height="75"/>
-                                    <TextBlock Text="{Binding Name}" TextAlignment="Center"/>
+                                <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Image Source="{Binding Path, Converter={StaticResource IconPathToImageConverter}}" Width="60" Height="60" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                    <TextBlock Text="{Binding Name}" TextAlignment="Center" HorizontalAlignment="Center"/>
                                 </StackPanel>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                         <ListBox.ItemsPanel>
                             <ItemsPanelTemplate>
-                                <WrapPanel Orientation="Horizontal" />
+                                <WrapPanel Orientation="Horizontal" ItemHeight="80" ItemWidth="90" />
                             </ItemsPanelTemplate>
                         </ListBox.ItemsPanel>
                     </ListBox>

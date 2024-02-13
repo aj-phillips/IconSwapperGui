@@ -2,9 +2,11 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Windows;
 using IconSwapperGui.Models;
 using IconSwapperGui.Utilities;
 using Microsoft.Win32;
+using Application = IconSwapperGui.Models.Application;
 
 namespace IconSwapperGui.ViewModels;
 
@@ -71,8 +73,12 @@ public class MainViewModel : INotifyPropertyChanged
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
+    public string iconsFolderPath { get; set; }
+    public string applicationsFolderPath { get; set; }
+
     public MainViewModel(IApplicationService applicationService, IIconService iconService)
     {
+        Applications = new ObservableCollection<Application>();
         Icons = new ObservableCollection<Icon>();
         FilteredIcons = new ObservableCollection<Icon>();
 
@@ -91,40 +97,93 @@ public class MainViewModel : INotifyPropertyChanged
         if (openFolderDialog.ShowDialog() == true)
         {
             string folderPath = openFolderDialog.FolderName;
-            var applications = _applicationService.GetApplications(folderPath);
 
-            foreach (var application in applications)
-            {
-                if (Applications.Any(x => x.Path == application.Path)) continue;
+            applicationsFolderPath = folderPath;
 
-                Applications.Add(application);
-            }
+            PopulateApplicationsList(folderPath);
+        }
+    }
+
+    private void PopulateApplicationsList(string folderPath)
+    {
+        Applications.Clear();
+
+        var applications = _applicationService.GetApplications(folderPath);
+
+        foreach (var application in applications)
+        {
+            if (Applications.Any(x => x.Path == application.Path)) continue;
+
+            Applications.Add(application);
         }
     }
 
     private void ChooseIconFolder()
     {
+        Icons.Clear();
+
         OpenFolderDialog openFolderDialog = new OpenFolderDialog();
 
         if (openFolderDialog.ShowDialog() == true)
         {
             string folderPath = openFolderDialog.FolderName;
-            var icons = _iconService.GetIcons(folderPath);
 
-            foreach (var icon in icons)
-            {
-                if (Icons.Any(x => x.Path == icon.Path)) continue;
+            iconsFolderPath = folderPath;
 
-                Icons.Add(icon);
-            }
-
-            FilterIcons();
+            PopulateIconsList(folderPath);
         }
+    }
+
+    private void PopulateIconsList(string folderPath)
+    {
+        var icons = _iconService.GetIcons(folderPath);
+
+        foreach (var icon in icons)
+        {
+            if (Icons.Any(x => x.Path == icon.Path)) continue;
+
+            Icons.Add(icon);
+        }
+
+        FilterIcons();
     }
 
     private void SwapIcons()
     {
-        // Implement the logic to swap icons for the selected application
+        if (SelectedApplication == null || SelectedIcon == null)
+        {
+            MessageBox.Show("Please select an application and an icon to swap.", "No Application or Icon Selected",
+                               MessageBoxButton.OK, MessageBoxImage.Warning);
+
+            return;
+        }
+
+        try
+        {
+            var wshShell = (IWshRuntimeLibrary.WshShell)Activator.CreateInstance(Type.GetTypeFromProgID("WScript.Shell"));
+
+            IWshRuntimeLibrary.IWshShortcut shortcut = (IWshRuntimeLibrary.IWshShortcut)wshShell.CreateShortcut(SelectedApplication.Path);
+
+            shortcut.IconLocation = $"{SelectedIcon.Path},0";
+
+            shortcut.Save();
+
+            MessageBox.Show($"The icon for {SelectedApplication.Name} has been successfully swapped.", "Icon Swapped",
+                                              MessageBoxButton.OK, MessageBoxImage.Information);
+
+            SelectedApplication = null;
+            SelectedIcon = null;
+
+            FilterIcons();
+
+            Applications.Clear();
+            PopulateApplicationsList(applicationsFolderPath);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"An error occurred while swapping the icon for {SelectedApplication.Name}: {ex.Message}",
+                                              "Error Swapping Icon", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     public void FilterIcons()

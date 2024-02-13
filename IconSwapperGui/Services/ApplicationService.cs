@@ -22,9 +22,29 @@ public class ApplicationService : IApplicationService
                 WshShell shell = new WshShell();
                 IWshShortcut shortcut = (IWshShortcut)shell.CreateShortcut(file);
 
-                string targetPath = shortcut.TargetPath;
+                string iconPath = "";
 
-                var app = new Application(Path.GetFileNameWithoutExtension(file), targetPath);
+                if (!string.IsNullOrWhiteSpace(shortcut.IconLocation))
+                {
+                    var iconLocationParts = shortcut.IconLocation.Split(',');
+
+                    if (string.IsNullOrWhiteSpace(iconLocationParts[0]))
+                    {
+                        iconPath = shortcut.TargetPath;
+                    }
+                    else if (iconLocationParts.Length > 1 && int.TryParse(iconLocationParts[1], out var iconIndex) &&
+                             iconIndex == 0)
+                    {
+                        iconPath = iconLocationParts[0];
+                    }
+                    else if (iconLocationParts.Length == 1)
+                    {
+                        iconPath = shortcut.IconLocation;
+                    }
+                }
+
+                var app = new Application(Path.GetFileNameWithoutExtension(file), file, iconPath);
+
                 applications.Add(app);
             }
         }
