@@ -35,5 +35,15 @@ namespace IconSwapperGui
         {
             loveTxt.Visibility = Visibility.Visible;
         }
+
+        private void CreditsTxt_OnMouseEnter(object sender, MouseEventArgs e)
+        {
+            Cursor = Cursors.Hand;
+        }
+
+        private void CreditsTxt_OnMouseLeave(object sender, MouseEventArgs e)
+        {
+            Cursor = Cursors.Arrow;
+        }
     }
 }

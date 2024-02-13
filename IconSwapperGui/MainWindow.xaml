@@ -132,7 +132,14 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <TextBlock Name="creditsTxt" HorizontalAlignment="Center" VerticalAlignment="Center" Text="Made with ❤ by Adam" MouseDown="CreditsTxt_OnMouseDown" />
+                    <TextBlock Name="creditsTxt" HorizontalAlignment="Center" VerticalAlignment="Center" Text="Made with ❤ by Adam" MouseDown="CreditsTxt_OnMouseDown" MouseEnter="CreditsTxt_OnMouseEnter" MouseLeave="CreditsTxt_OnMouseLeave">
+                        <TextBlock.Foreground>DodgerBlue</TextBlock.Foreground>
+                        <TextBlock.TextDecorations>
+                            <TextDecorationCollection>
+                                <TextDecoration Location="Underline"/>
+                            </TextDecorationCollection>
+                        </TextBlock.TextDecorations>
+                    </TextBlock>
                 </Grid>
             </GroupBox>
             <TextBlock Grid.Column="1" Name="loveTxt" HorizontalAlignment="Center" TextAlignment="Center" Visibility="Hidden" VerticalAlignment="Center" TextWrapping="Wrap" Margin="5,0,5,5"
