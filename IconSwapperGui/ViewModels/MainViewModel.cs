@@ -1,6 +1,7 @@
 ﻿using IconSwapperGui.Services;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using IconSwapperGui.Models;
@@ -14,6 +15,7 @@ public class MainViewModel : INotifyPropertyChanged
 {
     private readonly IApplicationService _applicationService;
     private readonly IIconService _iconService;
+    private readonly ISettingsService _settingsService;
 
     private ObservableCollection<Application> _applications;
     private ObservableCollection<Icon> _icons;
@@ -73,10 +75,10 @@ public class MainViewModel : INotifyPropertyChanged
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    public string iconsFolderPath { get; set; }
-    public string applicationsFolderPath { get; set; }
+    public string IconsFolderPath { get; set; }
+    public string ApplicationsFolderPath { get; set; }
 
-    public MainViewModel(IApplicationService applicationService, IIconService iconService)
+    public MainViewModel(IApplicationService applicationService, IIconService iconService, ISettingsService settingsService)
     {
         Applications = new ObservableCollection<Application>();
         Icons = new ObservableCollection<Icon>();
@@ -84,10 +86,34 @@ public class MainViewModel : INotifyPropertyChanged
 
         _applicationService = applicationService;
         _iconService = iconService;
+        _settingsService = settingsService;
 
         ChooseApplicationShortcutFolderCommand = new RelayCommand(_ => ChooseApplicationShortcutFolder());
         ChooseIconFolderCommand = new RelayCommand(_ => ChooseIconFolder());
         SwapCommand = new RelayCommand(_ => SwapIcons());
+        
+        LoadPreviousApplications();
+        LoadPreviousIcons();
+    }
+
+    private void LoadPreviousApplications()
+    {
+        ApplicationsFolderPath = _settingsService.GetApplicationsLocation();
+
+        if (ApplicationsFolderPath != null || ApplicationsFolderPath != "")
+        {
+            PopulateApplicationsList(ApplicationsFolderPath);
+        }
+    }
+
+    private void LoadPreviousIcons()
+    {
+        IconsFolderPath = _settingsService.GetIconsLocation();
+
+        if (IconsFolderPath != null || IconsFolderPath != "")
+        {
+            PopulateIconsList(IconsFolderPath);
+        }
     }
 
     private void ChooseApplicationShortcutFolder()
@@ -98,9 +124,10 @@ public class MainViewModel : INotifyPropertyChanged
         {
             string folderPath = openFolderDialog.FolderName;
 
-            applicationsFolderPath = folderPath;
+            ApplicationsFolderPath = folderPath;
 
             PopulateApplicationsList(folderPath);
+            _settingsService.SaveApplicationsLocation(ApplicationsFolderPath);
         }
     }
 
@@ -128,9 +155,10 @@ public class MainViewModel : INotifyPropertyChanged
         {
             string folderPath = openFolderDialog.FolderName;
 
-            iconsFolderPath = folderPath;
+            IconsFolderPath = folderPath;
 
             PopulateIconsList(folderPath);
+            _settingsService.SaveIconsLocation(IconsFolderPath);
         }
     }
 
@@ -152,24 +180,42 @@ public class MainViewModel : INotifyPropertyChanged
     {
         if (SelectedApplication == null || SelectedIcon == null)
         {
-            MessageBox.Show("Please select an application and an icon to swap.", "No Application or Icon Selected",
-                               MessageBoxButton.OK, MessageBoxImage.Warning);
-
+            MessageBox.Show("Please select an application and an icon to swap.",
+                "No Application or Icon Selected",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
         try
         {
-            var wshShell = (IWshRuntimeLibrary.WshShell)Activator.CreateInstance(Type.GetTypeFromProgID("WScript.Shell"));
+            if (Path.GetExtension(SelectedApplication.Path).ToLower().Equals(".lnk"))
+            {
+                var wshShell =
+                    (IWshRuntimeLibrary.WshShell)Activator.CreateInstance(Type.GetTypeFromProgID("WScript.Shell"));
 
-            IWshRuntimeLibrary.IWshShortcut shortcut = (IWshRuntimeLibrary.IWshShortcut)wshShell.CreateShortcut(SelectedApplication.Path);
+                IWshRuntimeLibrary.IWshShortcut shortcut =
+                    (IWshRuntimeLibrary.IWshShortcut)wshShell.CreateShortcut(SelectedApplication.Path);
 
-            shortcut.IconLocation = $"{SelectedIcon.Path},0";
+                shortcut.IconLocation = $"{SelectedIcon.Path},0";
+                shortcut.Save();
+            }
+            else if (System.IO.Path.GetExtension(SelectedApplication.Path).ToLower().Equals(".url"))
+            {
+                string[] urlFile = File.ReadAllLines(SelectedApplication.Path);
 
-            shortcut.Save();
+                for (int i = 0; i < urlFile.Length; i++)
+                {
+                    if (urlFile[i].StartsWith("IconFile"))
+                    {
+                        urlFile[i] = "IconFile=" + SelectedIcon.Path;
+                    }
+                }
+
+                File.WriteAllLines(SelectedApplication.Path, urlFile);
+            }
 
             MessageBox.Show($"The icon for {SelectedApplication.Name} has been successfully swapped.", "Icon Swapped",
-                                              MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBoxButton.OK, MessageBoxImage.Information);
 
             SelectedApplication = null;
             SelectedIcon = null;
@@ -177,12 +223,12 @@ public class MainViewModel : INotifyPropertyChanged
             FilterIcons();
 
             Applications.Clear();
-            PopulateApplicationsList(applicationsFolderPath);
+            PopulateApplicationsList(ApplicationsFolderPath);
         }
         catch (Exception ex)
         {
             MessageBox.Show($"An error occurred while swapping the icon for {SelectedApplication.Name}: {ex.Message}",
-                                              "Error Swapping Icon", MessageBoxButton.OK, MessageBoxImage.Error);
+                "Error Swapping Icon", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -194,7 +240,8 @@ public class MainViewModel : INotifyPropertyChanged
         }
         else
         {
-            var filtered = Icons.Where(icon => icon.Name.Contains(_filterString, StringComparison.OrdinalIgnoreCase)).ToList();
+            var filtered = Icons.Where(icon => icon.Name.Contains(_filterString, StringComparison.OrdinalIgnoreCase))
+                .ToList();
             FilteredIcons = new ObservableCollection<Icon>(filtered);
         }
     }

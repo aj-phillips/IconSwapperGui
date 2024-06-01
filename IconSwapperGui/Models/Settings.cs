@@ -1,0 +1,7 @@
+﻿namespace IconSwapperGui.Models;
+
+public class Settings
+{
+    public string? IconLocation { get; set; }
+    public string? ApplicationsLocation { get; set; }
+}

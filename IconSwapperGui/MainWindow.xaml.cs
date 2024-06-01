@@ -24,9 +24,10 @@ namespace IconSwapperGui
         {
             InitializeComponent();
 
+            var settingsService = new SettingsService();
             var applicationService = new ApplicationService();
             var iconService = new IconService();
-            var viewModel = new MainViewModel(applicationService, iconService);
+            var viewModel = new MainViewModel(applicationService, iconService, settingsService);
 
             DataContext = viewModel;
         }
