@@ -9,32 +9,35 @@ namespace IconSwapperGui.Utilities;
 [ValueConversion(typeof(string), typeof(BitmapImage))]
 public class IconPathToImageConverter : IValueConverter
 {
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        string path = value as string;
+        var path = value as string;
 
         if (string.IsNullOrEmpty(path) || !File.Exists(path))
             return null;
 
-        using (Icon icon = System.Drawing.Icon.ExtractAssociatedIcon(path))
-        {
-            using (Bitmap bmp = icon.ToBitmap())
-            {
-                var stream = new MemoryStream();
-                bmp.Save(stream, System.Drawing.Imaging.ImageFormat.Png);
-                stream.Position = 0;
-                BitmapImage bitmapImage = new BitmapImage();
-                bitmapImage.BeginInit();
-                bitmapImage.StreamSource = stream;
-                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                bitmapImage.EndInit();
-                bitmapImage.Freeze();
-                return bitmapImage;
-            }
-        }
+        using var icon = Icon.ExtractAssociatedIcon(path);
+
+        using var bmp = icon?.ToBitmap();
+        
+        var stream = new MemoryStream();
+        
+        bmp?.Save(stream, System.Drawing.Imaging.ImageFormat.Png);
+        
+        stream.Position = 0;
+        
+        var bitmapImage = new BitmapImage();
+        
+        bitmapImage.BeginInit();
+        bitmapImage.StreamSource = stream;
+        bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+        bitmapImage.EndInit();
+        bitmapImage.Freeze();
+        
+        return bitmapImage;
     }
 
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         throw new NotImplementedException();
     }

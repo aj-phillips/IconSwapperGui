@@ -17,14 +17,17 @@ namespace IconSwapperGui
             var settingsService = new SettingsService();
             var applicationService = new ApplicationService();
             var iconService = new IconService();
-            var viewModel = new MainViewModel(applicationService, iconService, settingsService);
+            var dialogService = new DialogService();
+            var elevationService = new ElevationService();
+            var viewModel = new MainViewModel(applicationService, iconService, settingsService, dialogService,
+                elevationService);
 
             DataContext = viewModel;
         }
 
         private void CreditsTxt_OnMouseDown(object sender, MouseButtonEventArgs e)
         {
-            loveTxt.Visibility = Visibility.Visible;
+            LoveTxt.Visibility = Visibility.Visible;
         }
 
         private void CreditsTxt_OnMouseEnter(object sender, MouseEventArgs e)

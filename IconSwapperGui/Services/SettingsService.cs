@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Text.Json;
+using IconSwapperGui.Interfaces;
 using IconSwapperGui.Models;
 
 namespace IconSwapperGui.Services;
@@ -24,7 +25,7 @@ public class SettingsService : ISettingsService
             ApplicationsLocation = ""
         };
 
-        string settingsData = JsonSerializer.Serialize(settingsObj);
+        var settingsData = JsonSerializer.Serialize(settingsObj);
 
         File.WriteAllText(_settingsFilePath, settingsData);
     }
@@ -37,7 +38,7 @@ public class SettingsService : ISettingsService
 
         settingsObj.IconLocation = iconsPath;
 
-        string updatedSettingsData = JsonSerializer.Serialize(settingsObj);
+        var updatedSettingsData = JsonSerializer.Serialize(settingsObj);
 
         File.WriteAllText(_settingsFilePath, updatedSettingsData);
     }
@@ -50,7 +51,7 @@ public class SettingsService : ISettingsService
 
         settingsObj.ApplicationsLocation = applicationsPath;
 
-        string updatedSettingsData = JsonSerializer.Serialize(settingsObj);
+        var updatedSettingsData = JsonSerializer.Serialize(settingsObj);
 
         File.WriteAllText(_settingsFilePath, updatedSettingsData);
     }

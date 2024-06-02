@@ -1,33 +1,31 @@
 ﻿using System.IO;
-using System.Windows;
+using IconSwapperGui.Interfaces;
 using IconSwapperGui.Models;
 
-namespace IconSwapperGui.Services;
-
-public class IconService : IIconService
+namespace IconSwapperGui.Services 
 {
-    public IEnumerable<Icon> GetIcons(string folderPath)
+    public class IconService : IIconService
     {
-        var icons = new List<Icon>();
-
-        try
+        public IEnumerable<Icon> GetIcons(string folderPath)
         {
-            if (!Directory.Exists(folderPath)) return icons;
+            var icons = new List<Icon>();
 
-            string[] iconFiles = Directory.GetFiles(folderPath, "*.ico");
+            if (!Directory.Exists(folderPath)) throw new DirectoryNotFoundException($"Directory {folderPath} does not exist.");
 
-            foreach (var file in iconFiles)
+            try
             {
-                var icon = new Icon(Path.GetFileName(file), file);
-                icons.Add(icon);
+                foreach (var file in Directory.GetFiles(folderPath, "*.ico"))
+                {
+                    var icon = new Icon(Path.GetFileName(file), file);
+                    icons.Add(icon);
+                }
+
+                return icons;
+            }
+            catch (IOException ex)
+            {
+                throw new IOException($"An error occurred while accessing {folderPath}: {ex.Message}", ex);
             }
         }
-        catch (IOException ex)
-        {
-            MessageBox.Show($"An error occurred while accessing {folderPath}: {ex.Message}",
-                               "Error Accessing Folder", MessageBoxButton.OK, MessageBoxImage.Error);
-        }
-
-        return icons;
     }
 }

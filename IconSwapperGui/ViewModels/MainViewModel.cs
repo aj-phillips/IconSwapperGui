@@ -1,14 +1,9 @@
-﻿using IconSwapperGui.Services;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Diagnostics;
-using System.IO;
 using System.Runtime.CompilerServices;
-using System.Security.Principal;
-using System.Windows;
+using IconSwapperGui.Commands;
+using IconSwapperGui.Interfaces;
 using IconSwapperGui.Models;
-using IconSwapperGui.Utilities;
-using Microsoft.Win32;
 using Application = IconSwapperGui.Models.Application;
 
 namespace IconSwapperGui.ViewModels;
@@ -17,7 +12,9 @@ public class MainViewModel : INotifyPropertyChanged
 {
     private readonly IApplicationService _applicationService;
     private readonly IIconService _iconService;
-    private readonly ISettingsService _settingsService;
+    public readonly ISettingsService SettingsService;
+    public readonly IDialogService DialogService;
+    public readonly IElevationService ElevationService;
 
     private ObservableCollection<Application> _applications;
     private ObservableCollection<Icon> _icons;
@@ -82,7 +79,7 @@ public class MainViewModel : INotifyPropertyChanged
     public string ApplicationsFolderPath { get; set; }
 
     public MainViewModel(IApplicationService applicationService, IIconService iconService,
-        ISettingsService settingsService)
+        ISettingsService settingsService, IDialogService dialogService, IElevationService elevationService)
     {
         Applications = new ObservableCollection<Application>();
         Icons = new ObservableCollection<Icon>();
@@ -90,12 +87,14 @@ public class MainViewModel : INotifyPropertyChanged
 
         _applicationService = applicationService;
         _iconService = iconService;
-        _settingsService = settingsService;
+        SettingsService = settingsService;
+        DialogService = dialogService;
+        ElevationService = elevationService;
 
-        ChooseApplicationShortcutFolderCommand = new RelayCommand(_ => ChooseApplicationShortcutFolder());
-        ChooseIconFolderCommand = new RelayCommand(_ => ChooseIconFolder());
-        SwapCommand = new RelayCommand(_ => SwapIcons());
-        RefreshCommand = new RelayCommand(_ => RefreshAll());
+        ChooseApplicationShortcutFolderCommand = new ChooseApplicationShortcutFolderCommand(this, null!, x => true);
+        ChooseIconFolderCommand = new ChooseIconFolderCommand(this, null!, x => true);
+        SwapCommand = new SwapCommand(this, null!, x => true);
+        RefreshCommand = new RefreshCommand(this, null!, x => true);
 
         LoadPreviousApplications();
         LoadPreviousIcons();
@@ -103,9 +102,9 @@ public class MainViewModel : INotifyPropertyChanged
 
     private void LoadPreviousApplications()
     {
-        ApplicationsFolderPath = _settingsService.GetApplicationsLocation();
-
-        if (ApplicationsFolderPath != null || ApplicationsFolderPath != "")
+        ApplicationsFolderPath = SettingsService.GetApplicationsLocation();
+        
+        if (!string.IsNullOrEmpty(ApplicationsFolderPath)) 
         {
             PopulateApplicationsList(ApplicationsFolderPath);
         }
@@ -113,30 +112,15 @@ public class MainViewModel : INotifyPropertyChanged
 
     private void LoadPreviousIcons()
     {
-        IconsFolderPath = _settingsService.GetIconsLocation();
-
-        if (IconsFolderPath != null || IconsFolderPath != "")
+        IconsFolderPath = SettingsService.GetIconsLocation();
+        
+        if (!string.IsNullOrEmpty(IconsFolderPath))
         {
             PopulateIconsList(IconsFolderPath);
         }
     }
 
-    private void ChooseApplicationShortcutFolder()
-    {
-        OpenFolderDialog openFolderDialog = new OpenFolderDialog();
-
-        if (openFolderDialog.ShowDialog() == true)
-        {
-            string folderPath = openFolderDialog.FolderName;
-
-            ApplicationsFolderPath = folderPath;
-
-            PopulateApplicationsList(folderPath);
-            _settingsService.SaveApplicationsLocation(ApplicationsFolderPath);
-        }
-    }
-
-    private void PopulateApplicationsList(string folderPath)
+    public void PopulateApplicationsList(string folderPath)
     {
         Applications.Clear();
 
@@ -150,24 +134,7 @@ public class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    private void ChooseIconFolder()
-    {
-        Icons.Clear();
-
-        OpenFolderDialog openFolderDialog = new OpenFolderDialog();
-
-        if (openFolderDialog.ShowDialog() == true)
-        {
-            string folderPath = openFolderDialog.FolderName;
-
-            IconsFolderPath = folderPath;
-
-            PopulateIconsList(folderPath);
-            _settingsService.SaveIconsLocation(IconsFolderPath);
-        }
-    }
-
-    private void PopulateIconsList(string folderPath)
+    public void PopulateIconsList(string folderPath)
     {
         var icons = _iconService.GetIcons(folderPath);
 
@@ -181,140 +148,13 @@ public class MainViewModel : INotifyPropertyChanged
         FilterIcons();
     }
 
-    private void SwapIcons()
-    {
-        if (SelectedApplication == null || SelectedIcon == null)
-        {
-            ShowWarning("Please select an application and an icon to swap.", "No Application or Icon Selected");
-            return;
-        }
-
-        try
-        {
-            string extension = Path.GetExtension(SelectedApplication.Path).ToLower();
-
-            switch (extension)
-            {
-                case ".lnk":
-                    SwapLinkFileIcon();
-                    break;
-                case ".url":
-                    SwapUrlFileIcon();
-                    break;
-            }
-
-            ShowInformation($"The icon for {SelectedApplication.Name} has been successfully swapped.", "Icon Swapped");
-            ResetGui();
-        }
-        catch (Exception ex)
-        {
-            ShowError($"An error occurred while swapping the icon for {SelectedApplication.Name}: {ex.Message}",
-                "Error Swapping Icon");
-        }
-    }
-
-    private void SwapLinkFileIcon()
-    {
-        string publicDesktopPath = "C:\\Users\\Public\\Desktop";
-
-        if (Path.GetDirectoryName(SelectedApplication.Path).Equals(publicDesktopPath) && !IsRunningAsAdmin())
-        {
-            ShowInformation(
-                $"To change the icon of {SelectedApplication.Name}, the application needs to be restarted as admin.\n\nYou will need to attempt the swap again afterwards",
-                "Permissions Required To Swap Icon");
-
-            ElevateApplicationViaUac();
-        }
-
-        var wshShell = (IWshRuntimeLibrary.WshShell)Activator.CreateInstance(Type.GetTypeFromProgID("WScript.Shell"));
-
-        IWshRuntimeLibrary.IWshShortcut shortcut =
-            (IWshRuntimeLibrary.IWshShortcut)wshShell.CreateShortcut(SelectedApplication.Path);
-
-        shortcut.IconLocation = $"{SelectedIcon.Path},0";
-
-        shortcut.Save();
-    }
-
-    private void SwapUrlFileIcon()
-    {
-        string[] urlFileContent = File.ReadAllLines(SelectedApplication.Path);
-
-        for (int i = 0; i < urlFileContent.Length; i++)
-        {
-            if (urlFileContent[i].StartsWith("IconFile", StringComparison.CurrentCultureIgnoreCase))
-            {
-                urlFileContent[i] = "IconFile=" + SelectedIcon.Path;
-            }
-        }
-
-        File.WriteAllLines(SelectedApplication.Path, urlFileContent);
-    }
-
-    private void ShowWarning(string message, string caption)
-    {
-        MessageBox.Show(message, caption, MessageBoxButton.OK, MessageBoxImage.Warning);
-    }
-
-    private void ShowInformation(string message, string caption)
-    {
-        MessageBox.Show(message, caption, MessageBoxButton.OK, MessageBoxImage.Information);
-    }
-
-    private void ShowError(string message, string caption)
-    {
-        MessageBox.Show(message, caption, MessageBoxButton.OK, MessageBoxImage.Error);
-    }
-
-    private void ResetGui()
+    public void ResetGui()
     {
         SelectedApplication = null;
         SelectedIcon = null;
         FilterIcons();
         Applications.Clear();
         PopulateApplicationsList(ApplicationsFolderPath);
-    }
-
-    private void ElevateApplicationViaUac()
-    {
-        var processInfo = new ProcessStartInfo
-        {
-            UseShellExecute = true,
-            WorkingDirectory = Environment.CurrentDirectory,
-            FileName = Process.GetCurrentProcess().MainModule.FileName,
-            Verb = "runas",
-            Arguments = "elevate"
-        };
-
-        try
-        {
-            Process.Start(processInfo);
-            System.Windows.Application.Current.Shutdown();
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show(
-                "This operation requires elevated permissions. Please run the application as an administrator.",
-                "Elevation Required", MessageBoxButton.OK, MessageBoxImage.Error);
-        }
-    }
-    
-    private bool IsRunningAsAdmin()
-    {
-        using var identity = WindowsIdentity.GetCurrent();
-        
-        var principal = new WindowsPrincipal(identity);
-        
-        return principal.IsInRole(WindowsBuiltInRole.Administrator);
-    }
-
-    public void RefreshAll()
-    {
-        Applications.Clear();
-        Icons.Clear();
-
-        PopulateApplicationsList(ApplicationsFolderPath);
-        PopulateIconsList(IconsFolderPath);
     }
 
     public void FilterIcons()
@@ -327,6 +167,7 @@ public class MainViewModel : INotifyPropertyChanged
         {
             var filtered = Icons.Where(icon => icon.Name.Contains(_filterString, StringComparison.OrdinalIgnoreCase))
                 .ToList();
+
             FilteredIcons = new ObservableCollection<Icon>(filtered);
         }
     }
@@ -336,6 +177,7 @@ public class MainViewModel : INotifyPropertyChanged
         get => _filterString;
         set
         {
+            if (_filterString == value) return; 
             _filterString = value;
             OnPropertyChanged(nameof(FilterString));
             FilterIcons();

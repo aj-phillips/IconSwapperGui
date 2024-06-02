@@ -1,6 +1,6 @@
 ﻿using IconSwapperGui.Models;
 
-namespace IconSwapperGui.Services;
+namespace IconSwapperGui.Interfaces;
 
 public interface ISettingsService
 {
