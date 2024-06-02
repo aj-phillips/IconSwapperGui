@@ -1,8 +1,10 @@
 ﻿using IconSwapperGui.Services;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Security.Principal;
 using System.Windows;
 using IconSwapperGui.Models;
 using IconSwapperGui.Utilities;
@@ -72,13 +74,15 @@ public class MainViewModel : INotifyPropertyChanged
     public RelayCommand ChooseApplicationShortcutFolderCommand { get; }
     public RelayCommand ChooseIconFolderCommand { get; }
     public RelayCommand SwapCommand { get; }
+    public RelayCommand RefreshCommand { get; }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public string IconsFolderPath { get; set; }
     public string ApplicationsFolderPath { get; set; }
 
-    public MainViewModel(IApplicationService applicationService, IIconService iconService, ISettingsService settingsService)
+    public MainViewModel(IApplicationService applicationService, IIconService iconService,
+        ISettingsService settingsService)
     {
         Applications = new ObservableCollection<Application>();
         Icons = new ObservableCollection<Icon>();
@@ -91,7 +95,8 @@ public class MainViewModel : INotifyPropertyChanged
         ChooseApplicationShortcutFolderCommand = new RelayCommand(_ => ChooseApplicationShortcutFolder());
         ChooseIconFolderCommand = new RelayCommand(_ => ChooseIconFolder());
         SwapCommand = new RelayCommand(_ => SwapIcons());
-        
+        RefreshCommand = new RelayCommand(_ => RefreshAll());
+
         LoadPreviousApplications();
         LoadPreviousIcons();
     }
@@ -180,56 +185,136 @@ public class MainViewModel : INotifyPropertyChanged
     {
         if (SelectedApplication == null || SelectedIcon == null)
         {
-            MessageBox.Show("Please select an application and an icon to swap.",
-                "No Application or Icon Selected",
-                MessageBoxButton.OK, MessageBoxImage.Warning);
+            ShowWarning("Please select an application and an icon to swap.", "No Application or Icon Selected");
             return;
         }
 
         try
         {
-            if (Path.GetExtension(SelectedApplication.Path).ToLower().Equals(".lnk"))
+            string extension = Path.GetExtension(SelectedApplication.Path).ToLower();
+
+            switch (extension)
             {
-                var wshShell =
-                    (IWshRuntimeLibrary.WshShell)Activator.CreateInstance(Type.GetTypeFromProgID("WScript.Shell"));
-
-                IWshRuntimeLibrary.IWshShortcut shortcut =
-                    (IWshRuntimeLibrary.IWshShortcut)wshShell.CreateShortcut(SelectedApplication.Path);
-
-                shortcut.IconLocation = $"{SelectedIcon.Path},0";
-                shortcut.Save();
-            }
-            else if (System.IO.Path.GetExtension(SelectedApplication.Path).ToLower().Equals(".url"))
-            {
-                string[] urlFile = File.ReadAllLines(SelectedApplication.Path);
-
-                for (int i = 0; i < urlFile.Length; i++)
-                {
-                    if (urlFile[i].StartsWith("IconFile"))
-                    {
-                        urlFile[i] = "IconFile=" + SelectedIcon.Path;
-                    }
-                }
-
-                File.WriteAllLines(SelectedApplication.Path, urlFile);
+                case ".lnk":
+                    SwapLinkFileIcon();
+                    break;
+                case ".url":
+                    SwapUrlFileIcon();
+                    break;
             }
 
-            MessageBox.Show($"The icon for {SelectedApplication.Name} has been successfully swapped.", "Icon Swapped",
-                MessageBoxButton.OK, MessageBoxImage.Information);
-
-            SelectedApplication = null;
-            SelectedIcon = null;
-
-            FilterIcons();
-
-            Applications.Clear();
-            PopulateApplicationsList(ApplicationsFolderPath);
+            ShowInformation($"The icon for {SelectedApplication.Name} has been successfully swapped.", "Icon Swapped");
+            ResetGui();
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"An error occurred while swapping the icon for {SelectedApplication.Name}: {ex.Message}",
-                "Error Swapping Icon", MessageBoxButton.OK, MessageBoxImage.Error);
+            ShowError($"An error occurred while swapping the icon for {SelectedApplication.Name}: {ex.Message}",
+                "Error Swapping Icon");
         }
+    }
+
+    private void SwapLinkFileIcon()
+    {
+        string publicDesktopPath = "C:\\Users\\Public\\Desktop";
+
+        if (Path.GetDirectoryName(SelectedApplication.Path).Equals(publicDesktopPath) && !IsRunningAsAdmin())
+        {
+            ShowInformation(
+                $"To change the icon of {SelectedApplication.Name}, the application needs to be restarted as admin.\n\nYou will need to attempt the swap again afterwards",
+                "Permissions Required To Swap Icon");
+
+            ElevateApplicationViaUac();
+        }
+
+        var wshShell = (IWshRuntimeLibrary.WshShell)Activator.CreateInstance(Type.GetTypeFromProgID("WScript.Shell"));
+
+        IWshRuntimeLibrary.IWshShortcut shortcut =
+            (IWshRuntimeLibrary.IWshShortcut)wshShell.CreateShortcut(SelectedApplication.Path);
+
+        shortcut.IconLocation = $"{SelectedIcon.Path},0";
+
+        shortcut.Save();
+    }
+
+    private void SwapUrlFileIcon()
+    {
+        string[] urlFileContent = File.ReadAllLines(SelectedApplication.Path);
+
+        for (int i = 0; i < urlFileContent.Length; i++)
+        {
+            if (urlFileContent[i].StartsWith("IconFile", StringComparison.CurrentCultureIgnoreCase))
+            {
+                urlFileContent[i] = "IconFile=" + SelectedIcon.Path;
+            }
+        }
+
+        File.WriteAllLines(SelectedApplication.Path, urlFileContent);
+    }
+
+    private void ShowWarning(string message, string caption)
+    {
+        MessageBox.Show(message, caption, MessageBoxButton.OK, MessageBoxImage.Warning);
+    }
+
+    private void ShowInformation(string message, string caption)
+    {
+        MessageBox.Show(message, caption, MessageBoxButton.OK, MessageBoxImage.Information);
+    }
+
+    private void ShowError(string message, string caption)
+    {
+        MessageBox.Show(message, caption, MessageBoxButton.OK, MessageBoxImage.Error);
+    }
+
+    private void ResetGui()
+    {
+        SelectedApplication = null;
+        SelectedIcon = null;
+        FilterIcons();
+        Applications.Clear();
+        PopulateApplicationsList(ApplicationsFolderPath);
+    }
+
+    private void ElevateApplicationViaUac()
+    {
+        var processInfo = new ProcessStartInfo
+        {
+            UseShellExecute = true,
+            WorkingDirectory = Environment.CurrentDirectory,
+            FileName = Process.GetCurrentProcess().MainModule.FileName,
+            Verb = "runas",
+            Arguments = "elevate"
+        };
+
+        try
+        {
+            Process.Start(processInfo);
+            System.Windows.Application.Current.Shutdown();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                "This operation requires elevated permissions. Please run the application as an administrator.",
+                "Elevation Required", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+    
+    private bool IsRunningAsAdmin()
+    {
+        using var identity = WindowsIdentity.GetCurrent();
+        
+        var principal = new WindowsPrincipal(identity);
+        
+        return principal.IsInRole(WindowsBuiltInRole.Administrator);
+    }
+
+    public void RefreshAll()
+    {
+        Applications.Clear();
+        Icons.Clear();
+
+        PopulateApplicationsList(ApplicationsFolderPath);
+        PopulateIconsList(IconsFolderPath);
     }
 
     public void FilterIcons()

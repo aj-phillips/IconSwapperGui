@@ -82,7 +82,10 @@
                             <Label Content="Search:"/>
                             <TextBox Width="220px" Name="searchTextBox" VerticalContentAlignment="Center" Text="{Binding FilterString, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
-                        <Button Grid.Column="1" Name="chooseIconFolderButton" Margin="0,5,0,0" Content="Choose Icon Folder" Command="{Binding ChooseIconFolderCommand}"/>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                            <Button Name="chooseIconFolderButton" Width="170px" Margin="0,5,27,0" Content="Choose Icon Folder" Command="{Binding ChooseIconFolderCommand}"/>
+                            <Button Name="refreshButton" Width="90px" Margin="0,5,0,0" Content="Refresh" Command="{Binding RefreshCommand}"/>
+                        </StackPanel>
                     </Grid>
                     <ListBox Grid.Row="1" Name="iconsListBox" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ItemsSource="{Binding FilteredIcons}" SelectedItem="{Binding SelectedIcon, Mode=TwoWay}" Margin="0,5,0,0">
                         <ListBox.Resources>
@@ -154,7 +157,7 @@
                     </Grid.RowDefinitions>
                     <!-- Three buttons, one for choosing application shortcut folder, one for choosing icon folder, and one for swapping -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="5">
-                        <Button Name="swapButton" Width="125px" Content="Swap Icon" Command="{Binding SwapCommand}"/>
+                        <Button Name="swapButton" Width="110px" Content="Swap Icon" Command="{Binding SwapCommand}"/>
                     </StackPanel>
                 </Grid>
             </GroupBox>

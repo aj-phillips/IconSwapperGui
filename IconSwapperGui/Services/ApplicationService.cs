@@ -12,14 +12,16 @@ public class ApplicationService : IApplicationService
     public IEnumerable<Application> GetApplications(string folderPath)
     {
         var applications = new List<Application>();
+        var publicDesktopPath = "C:\\Users\\Public\\Desktop";
 
         try
         {
             if (!Directory.Exists(folderPath)) return applications;
 
+            string[] publicShortcutFiles = Directory.GetFiles(publicDesktopPath, "*.lnk", SearchOption.AllDirectories);
             string[] shortcutFiles = Directory.GetFiles(folderPath, "*.lnk", SearchOption.AllDirectories);
             string[] steamShortcuts = Directory.GetFiles(folderPath, "*.url", SearchOption.AllDirectories);
-            shortcutFiles = shortcutFiles.Concat(steamShortcuts).ToArray();
+            shortcutFiles = shortcutFiles.Concat(publicShortcutFiles).Concat(steamShortcuts).ToArray();
 
             foreach (var file in shortcutFiles)
             {
