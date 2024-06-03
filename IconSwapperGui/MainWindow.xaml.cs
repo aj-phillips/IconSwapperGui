@@ -1,4 +1,7 @@
-﻿using System.Windows;
+﻿using System.Diagnostics;
+using System.IO;
+using System.Reflection;
+using System.Windows;
 using System.Windows.Input;
 using IconSwapperGui.Services;
 using IconSwapperGui.ViewModels;
@@ -10,6 +13,9 @@ namespace IconSwapperGui
     /// </summary>
     public partial class MainWindow : Window
     {
+        private readonly string _currentAssemblyDirectory = Path.GetDirectoryName(System.AppContext.BaseDirectory);
+        private readonly string _currentVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+        
         public MainWindow()
         {
             InitializeComponent();
@@ -23,21 +29,15 @@ namespace IconSwapperGui
                 elevationService);
 
             DataContext = viewModel;
+            
+            CheckForUpdates();
         }
 
-        private void CreditsTxt_OnMouseDown(object sender, MouseButtonEventArgs e)
+        public void CheckForUpdates()
         {
-            LoveTxt.Visibility = Visibility.Visible;
-        }
+            var updaterExePath = Path.Combine(_currentAssemblyDirectory, "IconSwapperGui.Updater.exe");
 
-        private void CreditsTxt_OnMouseEnter(object sender, MouseEventArgs e)
-        {
-            Cursor = Cursors.Hand;
-        }
-
-        private void CreditsTxt_OnMouseLeave(object sender, MouseEventArgs e)
-        {
-            Cursor = Cursors.Arrow;
+            Process.Start(updaterExePath, _currentVersion);
         }
     }
 }

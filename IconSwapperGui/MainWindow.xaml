@@ -15,29 +15,35 @@
             <RowDefinition Height="5*"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
+        
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
+        
         <Grid Grid.Row="0" Grid.Column="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="3*"/>
             </Grid.ColumnDefinitions>
-            <!-- Start application selector -->
+            
             <GroupBox Grid.Column="0" Grid.Row="0">
                 <GroupBox.Header>
                     <TextBlock Text="Application Selector"/>
                 </GroupBox.Header>
+                
                 <Grid HorizontalAlignment="Stretch">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="10*"/>
                     </Grid.RowDefinitions>
+                    
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
+                    
                     <Button Name="ChooseApplicationShortcutFolderButton" Content="Choose Shortcut Folder" Command="{Binding ChooseApplicationShortcutFolderCommand}" Margin="0,5,0,0"/>
+                    
                     <ListBox Grid.Row="1" Name="ApplicationsListBox" ItemsSource="{Binding Applications}" SelectedItem="{Binding SelectedApplication, Mode=TwoWay}" Margin="0,5,0,0">
                         <ListBox.Resources>
                             <Style TargetType="ListBoxItem">
@@ -52,6 +58,7 @@
                                 </Style.Triggers>
                             </Style>
                         </ListBox.Resources>
+                        
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
@@ -63,25 +70,29 @@
                     </ListBox>
                 </Grid>
             </GroupBox>
-            <!-- Start icon selector -->
+
             <GroupBox Grid.Column="1" Grid.Row="0">
                 <GroupBox.Header>
                     <TextBlock Text="Icon Selector"/>
                 </GroupBox.Header>
+                
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="10*"/>
                     </Grid.RowDefinitions>
+                    
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
+                        
                         <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
                             <Label Content="Search:"/>
                             <TextBox Width="220px" Name="SearchTextBox" VerticalContentAlignment="Center" Text="{Binding FilterString, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
+                        
                         <StackPanel Grid.Column="1" Orientation="Horizontal">
                             <Button Name="ChooseIconFolderButton" Width="170px" Margin="0,5,27,0" Content="Choose Icon Folder" Command="{Binding ChooseIconFolderCommand}"/>
                             <Button Name="RefreshButton" Width="90px" Margin="0,5,0,0" Content="Refresh" Command="{Binding RefreshCommand}"/>
@@ -103,6 +114,7 @@
                                 </Style.Triggers>
                             </Style>
                         </ListBox.Resources>
+                        
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -111,6 +123,7 @@
                                 </StackPanel>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
+                        
                         <ListBox.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <WrapPanel Orientation="Horizontal" ItemHeight="80" ItemWidth="90" />
@@ -126,36 +139,17 @@
                 <ColumnDefinition Width="2*"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <!-- This is for the made with love section and action buttons -->
-            <GroupBox Grid.Column="0" Grid.Row="0">
-                <GroupBox.Header>
-                    <TextBlock Text="Credits"/>
-                </GroupBox.Header>
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    <TextBlock Name="CreditsTxt" HorizontalAlignment="Center" VerticalAlignment="Center" Text="Made with ❤ by Adam" MouseDown="CreditsTxt_OnMouseDown" MouseEnter="CreditsTxt_OnMouseEnter" MouseLeave="CreditsTxt_OnMouseLeave">
-                        <TextBlock.Foreground>DodgerBlue</TextBlock.Foreground>
-                        <TextBlock.TextDecorations>
-                            <TextDecorationCollection>
-                                <TextDecoration Location="Underline"/>
-                            </TextDecorationCollection>
-                        </TextBlock.TextDecorations>
-                    </TextBlock>
-                </Grid>
-            </GroupBox>
-            <TextBlock Grid.Column="1" Name="LoveTxt" HorizontalAlignment="Center" TextAlignment="Center" Visibility="Hidden" VerticalAlignment="Center" TextWrapping="Wrap" Margin="5,0,5,5"
-                        Text="I'm truly sorry for how I acted...I was selfish and inconsiderate of your health, insisting you stay with me despite you being ill. I regret everything I did and said deeply and feel so guilty about it. I still love you..."></TextBlock>
+            
             <GroupBox Grid.Column="2">
                 <GroupBox.Header>
                     <TextBlock Text="Actions"/>
                 </GroupBox.Header>
+                
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <!-- Three buttons, one for choosing application shortcut folder, one for choosing icon folder, and one for swapping -->
+                    
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="5">
                         <Button Name="SwapButton" Width="110px" Content="Swap Icon" Command="{Binding SwapCommand}"/>
                     </StackPanel>
