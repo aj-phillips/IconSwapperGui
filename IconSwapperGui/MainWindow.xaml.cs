@@ -29,7 +29,10 @@ namespace IconSwapperGui
 
             DataContext = viewModel;
             
-            CheckForUpdates();
+            if (!Debugger.IsAttached)
+            {
+                CheckForUpdates();
+            }
         }
 
         public void CheckForUpdates()

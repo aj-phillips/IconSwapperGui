@@ -9,6 +9,7 @@
         Title="Icon Swapper" Height="450" Width="800" ResizeMode="NoResize" WindowStartupLocation="CenterScreen" UseLayoutRounding="True">
     <Window.Resources>
         <utilities:IconPathToImageConverter x:Key="IconPathToImageConverter"/>
+        <utilities:ApplicationPathToImageConverter x:Key="ApplicationPathToImageConverter"/>
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -118,7 +119,7 @@
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <Image Source="{Binding Path, Converter={StaticResource IconPathToImageConverter}}" Width="60" Height="60" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                    <Image Source="{Binding Path, Converter={StaticResource ApplicationPathToImageConverter}}" Width="60" Height="60" Stretch="Uniform" RenderOptions.BitmapScalingMode="Fant"/>
                                     <TextBlock Text="{Binding Name}" TextAlignment="Center" HorizontalAlignment="Center"/>
                                 </StackPanel>
                             </DataTemplate>
