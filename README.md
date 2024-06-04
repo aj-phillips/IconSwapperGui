@@ -8,7 +8,7 @@ Welcome to IconSwapperGui, your all-in-one solution for changing shortcut icons 
 - Search Functionality: Have a specific icon in mind for your chosen shortcut? Use the search bar and easily filter through your icons!
 - Refresh: Easily reload the contents of your icons folder if you added extra ones while the application is open.
 
-## Updater
+### Updater
 - Automatic Updates: IconSwapperGui includes an integrated updater that ensures you always have the latest features and improvements. The updater checks for new releases on our GitHub page and installs updates automatically.
 
 ## Getting Started
@@ -20,7 +20,7 @@ Welcome to IconSwapperGui, your all-in-one solution for changing shortcut icons 
 - Start Swapping: Use the interface to select and change the icons of your .lnk and Steam .url shortcuts.
 
 ## Feedback and Support
-Your feedback is invaluable to us! If you encounter any issues or have suggestions for future features, please open an issue on our GitHub issues page.
+Your feedback is invaluable to me! If you encounter any issues or have suggestions for future features, please open an issue on the GitHub issues page.
 
 Thank you for using IconSwapperGui! I look forward to your feedback and hope you enjoy a more organized and personalized desktop experience.
 
@@ -28,4 +28,4 @@ Thank you for using IconSwapperGui! I look forward to your feedback and hope you
 IconSwapperGui is released under the MIT License.
 
 ## Contributing
-We welcome contributions from the community! If you'd like to contribute, please read our Contributing Guidelines.
+We welcome contributions from the community! If you'd like to contribute, please read the Contributing Guidelines.
