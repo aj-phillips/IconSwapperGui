@@ -24,8 +24,5 @@ Your feedback is invaluable to me! If you encounter any issues or have suggestio
 
 Thank you for using IconSwapperGui! I look forward to your feedback and hope you enjoy a more organized and personalized desktop experience.
 
-## License
-IconSwapperGui is released under the MIT License.
-
 ## Contributing
 We welcome contributions from the community! If you'd like to contribute, please read the Contributing Guidelines.
