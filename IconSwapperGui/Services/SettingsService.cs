@@ -22,6 +22,7 @@ public class SettingsService : ISettingsService
         var settingsObj = new Settings
         {
             IconLocation = "",
+            ConverterIconLocation = "",
             ApplicationsLocation = ""
         };
 
@@ -37,6 +38,19 @@ public class SettingsService : ISettingsService
         if (settingsObj == null) return;
 
         settingsObj.IconLocation = iconsPath;
+
+        var updatedSettingsData = JsonSerializer.Serialize(settingsObj);
+
+        File.WriteAllText(_settingsFilePath, updatedSettingsData);
+    }
+
+    public void SaveConverterIconsLocation(string? iconsPath)
+    {
+        var settingsObj = GetSettings();
+
+        if (settingsObj == null) return;
+
+        settingsObj.ConverterIconLocation = iconsPath;
 
         var updatedSettingsData = JsonSerializer.Serialize(settingsObj);
 
@@ -68,6 +82,13 @@ public class SettingsService : ISettingsService
         var settingsObj = GetSettings();
 
         return settingsObj?.IconLocation;
+    }
+    
+    public string? GetConverterIconsLocation()
+    {
+        var settingsObj = GetSettings();
+
+        return settingsObj?.ConverterIconLocation;
     }
 
     public Settings? GetSettings()

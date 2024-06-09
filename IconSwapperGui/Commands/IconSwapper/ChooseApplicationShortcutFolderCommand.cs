@@ -1,13 +1,13 @@
 ﻿using IconSwapperGui.ViewModels;
 using Microsoft.Win32;
 
-namespace IconSwapperGui.Commands;
+namespace IconSwapperGui.Commands.IconSwapper;
 
 public class ChooseApplicationShortcutFolderCommand : RelayCommand
 {
-    private readonly MainViewModel _viewModel;
+    private readonly IconSwapperViewModel _viewModel;
 
-    public ChooseApplicationShortcutFolderCommand(MainViewModel viewModel, Action<object> execute, Func<object, bool>? canExecute = null)
+    public ChooseApplicationShortcutFolderCommand(IconSwapperViewModel viewModel, Action<object> execute, Func<object, bool>? canExecute = null)
         : base(execute, canExecute)
     {
         _viewModel = viewModel;

@@ -2,17 +2,18 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using IconSwapperGui.Commands;
+using IconSwapperGui.Commands.IconSwapper;
 using IconSwapperGui.Interfaces;
 using IconSwapperGui.Models;
 using Application = IconSwapperGui.Models.Application;
 
 namespace IconSwapperGui.ViewModels;
 
-public class MainViewModel : INotifyPropertyChanged
+public class IconSwapperViewModel : ViewModel, IIconViewModel
 {
     private readonly IApplicationService _applicationService;
     private readonly IIconService _iconService;
-    public readonly ISettingsService SettingsService;
+    public ISettingsService SettingsService { get; set; }
     public readonly IDialogService DialogService;
     public readonly IElevationService ElevationService;
 
@@ -73,12 +74,10 @@ public class MainViewModel : INotifyPropertyChanged
     public RelayCommand SwapCommand { get; }
     public RelayCommand RefreshCommand { get; }
 
-    public event PropertyChangedEventHandler? PropertyChanged;
-
     public string IconsFolderPath { get; set; }
     public string ApplicationsFolderPath { get; set; }
 
-    public MainViewModel(IApplicationService applicationService, IIconService iconService,
+    public IconSwapperViewModel(IApplicationService applicationService, IIconService iconService,
         ISettingsService settingsService, IDialogService dialogService, IElevationService elevationService)
     {
         Applications = new ObservableCollection<Application>();
@@ -92,7 +91,7 @@ public class MainViewModel : INotifyPropertyChanged
         ElevationService = elevationService;
 
         ChooseApplicationShortcutFolderCommand = new ChooseApplicationShortcutFolderCommand(this, null!, x => true);
-        ChooseIconFolderCommand = new ChooseIconFolderCommand(this, null!, x => true);
+        ChooseIconFolderCommand = new ChooseIconFolderCommand<IconSwapperViewModel>(this, null!, x => true);
         SwapCommand = new SwapCommand(this, null!, x => true);
         RefreshCommand = new RefreshCommand(this, null!, x => true);
 
@@ -182,18 +181,5 @@ public class MainViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(FilterString));
             FilterIcons();
         }
-    }
-
-    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-    }
-
-    protected bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
-    {
-        if (EqualityComparer<T>.Default.Equals(field, value)) return false;
-        field = value;
-        OnPropertyChanged(propertyName);
-        return true;
     }
 }

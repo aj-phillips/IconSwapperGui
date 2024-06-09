@@ -2,8 +2,6 @@
 using System.IO;
 using System.Reflection;
 using System.Windows;
-using IconSwapperGui.Services;
-using IconSwapperGui.ViewModels;
 
 namespace IconSwapperGui
 {
@@ -18,16 +16,6 @@ namespace IconSwapperGui
         public MainWindow()
         {
             InitializeComponent();
-
-            var settingsService = new SettingsService();
-            var applicationService = new ApplicationService();
-            var iconService = new IconService();
-            var dialogService = new DialogService();
-            var elevationService = new ElevationService();
-            var viewModel = new MainViewModel(applicationService, iconService, settingsService, dialogService,
-                elevationService);
-
-            DataContext = viewModel;
             
             if (!Debugger.IsAttached)
             {
