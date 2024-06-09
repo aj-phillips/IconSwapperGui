@@ -1,12 +1,12 @@
 ﻿using IconSwapperGui.ViewModels;
 
-namespace IconSwapperGui.Commands;
+namespace IconSwapperGui.Commands.IconSwapper;
 
 public class RefreshCommand : RelayCommand
 {
-    private readonly MainViewModel _viewModel;
+    private readonly IconSwapperViewModel _viewModel;
 
-    public RefreshCommand(MainViewModel viewModel, Action<object> execute, Func<object, bool>? canExecute = null)
+    public RefreshCommand(IconSwapperViewModel viewModel, Action<object> execute, Func<object, bool>? canExecute = null)
         : base(execute, canExecute)
     {
         _viewModel = viewModel;
