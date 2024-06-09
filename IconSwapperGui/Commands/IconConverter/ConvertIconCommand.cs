@@ -38,5 +38,6 @@ public class ConvertIconCommand : RelayCommand
         }
 
         _viewModel.DialogService.ShowInformation("Successfully converted PNG images to ICOs!", "Conversion Successful");
+        _viewModel.RefreshGui();
     }
 }

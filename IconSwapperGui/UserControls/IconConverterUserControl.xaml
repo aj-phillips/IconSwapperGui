@@ -87,9 +87,9 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <Button x:Name="Convert" Content="Convert all PNGs to ICO" Grid.Column="1" Width="150" Height="30"
-                    Command="{Binding ConvertIconCommand}" />
-            <CheckBox x:Name="DeletePngs" Content="Delete PNGs after conversion?"
+            <Button x:Name="ConvertButton" Content="Convert all PNGs to ICO" Grid.Column="1" Width="150" Height="30"
+                    Command="{Binding ConvertIconCommand}" IsEnabled="{Binding CanConvertImages}" />
+            <CheckBox x:Name="DeletePngsButton" Content="Delete PNGs after conversion?"
                       IsChecked="{Binding CanDeletePngImages}" Grid.Column="0" Margin="10,8,0,0" />
         </Grid>
     </Grid>

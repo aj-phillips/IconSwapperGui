@@ -1,12 +1,14 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Windows;
 using IconSwapperGui.Commands;
 using IconSwapperGui.Commands.IconConverter;
 using IconSwapperGui.Commands.IconSwapper;
 using IconSwapperGui.Interfaces;
 using IconSwapperGui.Models;
 using IconSwapperGui.Services;
+using Microsoft.WindowsAPICodePack.Shell.Interop;
 
 namespace IconSwapperGui.ViewModels;
 
@@ -19,10 +21,9 @@ public class IconConverterViewModel : ViewModel, IIconViewModel
     private ObservableCollection<Icon> _icons;
     private ObservableCollection<Icon> _filteredIcons;
     private string _filterString;
-
-    private Icon? _selectedIcon;
     
     public bool CanDeletePngImages { get; set; }
+    public bool _canConvertImages;
 
     public string IconsFolderPath { get; set; }
 
@@ -46,11 +47,18 @@ public class IconConverterViewModel : ViewModel, IIconViewModel
             OnPropertyChanged(nameof(FilteredIcons));
         }
     }
-
-    public Icon? SelectedIcon
+    
+    public bool CanConvertImages
     {
-        get => _selectedIcon;
-        set => SetField(ref _selectedIcon, value);
+        get => _canConvertImages;
+        set
+        {
+            if (_canConvertImages != value)
+            {
+                _canConvertImages = value;
+                OnPropertyChanged(nameof(CanConvertImages));
+            }
+        }
     }
 
     public RelayCommand ConvertIconCommand { get; }
@@ -95,6 +103,7 @@ public class IconConverterViewModel : ViewModel, IIconViewModel
         }
 
         FilterIcons();
+        UpdateConvertButtonEnabledState();
     }
 
     public void FilterIcons()
@@ -121,6 +130,24 @@ public class IconConverterViewModel : ViewModel, IIconViewModel
             _filterString = value;
             OnPropertyChanged(nameof(FilterString));
             FilterIcons();
+        }
+    }
+
+    public void RefreshGui()
+    {
+        _icons.Clear();
+        PopulateIconsList(IconsFolderPath);
+    }
+
+    public void UpdateConvertButtonEnabledState()
+    {
+        if (_icons.Count == 0)
+        {
+            CanConvertImages = false;
+        }
+        else
+        {
+            CanConvertImages = true;
         }
     }
 }

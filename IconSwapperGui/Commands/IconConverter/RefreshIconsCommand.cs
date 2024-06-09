@@ -14,7 +14,6 @@ public class RefreshIconsCommand : RelayCommand
 
     public override void Execute(object? parameter)
     {
-        _viewModel.Icons.Clear();
-        _viewModel.PopulateIconsList(_viewModel.IconsFolderPath);
+        _viewModel.RefreshGui();
     }
 }

@@ -67,7 +67,7 @@
                                     <Image
                                         Source="{Binding TargetPath, Converter={StaticResource IconPathToImageConverter}}"
                                         Width="25" Height="25" />
-                                    <TextBlock Text="{Binding Name}" Margin="10,0,0,0" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding Name}" Margin="10,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="100" />
                                 </StackPanel>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
@@ -132,7 +132,7 @@
                                         Source="{Binding Path, Converter={StaticResource ApplicationPathToImageConverter}}"
                                         Width="60" Height="60" Stretch="Uniform" RenderOptions.BitmapScalingMode="Fant" />
                                     <TextBlock Text="{Binding Name}" TextAlignment="Center"
-                                               HorizontalAlignment="Center" />
+                                               HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="90" />
                                 </StackPanel>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
