@@ -27,7 +27,14 @@ namespace IconSwapperGui
         {
             var updaterExePath = Path.Combine(_currentAssemblyDirectory, "IconSwapperGui.Updater.exe");
 
-            Process.Start(updaterExePath, _currentVersion);
+            if (File.Exists(updaterExePath))
+            {
+                Process.Start(updaterExePath, _currentVersion);
+            }
+            else
+            {
+                MessageBox.Show("Updater could not be found. The application will start without updating.", "Updater Not Found", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
         }
     }
 }
