@@ -5,14 +5,15 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:IconSwapperGui"
         xmlns:userControls="clr-namespace:IconSwapperGui.UserControls"
+        Style="{StaticResource MaterialDesignWindow}"
         mc:Ignorable="d"
-        Title="Icon Swapper" Height="450" Width="800" ResizeMode="NoResize" WindowStartupLocation="CenterScreen" UseLayoutRounding="True">
-    <TabControl Margin="5">
-        <TabItem Header="Icon Swapper">
-            <userControls:IconSwapperUserControl />
-        </TabItem>
-        <TabItem Header="Icon Converter">
-            <userControls:IconConverterUserControl />
-        </TabItem>
-    </TabControl>
+        Title="Icon Swapper" Height="620" Width="1050" ResizeMode="NoResize" WindowStartupLocation="CenterScreen" UseLayoutRounding="True">
+        <TabControl Grid.Column="1" Margin="5">
+                <TabItem Header="Swapper">
+                        <userControls:IconSwapperUserControl />
+                </TabItem>
+                <TabItem Header="Converter">
+                        <userControls:IconConverterUserControl />
+                </TabItem>
+        </TabControl>
 </Window>
