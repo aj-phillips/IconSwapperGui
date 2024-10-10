@@ -17,6 +17,8 @@ namespace IconSwapperGui
         {
             InitializeComponent();
             
+            this.Title = $"Icon Swapper - v{_currentVersion}";
+            
             if (!Debugger.IsAttached)
             {
                 CheckForUpdates();

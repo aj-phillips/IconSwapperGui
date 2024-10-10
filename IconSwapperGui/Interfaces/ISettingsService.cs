@@ -1,15 +1,17 @@
 ﻿using IconSwapperGui.Models;
 
-namespace IconSwapperGui.Interfaces;
-
-public interface ISettingsService
+namespace IconSwapperGui.Interfaces
 {
-    public void CreateSettings();
-    public void SaveIconsLocation(string? iconsPath);
-    public void SaveConverterIconsLocation(string? iconsPath);
-    public void SaveApplicationsLocation(string? applicationsPath);
-    public string? GetApplicationsLocation();
-    public string? GetIconsLocation();
-    public string? GetConverterIconsLocation();
-    public Settings? GetSettings();
+    public interface ISettingsService
+    {
+        void SaveIconsLocation(string? iconsPath);
+        void SaveConverterIconsLocation(string? iconsPath);
+        void SaveApplicationsLocation(string? applicationsPath);
+        void SaveEnableDarkMode(bool? enableDarkMode);
+        Settings? GetSettings();
+
+        string? GetApplicationsLocation();
+        string? GetIconsLocation();
+        string? GetConverterIconsLocation();
+    }
 }

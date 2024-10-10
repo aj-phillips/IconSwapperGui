@@ -4,9 +4,9 @@ using IconSwapperGui.ViewModels;
 
 namespace IconSwapperGui.UserControls;
 
-public partial class IconSwapperUserControl : UserControl
+public partial class SwapperUserControl : UserControl
 {
-    public IconSwapperUserControl()
+    public SwapperUserControl()
     {
         InitializeComponent();
         
@@ -15,7 +15,7 @@ public partial class IconSwapperUserControl : UserControl
         var iconService = new IconService();
         var dialogService = new DialogService();
         var elevationService = new ElevationService();
-        var viewModel = new IconSwapperViewModel(applicationService, iconService, settingsService, dialogService,
+        var viewModel = new SwapperViewModel(applicationService, iconService, settingsService, dialogService,
             elevationService);
 
         DataContext = viewModel;

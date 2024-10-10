@@ -1,4 +1,4 @@
-<UserControl x:Class="IconSwapperGui.UserControls.IconConverterUserControl"
+<UserControl x:Class="IconSwapperGui.UserControls.ConverterUserControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -38,16 +38,7 @@
                                 Style="{StaticResource MaterialDesignRaisedDarkButton}">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                 <materialDesign:PackIcon Kind="FolderAccountOutline" Width="20" Height="20" Margin="-5,0,8,0" />
-                                <TextBlock Text="Select Directory" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
-    
-                        <Button x:Name="RefreshButton" HorizontalAlignment="Left"
-                                Style="{StaticResource MaterialDesignRaisedDarkButton}"
-                                Margin="0,5,0,0" Width="110" Height="30" Command="{Binding RefreshCommand}">
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <materialDesign:PackIcon Kind="Refresh" Width="20" Height="20" Margin="-5,0,8,0" />
-                                <TextBlock Text="Refresh" VerticalAlignment="Center" />
+                                <TextBlock Text="Select Directory" VerticalAlignment="Center" Foreground="White" />
                             </StackPanel>
                         </Button>
                     </StackPanel>
@@ -129,7 +120,8 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <CheckBox x:Name="DeletePngsButton" Content="Delete PNGs after conversion?"
-                          IsChecked="{Binding CanDeletePngImages}" Margin="10,0,0,0" />
+                          IsChecked="{Binding CanDeletePngImages}" Style="{StaticResource iOSToggleButton}" 
+                          Margin="10,0,0,0" VerticalAlignment="Center" />
                 <Button x:Name="ConvertButton" Grid.Column="1" Width="150"
                         Height="36"
                         Style="{StaticResource MaterialDesignRaisedDarkButton}"
@@ -140,7 +132,7 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <materialDesign:PackIcon Kind="FileImagePlus" Width="20" Height="20" Margin="-5,0,8,0" VerticalAlignment="Center" />
-                        <TextBlock Text="Convert All" VerticalAlignment="Center" Grid.Column="1" />
+                        <TextBlock Text="Convert All" VerticalAlignment="Center" Grid.Column="1" Foreground="White" />
                     </Grid>
                 </Button>
             </Grid>
