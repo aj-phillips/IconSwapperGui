@@ -3,101 +3,84 @@ using System.Text.Json;
 using IconSwapperGui.Interfaces;
 using IconSwapperGui.Models;
 
-namespace IconSwapperGui.Services;
-
-public class SettingsService : ISettingsService
+namespace IconSwapperGui.Services
 {
-    private readonly string _settingsFilePath;
-
-    public SettingsService()
+    public class SettingsService : ISettingsService
     {
-        _settingsFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "settings.json");
-        CreateSettings();
-    }
+        private readonly string _settingsFilePath;
 
-    public void CreateSettings()
-    {
-        if (File.Exists(_settingsFilePath)) return;
-
-        var settingsObj = new Settings
+        public SettingsService()
         {
-            IconLocation = "",
-            ConverterIconLocation = "",
-            ApplicationsLocation = ""
-        };
+            _settingsFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "settings.json");
+            EnsureSettingsFileExists();
+            UpdateSettingsWithDefaults();
+        }
 
-        var settingsData = JsonSerializer.Serialize(settingsObj);
+        private void EnsureSettingsFileExists()
+        {
+            if (File.Exists(_settingsFilePath)) return;
 
-        File.WriteAllText(_settingsFilePath, settingsData);
-    }
+            var settings = new Settings
+            {
+                IconLocation = "",
+                ConverterIconLocation = "",
+                ApplicationsLocation = "",
+                EnableDarkMode = false
+            };
 
-    public void SaveIconsLocation(string? iconsPath)
-    {
-        var settingsObj = GetSettings();
+            SaveSettings(settings);
+        }
 
-        if (settingsObj == null) return;
+        public Settings? GetSettings()
+        {
+            if (!File.Exists(_settingsFilePath)) return null;
 
-        settingsObj.IconLocation = iconsPath;
+            var settingsData = File.ReadAllText(_settingsFilePath);
+            return JsonSerializer.Deserialize<Settings>(settingsData);
+        }
+        
+        private void SaveSettings(Settings settings)
+        {
+            var settingsData = JsonSerializer.Serialize(settings);
+            File.WriteAllText(_settingsFilePath, settingsData);
+        }
 
-        var updatedSettingsData = JsonSerializer.Serialize(settingsObj);
+        private void UpdateSettingsWithDefaults()
+        {
+            var settings = GetSettings() ?? new Settings();
+            
+            settings.IconLocation ??= "";
+            settings.ConverterIconLocation ??= "";
+            settings.ApplicationsLocation ??= "";
+            settings.EnableDarkMode ??= false;
 
-        File.WriteAllText(_settingsFilePath, updatedSettingsData);
-    }
+            SaveSettings(settings);
+        }
 
-    public void SaveConverterIconsLocation(string? iconsPath)
-    {
-        var settingsObj = GetSettings();
+        private void UpdateSettingsProperty<T>(Action<Settings, T> updateAction, T value)
+        {
+            var settings = GetSettings() ?? new Settings();
 
-        if (settingsObj == null) return;
+            updateAction(settings, value);
+            SaveSettings(settings);
+        }
 
-        settingsObj.ConverterIconLocation = iconsPath;
+        public void SaveIconsLocation(string? iconsPath) =>
+            UpdateSettingsProperty((settings, value) => settings.IconLocation = value, iconsPath);
 
-        var updatedSettingsData = JsonSerializer.Serialize(settingsObj);
+        public void SaveConverterIconsLocation(string? iconsPath) =>
+            UpdateSettingsProperty((settings, value) => settings.ConverterIconLocation = value, iconsPath);
 
-        File.WriteAllText(_settingsFilePath, updatedSettingsData);
-    }
+        public void SaveApplicationsLocation(string? applicationsPath) =>
+            UpdateSettingsProperty((settings, value) => settings.ApplicationsLocation = value, applicationsPath);
 
-    public void SaveApplicationsLocation(string? applicationsPath)
-    {
-        var settingsObj = GetSettings();
+        public void SaveEnableDarkMode(bool? enableDarkMode) =>
+            UpdateSettingsProperty((settings, value) => settings.EnableDarkMode = value, enableDarkMode);
 
-        if (settingsObj == null) return;
+        public string? GetApplicationsLocation() => GetSettings()?.ApplicationsLocation;
 
-        settingsObj.ApplicationsLocation = applicationsPath;
+        public string? GetIconsLocation() => GetSettings()?.IconLocation;
 
-        var updatedSettingsData = JsonSerializer.Serialize(settingsObj);
-
-        File.WriteAllText(_settingsFilePath, updatedSettingsData);
-    }
-
-    public string? GetApplicationsLocation()
-    {
-        var settingsObj = GetSettings();
-
-        return settingsObj?.ApplicationsLocation;
-    }
-
-    public string? GetIconsLocation()
-    {
-        var settingsObj = GetSettings();
-
-        return settingsObj?.IconLocation;
-    }
-    
-    public string? GetConverterIconsLocation()
-    {
-        var settingsObj = GetSettings();
-
-        return settingsObj?.ConverterIconLocation;
-    }
-
-    public Settings? GetSettings()
-    {
-        if (!File.Exists(_settingsFilePath)) return null;
-
-        var settingsData = File.ReadAllText(_settingsFilePath);
-        var settingsObj = JsonSerializer.Deserialize<Settings>(settingsData);
-
-        return settingsObj;
+        public string? GetConverterIconsLocation() => GetSettings()?.ConverterIconLocation;
     }
 }

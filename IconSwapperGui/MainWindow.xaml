@@ -10,10 +10,13 @@
         Title="Icon Swapper" Height="620" Width="1050" ResizeMode="NoResize" WindowStartupLocation="CenterScreen" UseLayoutRounding="True">
         <TabControl Grid.Column="1" Margin="5">
                 <TabItem Header="Swapper">
-                        <userControls:IconSwapperUserControl />
+                        <userControls:SwapperUserControl />
                 </TabItem>
                 <TabItem Header="Converter">
-                        <userControls:IconConverterUserControl />
+                        <userControls:ConverterUserControl />
+                </TabItem>
+                <TabItem Header="Settings">
+                        <userControls:SettingsUserControl />
                 </TabItem>
         </TabControl>
 </Window>

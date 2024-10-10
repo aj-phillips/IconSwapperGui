@@ -2,7 +2,7 @@
 using IconSwapperGui.ViewModels;
 using Microsoft.Win32;
 
-namespace IconSwapperGui.Commands.IconSwapper;
+namespace IconSwapperGui.Commands.Swapper;
 
 public class ChooseIconFolderCommand<TViewModel> : RelayCommand where TViewModel : IIconViewModel
 {
@@ -17,12 +17,12 @@ public class ChooseIconFolderCommand<TViewModel> : RelayCommand where TViewModel
 
     public override void Execute(object? parameter)
     {
-        if (_viewModel is IconSwapperViewModel iconSwapperViewModel)
+        if (_viewModel is SwapperViewModel iconSwapperViewModel)
         {
             ExecuteCommand(iconSwapperViewModel);
             iconSwapperViewModel.SettingsService.SaveIconsLocation(iconSwapperViewModel.IconsFolderPath);
         }
-        else if (_viewModel is IconConverterViewModel iconConverterViewModel)
+        else if (_viewModel is ConverterViewModel iconConverterViewModel)
         {
             ExecuteCommand(iconConverterViewModel);
             iconConverterViewModel.SettingsService.SaveConverterIconsLocation(iconConverterViewModel.IconsFolderPath);

@@ -1,12 +1,12 @@
 ﻿using System.IO;
 using IconSwapperGui.ViewModels;
 
-namespace IconSwapperGui.Commands.IconSwapper;
+namespace IconSwapperGui.Commands.Swapper;
 
 public class SwapCommand : RelayCommand
 {
-    private readonly IconSwapperViewModel _viewModel;
-    public SwapCommand(IconSwapperViewModel viewModel, Action<object> execute, Func<object, bool>? canExecute = null) 
+    private readonly SwapperViewModel _viewModel;
+    public SwapCommand(SwapperViewModel viewModel, Action<object> execute, Func<object, bool>? canExecute = null) 
         : base(execute, canExecute)
     {
         _viewModel = viewModel;

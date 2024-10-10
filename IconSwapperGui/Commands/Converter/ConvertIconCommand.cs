@@ -2,13 +2,13 @@ using System.IO;
 using IconSwapperGui.ViewModels;
 using ImageMagick;
 
-namespace IconSwapperGui.Commands.IconConverter;
+namespace IconSwapperGui.Commands.Converter;
 
 public class ConvertIconCommand : RelayCommand
 {
-    private readonly IconConverterViewModel _viewModel;
+    private readonly ConverterViewModel _viewModel;
 
-    public ConvertIconCommand(IconConverterViewModel viewModel, Action<object> execute,
+    public ConvertIconCommand(ConverterViewModel viewModel, Action<object> execute,
         Func<object, bool>? canExecute = null) : base(execute, canExecute)
     {
         _viewModel = viewModel;
