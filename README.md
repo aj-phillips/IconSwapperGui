@@ -2,14 +2,36 @@
 Welcome to IconSwapperGui, your all-in-one solution for changing shortcut icons on your Windows desktop! This application is designed to make the process of customizing your desktop icons easy and efficient, eliminating the need to navigate through the properties window for each shortcut.
 
 ## Features
-### Main Application
-- Change Icons of .lnk Shortcuts: Easily update the icons of your traditional Windows shortcut files (.lnk) with just a few clicks.
-- Change Icons of Steam .url Shortcuts: Seamlessly modify the icons of your Steam game shortcuts (.url), giving your desktop a customized look.
-- Search Functionality: Have a specific icon in mind for your chosen shortcut? Use the search bar and easily filter through your icons!
-- Refresh: Easily reload the contents of your icons folder if you added extra ones while the application is open.
+### Swapper
+- Directory Selector
+  - Have a dedicated folder for all your icons? We got you covered!
+- Change Icons of Shortcuts
+  - Currently supports .url and .lnk shortcut types.
+- Search Functionality
+  - Have a specific icon in mind for your chosen shortcut? Use the search bar and easily filter through your icons!
+- Auto-Refresh
+  - Automatically refresh the contents of your icons folder if you added extra ones while the application is open.
+
+### Converter
+- Directory Selector
+  - Have a folder of PNGs that you want to use as icons? Have no fear!
+- Search Functionality
+  - Have a specific PNG you'd like to convert? Use the search bar and easily filter through them!
+- Conversion to ICO
+  - Currently, all PNGs in the selected icon folder are converted at once.
+- Delete PNGs After Conversion
+  - Don't want your PNGs after conversion has finished? Tick the box and enjoy!
+ 
+### Settings
+- Dark Mode
+  - Are you Dracula and afraid of the light? Be free in the realm of darkness!
+- Support Buttons
+  - There are currently two buttons, one that will take you to this GitHub page and the other will take you to the issues page.
 
 ### Updater
-- Automatic Updates: IconSwapperGui includes an integrated updater that ensures you always have the latest features and improvements. The updater checks for new releases on our GitHub page and installs updates automatically.
+- Automatic Updates
+  - IconSwapperGui includes an integrated updater that ensures you always have the latest features and improvements.
+  - The updater checks for new releases on our GitHub page and installs updates automatically.
 
 ## Getting Started
 - Download the ZIP File: Get the IconSwapperGui ZIP from the releases page.
