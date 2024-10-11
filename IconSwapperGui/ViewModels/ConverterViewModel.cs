@@ -1,26 +1,28 @@
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using IconSwapperGui.Commands;
 using IconSwapperGui.Commands.Converter;
 using IconSwapperGui.Commands.Swapper;
 using IconSwapperGui.Interfaces;
 using IconSwapperGui.Models;
+using IconSwapperGui.Services;
 
 namespace IconSwapperGui.ViewModels
 {
     public class ConverterViewModel : ViewModel, IIconViewModel, INotifyPropertyChanged, IDisposable
     {
         public ISettingsService SettingsService { get; set; }
-        private readonly IIconService _iconService;
+        private readonly IIconManagementService _iconManagementService;
         public IDialogService DialogService { get; set; }
+        private IFileSystemWatcherService _fsWatcherService;
 
         private ObservableCollection<Icon> _icons;
         private ObservableCollection<Icon> _filteredIcons;
         private string _filterString;
-        private FileSystemWatcher _iconsDirectoryWatcher;
-        
         private bool _canConvertImages;
         private string _iconsFolderPath;
 
@@ -60,7 +62,7 @@ namespace IconSwapperGui.ViewModels
                 OnPropertyChanged();
             }
         }
-        
+
         public bool CanConvertImages
         {
             get => _canConvertImages;
@@ -70,15 +72,19 @@ namespace IconSwapperGui.ViewModels
         public RelayCommand ConvertIconCommand { get; }
         public RelayCommand ChooseIconFolderCommand { get; }
 
-        public ConverterViewModel(IIconService iconService, ISettingsService settingsService,
-            IDialogService dialogService)
+        public ConverterViewModel(IIconManagementService iconManagementManagementService, ISettingsService settingsService,
+            IDialogService dialogService,
+            Func<string, Action<object, FileSystemEventArgs>, Action<object, RenamedEventArgs>,
+                IFileSystemWatcherService> fileSystemWatcherServiceFactory)
         {
-            Icons = new ObservableCollection<Icon>();
-            FilteredIcons = new ObservableCollection<Icon>();
-
-            _iconService = iconService;
+            _iconManagementService = iconManagementManagementService;
             SettingsService = settingsService;
             DialogService = dialogService;
+            _fsWatcherService = fileSystemWatcherServiceFactory(SettingsService.GetConverterIconsLocation(),
+                OnIconsDirectoryChanged, OnIconsDirectoryRenamed);
+
+            Icons = new ObservableCollection<Icon>();
+            FilteredIcons = new ObservableCollection<Icon>();
 
             ConvertIconCommand = new ConvertIconCommand(this, null!, x => true);
             ChooseIconFolderCommand = new ChooseIconFolderCommand<ConverterViewModel>(this, null!, x => true);
@@ -90,15 +96,10 @@ namespace IconSwapperGui.ViewModels
         {
             if (string.IsNullOrEmpty(IconsFolderPath)) return;
 
-            _iconsDirectoryWatcher?.Dispose();
-            _iconsDirectoryWatcher = new FileSystemWatcher(IconsFolderPath)
-            {
-                NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName
-            };
-            _iconsDirectoryWatcher.Created += OnIconsDirectoryChanged;
-            _iconsDirectoryWatcher.Deleted += OnIconsDirectoryChanged;
-            _iconsDirectoryWatcher.Renamed += OnIconsDirectoryRenamed;
-            _iconsDirectoryWatcher.EnableRaisingEvents = true;
+            _fsWatcherService?.Dispose();
+            _fsWatcherService =
+                new FileSystemWatcherService(IconsFolderPath, OnIconsDirectoryChanged, OnIconsDirectoryRenamed);
+            _fsWatcherService.StartWatching();
         }
 
         private void OnIconsDirectoryChanged(object sender, FileSystemEventArgs e)
@@ -114,7 +115,7 @@ namespace IconSwapperGui.ViewModels
         private void LoadPreviousIcons()
         {
             IconsFolderPath = SettingsService.GetConverterIconsLocation();
-            
+
             if (!string.IsNullOrEmpty(IconsFolderPath))
             {
                 PopulateIconsList(IconsFolderPath);
@@ -124,37 +125,14 @@ namespace IconSwapperGui.ViewModels
 
         public void PopulateIconsList(string folderPath)
         {
-            if (!string.IsNullOrEmpty(folderPath))
-            {
-                var icons = _iconService.GetPngIcons(folderPath);
-                
-                Icons.Clear();
-                
-                foreach (var icon in icons)
-                {
-                    if (Icons.Any(x => x.Path == icon.Path)) continue;
-                    Icons.Add(icon);
-                }
-
-                FilterIcons();
-            }
-
+            Icons = _iconManagementService.GetIcons(folderPath);
+            FilterIcons();
             UpdateConvertButtonEnabledState();
         }
 
         public void FilterIcons()
         {
-            if (string.IsNullOrEmpty(_filterString))
-            {
-                FilteredIcons = new ObservableCollection<Icon>(Icons);
-            }
-            else
-            {
-                var filtered = Icons
-                    .Where(icon => icon.Name.Contains(_filterString, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-                FilteredIcons = new ObservableCollection<Icon>(filtered);
-            }
+            FilteredIcons = _iconManagementService.FilterIcons(Icons, _filterString);
         }
 
         public string FilterString
@@ -171,7 +149,7 @@ namespace IconSwapperGui.ViewModels
 
         public void RefreshGui()
         {
-            _icons.Clear();
+            Icons.Clear();
             PopulateIconsList(IconsFolderPath);
         }
 
@@ -197,7 +175,7 @@ namespace IconSwapperGui.ViewModels
 
         public void Dispose()
         {
-            _iconsDirectoryWatcher?.Dispose();
+            _fsWatcherService?.Dispose();
         }
     }
 }

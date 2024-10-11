@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Text.Json;
 using IconSwapperGui.Interfaces;
 using IconSwapperGui.Models;
@@ -12,16 +13,25 @@ namespace IconSwapperGui.Services
 
         public SettingsService()
         {
-            _settingsFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "settings.json");
+            _settingsFilePath = GetSettingsFilePath();
             EnsureSettingsFileExists();
             UpdateSettingsWithDefaults();
+        }
+
+        private static string GetSettingsFilePath()
+        {
+            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "settings.json");
         }
 
         private void EnsureSettingsFileExists()
         {
             if (File.Exists(_settingsFilePath)) return;
+            SaveSettings(GetDefaultSettings());
+        }
 
-            var defaultSettings = new Settings
+        private Settings GetDefaultSettings()
+        {
+            return new Settings
             {
                 IconLocation = "",
                 ConverterIconLocation = "",
@@ -29,37 +39,34 @@ namespace IconSwapperGui.Services
                 EnableDarkMode = false,
                 EnableLaunchAtStartup = false
             };
-
-            SaveSettings(defaultSettings);
         }
 
         public Settings? GetSettings()
         {
             if (!File.Exists(_settingsFilePath)) return null;
-
             var settingsData = File.ReadAllText(_settingsFilePath);
-            return JsonSerializer.Deserialize<Settings>(settingsData);
+            return DeserializeSettings(settingsData);
         }
-        
-        public T GetSettingsFieldValue<T>(string fieldName)
-        {
-            var settings = JObject.Parse(File.ReadAllText(_settingsFilePath));
-            if (settings.TryGetValue(fieldName, out JToken fieldValue))
-            {
-                return fieldValue.ToObject<T>();
-            }
 
-            return default;
+        public T? GetSettingsFieldValue<T>(string fieldName)
+        {
+            var settings = ReadJsonFile();
+            return settings.TryGetValue(fieldName, out var fieldValue) ? fieldValue.ToObject<T>() : default;
+        }
+
+        private JObject ReadJsonFile()
+        {
+            var jsonData = File.ReadAllText(_settingsFilePath);
+            return JObject.Parse(jsonData);
         }
 
         private void UpdateSettingsProperty<T>(Action<Settings, T> updateAction, T value)
         {
             var settings = GetSettings() ?? new Settings();
-
             updateAction(settings, value);
             SaveSettings(settings);
         }
-        
+
         private void UpdateSettingsWithDefaults()
         {
             var settings = GetSettings() ?? new Settings();
@@ -72,11 +79,21 @@ namespace IconSwapperGui.Services
 
             SaveSettings(settings);
         }
-        
-        private void SaveSettings(Settings settings)
+
+        public void SaveSettings(Settings settings)
         {
-            var settingsData = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
+            var settingsData = SerializeSettings(settings);
             File.WriteAllText(_settingsFilePath, settingsData);
+        }
+
+        private string SerializeSettings(Settings settings)
+        {
+            return JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
+        }
+
+        private Settings? DeserializeSettings(string settingsData)
+        {
+            return JsonSerializer.Deserialize<Settings>(settingsData);
         }
 
         public void SaveIconsLocation(string? iconsPath) =>

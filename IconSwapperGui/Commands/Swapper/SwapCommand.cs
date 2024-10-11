@@ -1,84 +1,59 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
+using IconSwapperGui.Helpers;
 using IconSwapperGui.ViewModels;
 
-namespace IconSwapperGui.Commands.Swapper;
-
-public class SwapCommand : RelayCommand
+namespace IconSwapperGui.Commands.Swapper
 {
-    private readonly SwapperViewModel _viewModel;
-    public SwapCommand(SwapperViewModel viewModel, Action<object> execute, Func<object, bool>? canExecute = null) 
-        : base(execute, canExecute)
+    public class SwapCommand : RelayCommand
     {
-        _viewModel = viewModel;
-    }
+        private readonly SwapperViewModel _viewModel;
+        private readonly LnkIconSwapper _lnkIconSwapper;
+        private readonly UrlIconSwapper _urlIconSwapper;
 
-    public override void Execute(object? parameter)
-    {
-        if (_viewModel.SelectedApplication == null || _viewModel.SelectedIcon == null)
+        public SwapCommand(SwapperViewModel viewModel, Action<object> execute, Func<object, bool>? canExecute = null)
+            : base(execute, canExecute)
         {
-            _viewModel.DialogService.ShowWarning("Please select an application and an icon to swap.", "No Application or Icon Selected");
-            return;
+            _viewModel = viewModel;
+            _lnkIconSwapper = new LnkIconSwapper(viewModel.DialogService, viewModel.ElevationService);
+            _urlIconSwapper = new UrlIconSwapper();
         }
 
-        try
+        public override void Execute(object? parameter)
         {
-            var extension = Path.GetExtension(_viewModel.SelectedApplication.Path).ToLower();
-
-            switch (extension)
+            if (_viewModel.SelectedApplication == null || _viewModel.SelectedIcon == null)
             {
-                case ".lnk":
-                    SwapLinkFileIcon();
-                    break;
-                case ".url":
-                    SwapUrlFileIcon();
-                    break;
+                _viewModel.DialogService.ShowWarning("Please select an application and an icon to swap.",
+                    "No Application or Icon Selected");
+                return;
             }
 
-            _viewModel.DialogService.ShowInformation($"The icon for {_viewModel.SelectedApplication.Name} has been successfully swapped.", "Icon Swapped");
-            _viewModel.ResetGui();
-        }
-        catch (Exception ex)
-        {
-            _viewModel.DialogService.ShowError($"An error occurred while swapping the icon for {_viewModel.SelectedApplication.Name}: {ex.Message}",
-                "Error Swapping Icon");
-        }
-    }
-
-    private void SwapLinkFileIcon()
-    {
-        const string publicDesktopPath = "C:\\Users\\Public\\Desktop";
-
-        if (Path.GetDirectoryName(_viewModel.SelectedApplication.Path).Equals(publicDesktopPath) && !_viewModel.ElevationService.IsRunningAsAdministrator())
-        {
-            _viewModel.DialogService.ShowInformation(
-                $"To change the icon of {_viewModel.SelectedApplication.Name}, the application needs to be restarted with administrator permissions.\n\nYou will need to attempt the swap again afterwards",
-                "Permissions Required To Swap Icon");
-
-            _viewModel.ElevationService.ElevateApplicationViaUac();
-        }
-
-        var wshShell = (IWshRuntimeLibrary.WshShell)Activator.CreateInstance(Type.GetTypeFromProgID("WScript.Shell"));
-
-        var shortcut =
-            (IWshRuntimeLibrary.IWshShortcut)wshShell.CreateShortcut(_viewModel.SelectedApplication.Path);
-
-        shortcut.IconLocation = $"{_viewModel.SelectedIcon.Path},0";
-
-        shortcut.Save();
-    }
-
-    private void SwapUrlFileIcon()
-    {
-        var urlFileContent = File.ReadAllLines(_viewModel.SelectedApplication.Path);
-
-        for (var i = 0; i < urlFileContent.Length; i++)
-        {
-            if (urlFileContent[i].StartsWith("IconFile", StringComparison.CurrentCultureIgnoreCase))
+            try
             {
-                urlFileContent[i] = "IconFile=" + _viewModel.SelectedIcon.Path;
+                var extension = Path.GetExtension(_viewModel.SelectedApplication.Path).ToLower();
+
+                switch (extension)
+                {
+                    case ".lnk":
+                        _lnkIconSwapper.Swap(_viewModel.SelectedApplication.Path, _viewModel.SelectedIcon.Path,
+                            _viewModel.SelectedApplication.Name);
+                        break;
+                    case ".url":
+                        _urlIconSwapper.Swap(_viewModel.SelectedApplication.Path, _viewModel.SelectedIcon.Path);
+                        break;
+                }
+
+                _viewModel.DialogService.ShowInformation(
+                    $"The icon for {_viewModel.SelectedApplication.Name} has been successfully swapped.",
+                    "Icon Swapped");
+                _viewModel.ResetGui();
+            }
+            catch (Exception ex)
+            {
+                _viewModel.DialogService.ShowError(
+                    $"An error occurred while swapping the icon for {_viewModel.SelectedApplication.Name}: {ex.Message}",
+                    "Error Swapping Icon");
             }
         }
-
-        File.WriteAllLines(_viewModel.SelectedApplication.Path, urlFileContent);
     }
 }

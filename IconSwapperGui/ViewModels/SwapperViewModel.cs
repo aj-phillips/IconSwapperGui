@@ -13,7 +13,7 @@ namespace IconSwapperGui.ViewModels
     public class SwapperViewModel : ViewModel, IIconViewModel, INotifyPropertyChanged, IDisposable
     {
         private readonly IApplicationService _applicationService;
-        private readonly IIconService _iconService;
+        private readonly IIconManagementService _iconManagementService;
         public ISettingsService SettingsService { get; set; }
         public readonly IDialogService DialogService;
         public readonly IElevationService ElevationService;
@@ -114,7 +114,7 @@ namespace IconSwapperGui.ViewModels
             }
         }
 
-        public SwapperViewModel(IApplicationService applicationService, IIconService iconService,
+        public SwapperViewModel(IApplicationService applicationService, IIconManagementService iconManagementService,
             ISettingsService settingsService, IDialogService dialogService, IElevationService elevationService)
         {
             Applications = new ObservableCollection<Application>();
@@ -122,7 +122,7 @@ namespace IconSwapperGui.ViewModels
             FilteredIcons = new ObservableCollection<Icon>();
 
             _applicationService = applicationService;
-            _iconService = iconService;
+            _iconManagementService = iconManagementService;
             SettingsService = settingsService;
             DialogService = dialogService;
             ElevationService = elevationService;
@@ -195,8 +195,10 @@ namespace IconSwapperGui.ViewModels
 
         public void PopulateIconsList(string folderPath)
         {
+            var supportedExtensions = new List<string> {".ico"};
+            
             Icons.Clear();
-            var icons = _iconService.GetIcons(folderPath); // Make sure this line calls the correct method for Swapper
+            var icons = _iconManagementService.GetIcons(folderPath, supportedExtensions);
 
             foreach (var icon in icons)
             {
