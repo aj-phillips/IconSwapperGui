@@ -25,6 +25,8 @@ Welcome to IconSwapperGui, your all-in-one solution for changing shortcut icons 
 ### Settings
 - Dark Mode
   - Are you Dracula and afraid of the light? Be free in the realm of darkness!
+- Launch At Startup
+  - Getting tired of launching the application after powering on your computer? Have no fear, launch at startup is here!
 - Support Buttons
   - There are currently two buttons, one that will take you to this GitHub page and the other will take you to the issues page.
 
