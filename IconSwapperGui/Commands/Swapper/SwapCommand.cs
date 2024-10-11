@@ -1,57 +1,58 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using IconSwapperGui.Helpers;
 using IconSwapperGui.ViewModels;
 
-namespace IconSwapperGui.Commands.Swapper;
-
-public class SwapCommand : RelayCommand
+namespace IconSwapperGui.Commands.Swapper
 {
-    private readonly LnkIconSwapper _lnkIconSwapper;
-    private readonly UrlIconSwapper _urlIconSwapper;
-    private readonly SwapperViewModel _viewModel;
-
-    public SwapCommand(SwapperViewModel viewModel, Action<object> execute, Func<object, bool>? canExecute = null)
-        : base(execute, canExecute)
+    public class SwapCommand : RelayCommand
     {
-        _viewModel = viewModel;
-        _lnkIconSwapper = new LnkIconSwapper(viewModel.DialogService, viewModel.ElevationService);
-        _urlIconSwapper = new UrlIconSwapper();
-    }
+        private readonly LnkIconSwapper _lnkIconSwapper;
+        private readonly UrlIconSwapper _urlIconSwapper;
+        private readonly SwapperViewModel _viewModel;
 
-    public override void Execute(object? parameter)
-    {
-        if (_viewModel.SelectedApplication == null || _viewModel.SelectedIcon == null)
+        public SwapCommand(SwapperViewModel viewModel, Action<object> execute, Func<object, bool>? canExecute = null)
+            : base(execute, canExecute)
         {
-            _viewModel.DialogService.ShowWarning("Please select an application and an icon to swap.",
-                "No Application or Icon Selected");
-            return;
+            _viewModel = viewModel;
+            _lnkIconSwapper = new LnkIconSwapper(viewModel.DialogService, viewModel.ElevationService);
+            _urlIconSwapper = new UrlIconSwapper();
         }
 
-        try
+        public override async void Execute(object? parameter)
         {
-            var extension = Path.GetExtension(_viewModel.SelectedApplication.Path).ToLower();
-
-            switch (extension)
+            if (_viewModel.SelectedApplication == null || _viewModel.SelectedIcon == null)
             {
-                case ".lnk":
-                    _lnkIconSwapper.Swap(_viewModel.SelectedApplication.Path, _viewModel.SelectedIcon.Path,
-                        _viewModel.SelectedApplication.Name);
-                    break;
-                case ".url":
-                    _urlIconSwapper.Swap(_viewModel.SelectedApplication.Path, _viewModel.SelectedIcon.Path);
-                    break;
+                _viewModel.DialogService.ShowWarning("Please select an application and an icon to swap.",
+                    "No Application or Icon Selected");
+                return;
             }
 
-            _viewModel.DialogService.ShowInformation(
-                $"The icon for {_viewModel.SelectedApplication.Name} has been successfully swapped.",
-                "Icon Swapped");
-            _viewModel.ResetGui();
-        }
-        catch (Exception ex)
-        {
-            _viewModel.DialogService.ShowError(
-                $"An error occurred while swapping the icon for {_viewModel.SelectedApplication.Name}: {ex.Message}",
-                "Error Swapping Icon");
+            try
+            {
+                var extension = Path.GetExtension(_viewModel.SelectedApplication.Path).ToLower();
+
+                switch (extension)
+                {
+                    case ".lnk":
+                        _lnkIconSwapper.Swap(_viewModel.SelectedApplication.Path, _viewModel.SelectedIcon.Path,
+                            _viewModel.SelectedApplication.Name);
+                        break;
+                    case ".url":
+                        _urlIconSwapper.Swap(_viewModel.SelectedApplication.Path, _viewModel.SelectedIcon.Path);
+                        break;
+                }
+                
+                await _viewModel.ShowSuccessTick();
+                
+               _viewModel.ResetGui();
+            }
+            catch (Exception ex)
+            {
+                _viewModel.DialogService.ShowError(
+                    $"An error occurred while swapping the icon for {_viewModel.SelectedApplication.Name}: {ex.Message}",
+                    "Error Swapping Icon");
+            }
         }
     }
 }

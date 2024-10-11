@@ -6,32 +6,32 @@ using IconSwapperGui.Commands;
 using IconSwapperGui.Commands.Swapper;
 using IconSwapperGui.Interfaces;
 using IconSwapperGui.Models;
+using IconSwapperGui.Services;
 using Application = IconSwapperGui.Models.Application;
 
 namespace IconSwapperGui.ViewModels;
 
 public class SwapperViewModel : ViewModel, IIconViewModel, INotifyPropertyChanged, IDisposable
 {
-    private readonly IApplicationService _applicationService;
-    private readonly IIconManagementService _iconManagementService;
-    public readonly IDialogService DialogService;
-    public readonly IElevationService ElevationService;
-
     private ObservableCollection<Application> _applications;
-
     private string _applicationsFolderPath;
-
+    private bool _isTickVisible;
     private bool _canSwapIcons;
     private ObservableCollection<Icon> _filteredIcons;
     private string _filterString;
     private ObservableCollection<Icon> _icons;
-    private FileSystemWatcher _iconsDirectoryWatcher;
+
+    private IFileSystemWatcherService _iconsDirectoryWatcherService;
+    private IFileSystemWatcherService _applicationsDirectoryWatcherService;
 
     private string _iconsFolderPath;
-
     private Application? _selectedApplication;
-
     private Icon? _selectedIcon;
+
+    private readonly IApplicationService _applicationService;
+    private readonly IIconManagementService _iconManagementService;
+    public readonly IDialogService DialogService;
+    public readonly IElevationService ElevationService;
 
     public SwapperViewModel(IApplicationService applicationService, IIconManagementService iconManagementService,
         ISettingsService settingsService, IDialogService dialogService, IElevationService elevationService)
@@ -94,6 +94,21 @@ public class SwapperViewModel : ViewModel, IIconViewModel, INotifyPropertyChange
         set => SetField(ref _canSwapIcons, value);
     }
 
+    public bool IsTickVisible
+    {
+        get => _isTickVisible;
+        set => SetField(ref _isTickVisible, value);
+    }
+
+    public async Task ShowSuccessTick()
+    {
+        IsTickVisible = true;
+        await Task.Delay(750);
+        IsTickVisible = false;
+    }
+
+    public event PropertyChangedEventHandler PropertyChanged;
+    
     public RelayCommand ChooseApplicationShortcutFolderCommand { get; }
     public RelayCommand ChooseIconFolderCommand { get; }
     public RelayCommand SwapCommand { get; }
@@ -107,6 +122,7 @@ public class SwapperViewModel : ViewModel, IIconViewModel, INotifyPropertyChange
             {
                 _applicationsFolderPath = value;
                 OnPropertyChanged();
+                SetupApplicationsDirectoryWatcher();
             }
         }
     }
@@ -125,7 +141,8 @@ public class SwapperViewModel : ViewModel, IIconViewModel, INotifyPropertyChange
 
     public void Dispose()
     {
-        _iconsDirectoryWatcher?.Dispose();
+        _iconsDirectoryWatcherService?.Dispose();
+        _applicationsDirectoryWatcherService?.Dispose();
     }
 
     public ISettingsService SettingsService { get; set; }
@@ -171,21 +188,22 @@ public class SwapperViewModel : ViewModel, IIconViewModel, INotifyPropertyChange
         FilterIcons();
     }
 
-    public event PropertyChangedEventHandler PropertyChanged;
-
     private void SetupIconsDirectoryWatcher()
     {
-        if (string.IsNullOrEmpty(IconsFolderPath)) return;
+        _iconsDirectoryWatcherService?.Dispose();
 
-        _iconsDirectoryWatcher?.Dispose();
-        _iconsDirectoryWatcher = new FileSystemWatcher(IconsFolderPath)
-        {
-            NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName
-        };
-        _iconsDirectoryWatcher.Created += OnIconsDirectoryChanged;
-        _iconsDirectoryWatcher.Deleted += OnIconsDirectoryChanged;
-        _iconsDirectoryWatcher.Renamed += OnIconsDirectoryRenamed;
-        _iconsDirectoryWatcher.EnableRaisingEvents = true;
+        _iconsDirectoryWatcherService = new FileSystemWatcherService(IconsFolderPath,
+            OnIconsDirectoryChanged, OnIconsDirectoryRenamed);
+        _iconsDirectoryWatcherService.StartWatching();
+    }
+
+    private void SetupApplicationsDirectoryWatcher()
+    {
+        _applicationsDirectoryWatcherService?.Dispose();
+
+        _applicationsDirectoryWatcherService = new FileSystemWatcherService(ApplicationsFolderPath,
+            OnApplicationsDirectoryChanged, OnApplicationsDirectoryRenamed);
+        _applicationsDirectoryWatcherService.StartWatching();
     }
 
     private void OnIconsDirectoryChanged(object sender, FileSystemEventArgs e)
@@ -198,11 +216,25 @@ public class SwapperViewModel : ViewModel, IIconViewModel, INotifyPropertyChange
         PopulateIconsList(IconsFolderPath);
     }
 
+    private void OnApplicationsDirectoryChanged(object sender, FileSystemEventArgs e)
+    {
+        PopulateApplicationsList(ApplicationsFolderPath);
+    }
+
+    private void OnApplicationsDirectoryRenamed(object sender, RenamedEventArgs e)
+    {
+        PopulateApplicationsList(ApplicationsFolderPath);
+    }
+
     private void LoadPreviousApplications()
     {
         ApplicationsFolderPath = SettingsService.GetApplicationsLocation();
 
-        if (!string.IsNullOrEmpty(ApplicationsFolderPath)) PopulateApplicationsList(ApplicationsFolderPath);
+        if (!string.IsNullOrEmpty(ApplicationsFolderPath))
+        {
+            PopulateApplicationsList(ApplicationsFolderPath);
+            SetupApplicationsDirectoryWatcher();
+        }
     }
 
     private void LoadPreviousIcons()
@@ -229,11 +261,15 @@ public class SwapperViewModel : ViewModel, IIconViewModel, INotifyPropertyChange
 
     public void ResetGui()
     {
-        SelectedApplication = null;
-        SelectedIcon = null;
-        FilterIcons();
+        var tempSelectedApplicationPath = SelectedApplication?.Path;
+        
         Applications.Clear();
         PopulateApplicationsList(ApplicationsFolderPath);
+        
+        if (tempSelectedApplicationPath != null)
+        {
+            SelectedApplication = Applications.FirstOrDefault(app => app.Path == tempSelectedApplicationPath);
+        }
     }
 
     public void FilterIcons()
