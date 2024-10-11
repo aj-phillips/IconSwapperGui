@@ -10,16 +10,16 @@ Welcome to IconSwapperGui, your all-in-one solution for changing shortcut icons 
 - Search Functionality
   - Have a specific icon in mind for your chosen shortcut? Use the search bar and easily filter through your icons!
 - Auto-Refresh
-  - Automatically refresh the contents of your icons folder if you added extra ones while the application is open.
+  - Automatically refresh the contents of your applications list and icons folder if you added extra ones while the application is open.
 
 ### Converter
 - Directory Selector
-  - Have a folder of PNGs that you want to use as icons? Have no fear!
+  - Have a folder of .png, .jpg and .jpeg images that you want to use as icons? Have no fear!
 - Search Functionality
-  - Have a specific PNG you'd like to convert? Use the search bar and easily filter through them!
+  - Have a specific image you'd like to convert? Use the search bar and easily filter through them!
 - Conversion to ICO
-  - Currently, all PNGs in the selected icon folder are converted at once.
-- Delete PNGs After Conversion
+  - Easily convert .png, .jpg and .jpeg images to .ico files, ready for swapping!
+- Delete Images After Conversion
   - Don't want your PNGs after conversion has finished? Tick the box and enjoy!
  
 ### Settings
