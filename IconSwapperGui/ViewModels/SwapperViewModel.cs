@@ -117,15 +117,15 @@ namespace IconSwapperGui.ViewModels
         public SwapperViewModel(IApplicationService applicationService, IIconManagementService iconManagementService,
             ISettingsService settingsService, IDialogService dialogService, IElevationService elevationService)
         {
+            _applicationService = applicationService ?? throw new ArgumentNullException(nameof(applicationService));
+            _iconManagementService = iconManagementService ?? throw new ArgumentNullException(nameof(iconManagementService));
+            SettingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
+            DialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
+            ElevationService = elevationService ?? throw new ArgumentNullException(nameof(elevationService));
+    
             Applications = new ObservableCollection<Application>();
             Icons = new ObservableCollection<Icon>();
             FilteredIcons = new ObservableCollection<Icon>();
-
-            _applicationService = applicationService;
-            _iconManagementService = iconManagementService;
-            SettingsService = settingsService;
-            DialogService = dialogService;
-            ElevationService = elevationService;
 
             ChooseApplicationShortcutFolderCommand = new ChooseApplicationShortcutFolderCommand(this, null!, x => true);
             ChooseIconFolderCommand = new ChooseIconFolderCommand<SwapperViewModel>(this, null!, x => true);

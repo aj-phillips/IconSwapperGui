@@ -6,11 +6,17 @@ namespace IconSwapperGui.Services
 {
     public class FileSystemWatcherService : IFileSystemWatcherService
     {
-        private readonly FileSystemWatcher _fileSystemWatcher;
+        private FileSystemWatcher _fileSystemWatcher;
 
         public FileSystemWatcherService(string path, Action<object, FileSystemEventArgs> onChanged,
             Action<object, RenamedEventArgs> onRenamed)
         {
+            if (string.IsNullOrWhiteSpace(path) || !Directory.Exists(path))
+            {
+                _fileSystemWatcher = null;
+                return;
+            }
+
             _fileSystemWatcher = new FileSystemWatcher(path)
             {
                 NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName
@@ -22,16 +28,23 @@ namespace IconSwapperGui.Services
 
         public void StartWatching()
         {
-            _fileSystemWatcher.EnableRaisingEvents = true;
+            if (_fileSystemWatcher != null)
+            {
+                _fileSystemWatcher.EnableRaisingEvents = true;
+            }
         }
 
         public void StopWatching()
         {
-            _fileSystemWatcher.EnableRaisingEvents = false;
+            if (_fileSystemWatcher != null)
+            {
+                _fileSystemWatcher.EnableRaisingEvents = false;
+            }
         }
 
         public void Dispose()
         {
+            _fileSystemWatcher?.Dispose();
             GC.SuppressFinalize(this);
         }
     }

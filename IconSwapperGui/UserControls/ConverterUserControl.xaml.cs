@@ -28,7 +28,7 @@ namespace IconSwapperGui.UserControls
                 FileSystemWatcherServiceFactory
             );
 
-            DataContext = viewModel;
+            DataContext = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         }
     }
 }

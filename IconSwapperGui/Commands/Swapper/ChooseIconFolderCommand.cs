@@ -1,41 +1,54 @@
 ﻿using IconSwapperGui.Interfaces;
 using IconSwapperGui.ViewModels;
 using Microsoft.Win32;
+using Microsoft.WindowsAPICodePack.Dialogs;
 
-namespace IconSwapperGui.Commands.Swapper;
-
-public class ChooseIconFolderCommand<TViewModel> : RelayCommand where TViewModel : IIconViewModel
+namespace IconSwapperGui.Commands.Swapper
 {
-    private readonly TViewModel _viewModel;
+    public class ChooseIconFolderCommand<TViewModel> : RelayCommand where TViewModel : IIconViewModel
+    {
+        private readonly TViewModel _viewModel;
 
-    public ChooseIconFolderCommand(TViewModel viewModel, Action<object> execute,
-        Func<object, bool>? canExecute = null)
-        : base(execute, canExecute)
-    {
-        _viewModel = viewModel;
-    }
+        public ChooseIconFolderCommand(TViewModel viewModel, Action<object> execute,
+            Func<object, bool>? canExecute = null)
+            : base(execute, canExecute)
+        {
+            _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
+        }
 
-    public override void Execute(object? parameter)
-    {
-        if (_viewModel is SwapperViewModel iconSwapperViewModel)
+        public override void Execute(object? parameter)
         {
-            ExecuteCommand(iconSwapperViewModel);
-            iconSwapperViewModel.SettingsService.SaveIconsLocation(iconSwapperViewModel.IconsFolderPath);
+            if (_viewModel is SwapperViewModel iconSwapperViewModel)
+            {
+                ExecuteCommand(iconSwapperViewModel);
+                iconSwapperViewModel.SettingsService.SaveIconsLocation(iconSwapperViewModel.IconsFolderPath);
+            }
+            else if (_viewModel is ConverterViewModel iconConverterViewModel)
+            {
+                ExecuteCommand(iconConverterViewModel);
+                iconConverterViewModel.SettingsService.SaveConverterIconsLocation(
+                    iconConverterViewModel.IconsFolderPath);
+            }
         }
-        else if (_viewModel is ConverterViewModel iconConverterViewModel)
+
+        private void ExecuteCommand(IIconViewModel viewModel)
         {
-            ExecuteCommand(iconConverterViewModel);
-            iconConverterViewModel.SettingsService.SaveConverterIconsLocation(iconConverterViewModel.IconsFolderPath);
+            if (viewModel.Icons != null && viewModel.Icons.Count > 0)
+            {
+                viewModel.Icons.Clear();
+            }
+
+            var openFolderDialog = new CommonOpenFileDialog
+            {
+                IsFolderPicker = true
+            };
+
+            if (openFolderDialog.ShowDialog() != CommonFileDialogResult.Ok) return;
+
+            var folderPath = openFolderDialog.FileName;
+            viewModel.IconsFolderPath = folderPath;
+
+            viewModel.PopulateIconsList(folderPath);
         }
-    }
-    
-    private void ExecuteCommand(IIconViewModel viewModel)
-    {
-        viewModel.Icons.Clear();
-        var openFolderDialog = new OpenFolderDialog();
-        if (openFolderDialog.ShowDialog() != true) return;
-        var folderPath = openFolderDialog.FolderName;
-        viewModel.IconsFolderPath = folderPath;
-        viewModel.PopulateIconsList(folderPath);
     }
 }

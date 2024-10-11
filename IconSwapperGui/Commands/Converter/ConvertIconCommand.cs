@@ -43,7 +43,7 @@ namespace IconSwapperGui.Commands.Converter
                 RemoveExistingFile(targetIconPath);
                 ConvertImage(sourceImagePath, targetIconPath);
 
-                if (_viewModel.CanDeletePngImages)
+                if (_viewModel.CanDeleteImagesAfterConversion)
                 {
                     file.Delete();
                 }

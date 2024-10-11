@@ -21,6 +21,8 @@ namespace IconSwapperGui
         public MainWindow()
         {
             InitializeComponent();
+            
+            AppDomain.CurrentDomain.AssemblyResolve += OnResolveAssembly;
 
             this.Title = $"Icon Swapper - v{_currentVersion}";
 
@@ -32,6 +34,17 @@ namespace IconSwapperGui
             {
                 CheckForUpdates();
             }
+        }
+        
+        private static Assembly OnResolveAssembly(object sender, ResolveEventArgs args)
+        {
+            var assemblyName = new AssemblyName(args.Name).Name + ".dll";
+            var assemblyPath = Path.Combine(AppContext.BaseDirectory, assemblyName);
+            if (File.Exists(assemblyPath))
+            {
+                return Assembly.LoadFrom(assemblyPath);
+            }
+            return null;
         }
 
         public void CheckForUpdates()

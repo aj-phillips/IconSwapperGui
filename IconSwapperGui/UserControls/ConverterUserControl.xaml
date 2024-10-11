@@ -119,8 +119,8 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <CheckBox x:Name="DeletePngsButton" Content="Delete PNGs after conversion?"
-                          IsChecked="{Binding CanDeletePngImages}" Style="{StaticResource iOSToggleButton}" 
+                <CheckBox x:Name="DeleteImagesButton" Content="Delete Images After Conversion?"
+                          IsChecked="{Binding CanDeleteImagesAfterConversion}" Style="{StaticResource iOSToggleButton}" 
                           Margin="10,0,0,0" VerticalAlignment="Center" />
                 <Button x:Name="ConvertButton" Grid.Column="1" Width="150"
                         Height="36"
