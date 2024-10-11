@@ -1,10 +1,7 @@
-using System;
+namespace IconSwapperGui.Interfaces;
 
-namespace IconSwapperGui.Interfaces
+public interface IFileSystemWatcherService : IDisposable
 {
-    public interface IFileSystemWatcherService : IDisposable
-    {
-        void StartWatching();
-        void StopWatching();
-    }
+    void StartWatching();
+    void StopWatching();
 }

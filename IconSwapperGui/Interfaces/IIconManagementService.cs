@@ -1,13 +1,11 @@
-﻿using IconSwapperGui.Models;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
+using IconSwapperGui.Models;
 
-namespace IconSwapperGui.Interfaces
+namespace IconSwapperGui.Interfaces;
+
+public interface IIconManagementService
 {
-    public interface IIconManagementService
-    {
-        IEnumerable<Icon> GetIcons(string folderPath, IEnumerable<string> extensions);
-        ObservableCollection<Icon> GetIcons(string folderPath);
-        ObservableCollection<Icon> FilterIcons(ObservableCollection<Icon> icons, string filterString);
-    }
+    IEnumerable<Icon> GetIcons(string folderPath, IEnumerable<string> extensions);
+    ObservableCollection<Icon> GetIcons(string folderPath);
+    ObservableCollection<Icon> FilterIcons(ObservableCollection<Icon> icons, string filterString);
 }

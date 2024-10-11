@@ -1,120 +1,137 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Text.Json;
 using IconSwapperGui.Interfaces;
 using IconSwapperGui.Models;
 using Newtonsoft.Json.Linq;
 
-namespace IconSwapperGui.Services
+namespace IconSwapperGui.Services;
+
+public class SettingsService : ISettingsService
 {
-    public class SettingsService : ISettingsService
+    private readonly string _settingsFilePath;
+
+    public SettingsService()
     {
-        private readonly string _settingsFilePath;
+        _settingsFilePath = GetSettingsFilePath();
+        EnsureSettingsFileExists();
+        UpdateSettingsWithDefaults();
+    }
 
-        public SettingsService()
+    public Settings? GetSettings()
+    {
+        if (!File.Exists(_settingsFilePath)) return null;
+        var settingsData = File.ReadAllText(_settingsFilePath);
+        return DeserializeSettings(settingsData);
+    }
+
+    public T? GetSettingsFieldValue<T>(string fieldName)
+    {
+        var settings = ReadJsonFile();
+        return settings.TryGetValue(fieldName, out var fieldValue) ? fieldValue.ToObject<T>() : default;
+    }
+
+    public void SaveIconsLocation(string? iconsPath)
+    {
+        UpdateSettingsProperty((settings, value) => settings.IconLocation = value, iconsPath);
+    }
+
+    public void SaveConverterIconsLocation(string? iconsPath)
+    {
+        UpdateSettingsProperty((settings, value) => settings.ConverterIconLocation = value, iconsPath);
+    }
+
+    public void SaveApplicationsLocation(string? applicationsPath)
+    {
+        UpdateSettingsProperty((settings, value) => settings.ApplicationsLocation = value, applicationsPath);
+    }
+
+    public void SaveEnableDarkMode(bool? enableDarkMode)
+    {
+        UpdateSettingsProperty((settings, value) => settings.EnableDarkMode = value, enableDarkMode);
+    }
+
+    public void SaveEnableLaunchAtStartup(bool? enableLaunchAtStartup)
+    {
+        UpdateSettingsProperty((settings, value) => settings.EnableLaunchAtStartup = value, enableLaunchAtStartup);
+    }
+
+    public string? GetApplicationsLocation()
+    {
+        return GetSettingsFieldValue<string>("ApplicationsLocation");
+    }
+
+    public string? GetIconsLocation()
+    {
+        return GetSettingsFieldValue<string>("IconLocation");
+    }
+
+    public string? GetConverterIconsLocation()
+    {
+        return GetSettingsFieldValue<string>("ConverterIconLocation");
+    }
+
+    private static string GetSettingsFilePath()
+    {
+        return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "settings.json");
+    }
+
+    private void EnsureSettingsFileExists()
+    {
+        if (File.Exists(_settingsFilePath)) return;
+        SaveSettings(GetDefaultSettings());
+    }
+
+    private Settings GetDefaultSettings()
+    {
+        return new Settings
         {
-            _settingsFilePath = GetSettingsFilePath();
-            EnsureSettingsFileExists();
-            UpdateSettingsWithDefaults();
-        }
+            IconLocation = "",
+            ConverterIconLocation = "",
+            ApplicationsLocation = "",
+            EnableDarkMode = false,
+            EnableLaunchAtStartup = false
+        };
+    }
 
-        private static string GetSettingsFilePath()
-        {
-            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "settings.json");
-        }
+    private JObject ReadJsonFile()
+    {
+        var jsonData = File.ReadAllText(_settingsFilePath);
+        return JObject.Parse(jsonData);
+    }
 
-        private void EnsureSettingsFileExists()
-        {
-            if (File.Exists(_settingsFilePath)) return;
-            SaveSettings(GetDefaultSettings());
-        }
+    private void UpdateSettingsProperty<T>(Action<Settings, T> updateAction, T value)
+    {
+        var settings = GetSettings() ?? new Settings();
+        updateAction(settings, value);
+        SaveSettings(settings);
+    }
 
-        private Settings GetDefaultSettings()
-        {
-            return new Settings
-            {
-                IconLocation = "",
-                ConverterIconLocation = "",
-                ApplicationsLocation = "",
-                EnableDarkMode = false,
-                EnableLaunchAtStartup = false
-            };
-        }
+    private void UpdateSettingsWithDefaults()
+    {
+        var settings = GetSettings() ?? new Settings();
 
-        public Settings? GetSettings()
-        {
-            if (!File.Exists(_settingsFilePath)) return null;
-            var settingsData = File.ReadAllText(_settingsFilePath);
-            return DeserializeSettings(settingsData);
-        }
+        settings.IconLocation ??= "";
+        settings.ConverterIconLocation ??= "";
+        settings.ApplicationsLocation ??= "";
+        settings.EnableDarkMode ??= false;
+        settings.EnableLaunchAtStartup ??= false;
 
-        public T? GetSettingsFieldValue<T>(string fieldName)
-        {
-            var settings = ReadJsonFile();
-            return settings.TryGetValue(fieldName, out var fieldValue) ? fieldValue.ToObject<T>() : default;
-        }
+        SaveSettings(settings);
+    }
 
-        private JObject ReadJsonFile()
-        {
-            var jsonData = File.ReadAllText(_settingsFilePath);
-            return JObject.Parse(jsonData);
-        }
+    public void SaveSettings(Settings settings)
+    {
+        var settingsData = SerializeSettings(settings);
+        File.WriteAllText(_settingsFilePath, settingsData);
+    }
 
-        private void UpdateSettingsProperty<T>(Action<Settings, T> updateAction, T value)
-        {
-            var settings = GetSettings() ?? new Settings();
-            updateAction(settings, value);
-            SaveSettings(settings);
-        }
+    private string SerializeSettings(Settings settings)
+    {
+        return JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
+    }
 
-        private void UpdateSettingsWithDefaults()
-        {
-            var settings = GetSettings() ?? new Settings();
-
-            settings.IconLocation ??= "";
-            settings.ConverterIconLocation ??= "";
-            settings.ApplicationsLocation ??= "";
-            settings.EnableDarkMode ??= false;
-            settings.EnableLaunchAtStartup ??= false;
-
-            SaveSettings(settings);
-        }
-
-        public void SaveSettings(Settings settings)
-        {
-            var settingsData = SerializeSettings(settings);
-            File.WriteAllText(_settingsFilePath, settingsData);
-        }
-
-        private string SerializeSettings(Settings settings)
-        {
-            return JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
-        }
-
-        private Settings? DeserializeSettings(string settingsData)
-        {
-            return JsonSerializer.Deserialize<Settings>(settingsData);
-        }
-
-        public void SaveIconsLocation(string? iconsPath) =>
-            UpdateSettingsProperty((settings, value) => settings.IconLocation = value, iconsPath);
-
-        public void SaveConverterIconsLocation(string? iconsPath) =>
-            UpdateSettingsProperty((settings, value) => settings.ConverterIconLocation = value, iconsPath);
-
-        public void SaveApplicationsLocation(string? applicationsPath) =>
-            UpdateSettingsProperty((settings, value) => settings.ApplicationsLocation = value, applicationsPath);
-
-        public void SaveEnableDarkMode(bool? enableDarkMode) =>
-            UpdateSettingsProperty((settings, value) => settings.EnableDarkMode = value, enableDarkMode);
-
-        public void SaveEnableLaunchAtStartup(bool? enableLaunchAtStartup) =>
-            UpdateSettingsProperty((settings, value) => settings.EnableLaunchAtStartup = value, enableLaunchAtStartup);
-
-        public string? GetApplicationsLocation() => GetSettingsFieldValue<string>("ApplicationsLocation");
-
-        public string? GetIconsLocation() => GetSettingsFieldValue<string>("IconLocation");
-
-        public string? GetConverterIconsLocation() => GetSettingsFieldValue<string>("ConverterIconLocation");
+    private Settings? DeserializeSettings(string settingsData)
+    {
+        return JsonSerializer.Deserialize<Settings>(settingsData);
     }
 }

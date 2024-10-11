@@ -5,7 +5,7 @@ using IconSwapperGui.Updater.Services;
 namespace IconSwapperGui.Updater;
 
 /// <summary>
-/// Interaction logic for MainWindow.xaml
+///     Interaction logic for MainWindow.xaml
 /// </summary>
 public partial class MainWindow : Window
 {
@@ -18,7 +18,8 @@ public partial class MainWindow : Window
         var progressReporter = new Progress<string>(status => LabelStatus.Content = status);
         var downloadProgress = new Progress<double>(value => ProgressBarDownload.Value = value);
         var restartButtonVisibility = new Progress<Visibility>(visible => ButtonRestartInstall.Visibility = visible);
-        var shouldCloseApplication = new Action<bool>(shouldClose => {
+        var shouldCloseApplication = new Action<bool>(shouldClose =>
+        {
             if (shouldClose) Environment.Exit(0);
         });
 
@@ -26,10 +27,11 @@ public partial class MainWindow : Window
 
         var fileDownloadService =
             new FileDownloadService(progressReporter, downloadProgress, restartButtonVisibility, httpClient);
-        
+
         var githubReleaseService = new GithubReleaseService(httpClient);
 
-        _updateService = new UpdateService(githubReleaseService, fileDownloadService, progressReporter, shouldCloseApplication);
+        _updateService = new UpdateService(githubReleaseService, fileDownloadService, progressReporter,
+            shouldCloseApplication);
 
         _updateService.CheckForUpdates();
     }

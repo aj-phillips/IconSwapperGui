@@ -9,7 +9,7 @@ public partial class SwapperUserControl : UserControl
     public SwapperUserControl()
     {
         InitializeComponent();
-        
+
         var settingsService = new SettingsService();
         var applicationService = new ApplicationService();
         var iconService = new IconManagementService();

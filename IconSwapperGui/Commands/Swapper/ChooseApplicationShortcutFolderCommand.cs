@@ -7,7 +7,8 @@ public class ChooseApplicationShortcutFolderCommand : RelayCommand
 {
     private readonly SwapperViewModel _viewModel;
 
-    public ChooseApplicationShortcutFolderCommand(SwapperViewModel viewModel, Action<object> execute, Func<object, bool>? canExecute = null)
+    public ChooseApplicationShortcutFolderCommand(SwapperViewModel viewModel, Action<object> execute,
+        Func<object, bool>? canExecute = null)
         : base(execute, canExecute)
     {
         _viewModel = viewModel;

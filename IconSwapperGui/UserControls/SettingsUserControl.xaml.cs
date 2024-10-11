@@ -33,7 +33,7 @@ public partial class SettingsUserControl : UserControl
     {
         try
         {
-            ProcessStartInfo psi = new ProcessStartInfo
+            var psi = new ProcessStartInfo
             {
                 FileName = url,
                 UseShellExecute = true

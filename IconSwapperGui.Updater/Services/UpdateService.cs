@@ -6,27 +6,25 @@ namespace IconSwapperGui.Updater.Services;
 
 public class UpdateService
 {
+    private const int MaxRetry = 5;
+
+    private readonly string _currentAssemblyDirectory = Path.GetDirectoryName(AppContext.BaseDirectory);
     private readonly IProgress<string> _progressReporter;
     private readonly Action<bool> _shouldCloseApplication;
-    
-    private string CurrentVersion { get; set; }
-    
-    private const int MaxRetry = 5;
-    
-    private readonly string _currentAssemblyDirectory = Path.GetDirectoryName(AppContext.BaseDirectory);
     private readonly string _tempFilePath = Path.Combine(Path.GetTempPath(), "IconSwapperGui.exe");
+    private readonly FileDownloadService _fileDownloadService;
 
-    private GithubReleaseService _githubReleaseService;
-    private FileDownloadService _fileDownloadService;
+    private readonly GithubReleaseService _githubReleaseService;
 
-    public UpdateService(GithubReleaseService githubReleaseService, FileDownloadService fileDownloadService, IProgress<string> progressReporter, Action<bool> shouldCloseApplication)
+    public UpdateService(GithubReleaseService githubReleaseService, FileDownloadService fileDownloadService,
+        IProgress<string> progressReporter, Action<bool> shouldCloseApplication)
     {
         _githubReleaseService = githubReleaseService;
         _fileDownloadService = fileDownloadService;
-        
+
         _progressReporter = progressReporter;
         _shouldCloseApplication = shouldCloseApplication;
-        
+
         var args = Environment.GetCommandLineArgs();
 
         CurrentVersion = args.Length > 1
@@ -34,6 +32,8 @@ public class UpdateService
             : FileVersionInfo.GetVersionInfo(Path.Combine(_currentAssemblyDirectory, "IconSwapperGui.exe"))
                 .ProductVersion;
     }
+
+    private string CurrentVersion { get; }
 
     public async void CheckForUpdates()
     {
@@ -44,53 +44,40 @@ public class UpdateService
         var isNewVersionAvailable =
             string.Compare(latestVersion, CurrentVersion, StringComparison.OrdinalIgnoreCase) > 0;
 
-        if (!isNewVersionAvailable)
-        {
-            _shouldCloseApplication.Invoke(true);
-        }
+        if (!isNewVersionAvailable) _shouldCloseApplication.Invoke(true);
 
         var updateResult = MessageBox.Show(
             $"There is an update available from {CurrentVersion} to {latestVersion}. Do you want to update now?",
             "Update Available", MessageBoxButton.YesNo, MessageBoxImage.Question);
 
-        if (updateResult != MessageBoxResult.Yes)
-        {
-            _shouldCloseApplication.Invoke(true);
-        }
+        if (updateResult != MessageBoxResult.Yes) _shouldCloseApplication.Invoke(true);
 
         _progressReporter.Report("Downloading updates...");
 
         var downloadUrl = "https://github.com/aj-phillips/IconSwapperGui/releases/download/v" + latestVersion +
-                       "/IconSwapperGui.exe";
+                          "/IconSwapperGui.exe";
 
         await _fileDownloadService.DownloadFile(downloadUrl, _tempFilePath);
     }
-    
+
     public async Task RunInstaller()
     {
         var applicationPath = Path.Combine(_currentAssemblyDirectory, "IconSwapperGui.exe");
 
         try
         {
-            foreach (var process in Process.GetProcessesByName("IconSwapperGui"))
-            {
-                process.Kill();
-            }
+            foreach (var process in Process.GetProcessesByName("IconSwapperGui")) process.Kill();
 
             var retryCount = 0;
 
             while (retryCount < MaxRetry)
-            {
                 try
                 {
                     await Task.Delay(2000);
 
-                    if (File.Exists(applicationPath))
-                    {
-                        File.Delete(applicationPath);
-                    }
+                    if (File.Exists(applicationPath)) File.Delete(applicationPath);
 
-                    File.Move(_tempFilePath, applicationPath, overwrite: true);
+                    File.Move(_tempFilePath, applicationPath, true);
 
                     break;
                 }
@@ -99,7 +86,6 @@ public class UpdateService
                     retryCount++;
                     await Task.Delay(1000);
                 }
-            }
 
             Process.Start(applicationPath);
 

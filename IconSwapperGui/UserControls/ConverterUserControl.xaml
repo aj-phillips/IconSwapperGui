@@ -3,13 +3,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:local="clr-namespace:IconSwapperGui.UserControls"
              xmlns:utilities="clr-namespace:IconSwapperGui.Utilities"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              mc:Ignorable="d"
              d:DesignHeight="365" d:DesignWidth="765">
     <UserControl.Resources>
-        <utilities:IconPathToImageConverter x:Key="IconPathToImageConverter" />
         <utilities:ApplicationPathToImageConverter x:Key="ApplicationPathToImageConverter" />
     </UserControl.Resources>
     <Grid>
@@ -21,12 +19,12 @@
 
         <materialDesign:Card Grid.Row="0" Margin="8" Padding="16">
             <StackPanel>
-                <TextBlock Text="Configuration" 
-                           FontSize="16" 
+                <TextBlock Text="Configuration"
+                           FontSize="16"
                            Margin="10,10,10,5"
                            HorizontalAlignment="Center"
-                           Style="{DynamicResource MaterialDesignHeadline6TextBlockStyle}"/>
-                
+                           Style="{DynamicResource MaterialDesignHeadline6TextBlockStyle}" />
+
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
@@ -37,17 +35,19 @@
                                 Margin="0,5,5,0" Width="170" Height="30" Command="{Binding ChooseIconFolderCommand}"
                                 Style="{StaticResource MaterialDesignRaisedDarkButton}">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <materialDesign:PackIcon Kind="FolderAccountOutline" Width="20" Height="20" Margin="-5,0,8,0" />
+                                <materialDesign:PackIcon Kind="FolderAccountOutline" Width="20" Height="20"
+                                                         Margin="-5,0,8,0" />
                                 <TextBlock Text="Select Directory" VerticalAlignment="Center" Foreground="White" />
                             </StackPanel>
                         </Button>
                     </StackPanel>
 
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,5,0,0">
-                        <TextBox Width="220" Name="SearchTextBox" VerticalContentAlignment="Center" materialDesign:HintAssist.Hint="Search"
-                                 Text="{Binding FilterString, UpdateSourceTrigger=PropertyChanged}" Height="45" 
+                        <TextBox Width="220" Name="SearchTextBox" VerticalContentAlignment="Center"
+                                 materialDesign:HintAssist.Hint="Search"
+                                 Text="{Binding FilterString, UpdateSourceTrigger=PropertyChanged}" Height="45"
                                  Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                 HorizontalAlignment="Left"/>
+                                 HorizontalAlignment="Left" />
                     </StackPanel>
                 </Grid>
             </StackPanel>
@@ -55,28 +55,29 @@
 
         <materialDesign:Card Grid.Row="1" Margin="8" Padding="16">
             <StackPanel>
-                <TextBlock Text="Icons" 
-                           FontSize="16" 
+                <TextBlock Text="Icons"
+                           FontSize="16"
                            Margin="10,10,10,5"
                            HorizontalAlignment="Center"
-                           Style="{DynamicResource MaterialDesignHeadline6TextBlockStyle}"/>
-                
-                <ListBox Name="IconsListBox" 
-                         ItemsSource="{Binding FilteredIcons}" 
+                           Style="{DynamicResource MaterialDesignHeadline6TextBlockStyle}" />
+
+                <ListBox Name="IconsListBox"
+                         ItemsSource="{Binding FilteredIcons}"
                          SelectedItem="{Binding SelectedIcon, Mode=TwoWay}"
                          Margin="15"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                          ScrollViewer.VerticalScrollBarVisibility="Auto">
                     <ListBox.Resources>
                         <Style TargetType="ListBoxItem">
-                            <Setter Property="Background" Value="Transparent"/>
-                            <Setter Property="Padding" Value="10"/>
-                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                            <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+                            <Setter Property="Background" Value="Transparent" />
+                            <Setter Property="Padding" Value="10" />
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                            <Setter Property="VerticalContentAlignment" Value="Stretch" />
                             <Style.Triggers>
                                 <Trigger Property="IsSelected" Value="True">
-                                    <Setter Property="Background" Value="{DynamicResource MaterialDesignSelectionColor}"/>
-                                    <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
+                                    <Setter Property="Background"
+                                            Value="{DynamicResource MaterialDesignSelectionColor}" />
+                                    <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
                                 </Trigger>
                             </Style.Triggers>
                         </Style>
@@ -86,27 +87,28 @@
                             <Border HorizontalAlignment="Center" VerticalAlignment="Center" Width="100" Height="100">
                                 <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
                                     <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
                                     </Grid.RowDefinitions>
-                                    <Image Source="{Binding Path, Converter={StaticResource ApplicationPathToImageConverter}}" 
-                                           Width="60" Height="60" Stretch="Uniform" 
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    <TextBlock Text="{Binding Name}" 
+                                    <Image
+                                        Source="{Binding Path, Converter={StaticResource ApplicationPathToImageConverter}}"
+                                        Width="60" Height="60" Stretch="Uniform"
+                                        HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding Name}"
                                                Grid.Row="1"
                                                TextAlignment="Center"
-                                               HorizontalAlignment="Center" 
+                                               HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
-                                               TextTrimming="CharacterEllipsis" 
+                                               TextTrimming="CharacterEllipsis"
                                                ToolTip="{Binding Name}"
-                                               MaxWidth="75"/>
+                                               MaxWidth="75" />
                                 </Grid>
                             </Border>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                     <ListBox.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <WrapPanel ItemHeight="100" ItemWidth="100"/>
+                            <WrapPanel ItemHeight="100" ItemWidth="100" />
                         </ItemsPanelTemplate>
                     </ListBox.ItemsPanel>
                 </ListBox>
@@ -120,7 +122,7 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <CheckBox x:Name="DeleteImagesButton" Content="Delete Images After Conversion?"
-                          IsChecked="{Binding CanDeleteImagesAfterConversion}" Style="{StaticResource iOSToggleButton}" 
+                          IsChecked="{Binding CanDeleteImagesAfterConversion}" Style="{StaticResource iOSToggleButton}"
                           Margin="10,0,0,0" VerticalAlignment="Center" />
                 <Button x:Name="ConvertButton" Grid.Column="1" Width="150"
                         Height="36"
@@ -131,7 +133,8 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <materialDesign:PackIcon Kind="FileImagePlus" Width="20" Height="20" Margin="-5,0,8,0" VerticalAlignment="Center" />
+                        <materialDesign:PackIcon Kind="FileImagePlus" Width="20" Height="20" Margin="-5,0,8,0"
+                                                 VerticalAlignment="Center" />
                         <TextBlock Text="Convert All" VerticalAlignment="Center" Grid.Column="1" Foreground="White" />
                     </Grid>
                 </Button>

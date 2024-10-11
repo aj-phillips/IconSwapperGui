@@ -2,10 +2,6 @@
 
 public class Application
 {
-    public string Name { get; set; }
-    public string Path { get; set; }
-    public string? TargetPath { get; set; }
-
     public Application(string name, string path)
     {
         Name = name;
@@ -18,4 +14,8 @@ public class Application
         Path = path;
         TargetPath = targetPath;
     }
+
+    public string Name { get; set; }
+    public string Path { get; set; }
+    public string? TargetPath { get; set; }
 }
