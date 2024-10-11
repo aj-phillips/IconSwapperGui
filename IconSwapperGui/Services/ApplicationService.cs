@@ -49,8 +49,8 @@ namespace IconSwapperGui.Services
                 MessageBox.Show($"An error occurred while accessing {folderPath}: {ex.Message}",
                     "Error Accessing Folder", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-
-            return applications;
+            
+            return applications.OrderBy(x => x.Name);
         }
 
         private IEnumerable<string> GetShortcutFiles(string folderPath)
