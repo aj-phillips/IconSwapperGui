@@ -2,6 +2,7 @@
 using System.Text.Json;
 using IconSwapperGui.Interfaces;
 using IconSwapperGui.Models;
+using Newtonsoft.Json.Linq;
 
 namespace IconSwapperGui.Services
 {
@@ -20,15 +21,16 @@ namespace IconSwapperGui.Services
         {
             if (File.Exists(_settingsFilePath)) return;
 
-            var settings = new Settings
+            var defaultSettings = new Settings
             {
                 IconLocation = "",
                 ConverterIconLocation = "",
                 ApplicationsLocation = "",
-                EnableDarkMode = false
+                EnableDarkMode = false,
+                EnableLaunchAtStartup = false
             };
 
-            SaveSettings(settings);
+            SaveSettings(defaultSettings);
         }
 
         public Settings? GetSettings()
@@ -39,22 +41,15 @@ namespace IconSwapperGui.Services
             return JsonSerializer.Deserialize<Settings>(settingsData);
         }
         
-        private void SaveSettings(Settings settings)
+        public T GetSettingsFieldValue<T>(string fieldName)
         {
-            var settingsData = JsonSerializer.Serialize(settings);
-            File.WriteAllText(_settingsFilePath, settingsData);
-        }
+            var settings = JObject.Parse(File.ReadAllText(_settingsFilePath));
+            if (settings.TryGetValue(fieldName, out JToken fieldValue))
+            {
+                return fieldValue.ToObject<T>();
+            }
 
-        private void UpdateSettingsWithDefaults()
-        {
-            var settings = GetSettings() ?? new Settings();
-            
-            settings.IconLocation ??= "";
-            settings.ConverterIconLocation ??= "";
-            settings.ApplicationsLocation ??= "";
-            settings.EnableDarkMode ??= false;
-
-            SaveSettings(settings);
+            return default;
         }
 
         private void UpdateSettingsProperty<T>(Action<Settings, T> updateAction, T value)
@@ -63,6 +58,25 @@ namespace IconSwapperGui.Services
 
             updateAction(settings, value);
             SaveSettings(settings);
+        }
+        
+        private void UpdateSettingsWithDefaults()
+        {
+            var settings = GetSettings() ?? new Settings();
+
+            settings.IconLocation ??= "";
+            settings.ConverterIconLocation ??= "";
+            settings.ApplicationsLocation ??= "";
+            settings.EnableDarkMode ??= false;
+            settings.EnableLaunchAtStartup ??= false;
+
+            SaveSettings(settings);
+        }
+        
+        private void SaveSettings(Settings settings)
+        {
+            var settingsData = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(_settingsFilePath, settingsData);
         }
 
         public void SaveIconsLocation(string? iconsPath) =>
@@ -77,10 +91,13 @@ namespace IconSwapperGui.Services
         public void SaveEnableDarkMode(bool? enableDarkMode) =>
             UpdateSettingsProperty((settings, value) => settings.EnableDarkMode = value, enableDarkMode);
 
-        public string? GetApplicationsLocation() => GetSettings()?.ApplicationsLocation;
+        public void SaveEnableLaunchAtStartup(bool? enableLaunchAtStartup) =>
+            UpdateSettingsProperty((settings, value) => settings.EnableLaunchAtStartup = value, enableLaunchAtStartup);
 
-        public string? GetIconsLocation() => GetSettings()?.IconLocation;
+        public string? GetApplicationsLocation() => GetSettingsFieldValue<string>("ApplicationsLocation");
 
-        public string? GetConverterIconsLocation() => GetSettings()?.ConverterIconLocation;
+        public string? GetIconsLocation() => GetSettingsFieldValue<string>("IconLocation");
+
+        public string? GetConverterIconsLocation() => GetSettingsFieldValue<string>("ConverterIconLocation");
     }
 }

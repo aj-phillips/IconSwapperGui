@@ -15,7 +15,7 @@
             </materialDesign:Card>
 
             <!-- Appearance Section -->
-            <materialDesign:Card Padding="20" Margin="0,0,0,16" Background="{DynamicResource MaterialDesignPaper}">
+            <materialDesign:Card Padding="15" Margin="0,0,0,16" Background="{DynamicResource MaterialDesignPaper}">
                 <StackPanel VerticalAlignment="Center">
                     <TextBlock Text="Appearance" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,10" />
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,10,0,10" >
@@ -27,7 +27,21 @@
                 </StackPanel>
             </materialDesign:Card>
             
-            <materialDesign:Card Padding="20" Margin="0,0,0,16" Background="{DynamicResource MaterialDesignPaper}">
+            <!-- Other Section -->
+            <materialDesign:Card Padding="15" Margin="0,0,0,16" Background="{DynamicResource MaterialDesignPaper}">
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="Other" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,10" />
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,10,0,10" >
+                        <!-- Launch At Startup -->
+                        <CheckBox x:Name="LaunchAtStartupToggle" Content="Launch At Startup"
+                                  IsChecked="{Binding IsLaunchAtStartupEnabled, Mode=TwoWay}"
+                                  Style="{StaticResource iOSToggleButton}" Command="{Binding ToggleLaunchAtStartupCommand}" />
+                    </StackPanel>
+                </StackPanel>
+            </materialDesign:Card>
+            
+            <!-- Support Section -->
+            <materialDesign:Card Padding="15" Margin="0,0,0,16" Background="{DynamicResource MaterialDesignPaper}">
                 <StackPanel VerticalAlignment="Center">
                     <TextBlock Text="Support" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,10" />
                     <TextBlock Text="For any help with issues you encounter, please use the links below" FontSize="15" Margin="0,0,0,10" />
@@ -51,6 +65,7 @@
                         <Button Name="BugReportButton"
                                 Style="{StaticResource MaterialDesignRaisedDarkButton}"
                                 Margin="5,0,0,0"
+                                BorderBrush="DarkRed"
                                 Background="DarkRed"
                                 Click="BugReportButton_OnClick">
                             <Grid>
