@@ -6,4 +6,5 @@ public class Settings
     public string? ConverterIconLocation { get; set; }
     public string? ApplicationsLocation { get; set; }
     public bool? EnableDarkMode { get; set; }
+    public bool? EnableLaunchAtStartup { get; set; }
 }
