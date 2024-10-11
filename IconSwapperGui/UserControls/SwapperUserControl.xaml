@@ -94,7 +94,7 @@
                            HorizontalAlignment="Center"
                            Style="{DynamicResource MaterialDesignHeadline6TextBlockStyle}" />
 
-                <Grid Margin="30,10,30,0">
+                <Grid Margin="22,10,22,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
@@ -126,6 +126,7 @@
                          ItemsSource="{Binding FilteredIcons}"
                          SelectedItem="{Binding SelectedIcon, Mode=TwoWay}"
                          Margin="15"
+                         HorizontalAlignment="Center"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                          ScrollViewer.VerticalScrollBarVisibility="Auto"
                          Height="300">
