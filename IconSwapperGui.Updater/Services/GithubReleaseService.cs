@@ -6,14 +6,14 @@ namespace IconSwapperGui.Updater.Services;
 
 public class GithubReleaseService
 {
-    private HttpClient HttpClient { get; set; }
-    
     private const string RawFileUrl = "https://raw.githubusercontent.com/aj-phillips/IconSwapperGui/main/version.json";
 
     public GithubReleaseService(HttpClient httpClient)
     {
         HttpClient = httpClient;
     }
+
+    private HttpClient HttpClient { get; }
 
     public async Task<string> GetLatestReleaseVersion()
     {

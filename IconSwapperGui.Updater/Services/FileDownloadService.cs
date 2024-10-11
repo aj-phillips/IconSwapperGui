@@ -6,10 +6,9 @@ namespace IconSwapperGui.Updater.Services;
 
 public class FileDownloadService
 {
-    private readonly IProgress<string> _progressReporter;
     private readonly IProgress<double> _downloadProgress;
+    private readonly IProgress<string> _progressReporter;
     private readonly IProgress<Visibility> _restartButtonVisibility;
-    private HttpClient HttpClient { get; set; }
 
     public FileDownloadService(IProgress<string> progressReporter, IProgress<double> downloadProgress,
         IProgress<Visibility> restartButtonVisibility, HttpClient httpClient)
@@ -19,6 +18,8 @@ public class FileDownloadService
         _restartButtonVisibility = restartButtonVisibility;
         HttpClient = httpClient;
     }
+
+    private HttpClient HttpClient { get; }
 
     public async Task DownloadFile(string downloadUrl, string tempFilePath)
     {
@@ -50,10 +51,7 @@ public class FileDownloadService
                             await output.WriteAsync(buffer, 0, bytesRead);
                             totalBytesRead += bytesRead;
 
-                            if (canReportProgress)
-                            {
-                                _downloadProgress.Report((double)totalBytesRead / totalBytes * 100);
-                            }
+                            if (canReportProgress) _downloadProgress.Report((double)totalBytesRead / totalBytes * 100);
                         }
                     }
                 }

@@ -1,4 +1,6 @@
+using System.IO;
 using System.Windows.Controls;
+using IconSwapperGui.Interfaces;
 using IconSwapperGui.Services;
 using IconSwapperGui.ViewModels;
 
@@ -10,11 +12,23 @@ public partial class ConverterUserControl : UserControl
     {
         InitializeComponent();
 
-        var iconService = new IconService();
+        var iconManagementService = new IconManagementService();
         var settingsService = new SettingsService();
         var dialogService = new DialogService();
-        var viewModel = new ConverterViewModel(iconService, settingsService, dialogService);
 
-        DataContext = viewModel;
+        IFileSystemWatcherService FileSystemWatcherServiceFactory(string path,
+            Action<object, FileSystemEventArgs> onChanged, Action<object, RenamedEventArgs> onRenamed)
+        {
+            return new FileSystemWatcherService(path, onChanged, onRenamed);
+        }
+
+        var viewModel = new ConverterViewModel(
+            iconManagementService,
+            settingsService,
+            dialogService,
+            FileSystemWatcherServiceFactory
+        );
+
+        DataContext = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
     }
 }

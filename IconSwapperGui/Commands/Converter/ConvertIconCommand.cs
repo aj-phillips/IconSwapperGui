@@ -6,6 +6,8 @@ namespace IconSwapperGui.Commands.Converter;
 
 public class ConvertIconCommand : RelayCommand
 {
+    private static readonly uint[] IconSizes = [94];
+    private static readonly string[] SupportedExtensions = ["*.png", "*.jpg", "*.jpeg"];
     private readonly ConverterViewModel _viewModel;
 
     public ConvertIconCommand(ConverterViewModel viewModel, Action<object> execute,
@@ -18,26 +20,66 @@ public class ConvertIconCommand : RelayCommand
     {
         var directoryInfo = new DirectoryInfo(_viewModel.IconsFolderPath);
 
-        foreach (var file in directoryInfo.GetFiles("*.png", SearchOption.TopDirectoryOnly))
+        foreach (var extension in SupportedExtensions)
+        foreach (var file in directoryInfo.GetFiles(extension, SearchOption.TopDirectoryOnly))
+            ProcessFile(file);
+
+        NotifyCompletion();
+    }
+
+    private void ProcessFile(FileInfo file)
+    {
+        try
         {
-            var sourcePngPath = file.FullName;
+            var sourceImagePath = file.FullName;
+            var targetIconPath = GetTargetIconPath(sourceImagePath);
 
-            using (var collection = new MagickImageCollection())
-            {
-                collection.Add(sourcePngPath);
+            RemoveExistingFile(targetIconPath);
+            ConvertImage(sourceImagePath, targetIconPath);
 
-                var targetIconPath = sourcePngPath.Replace(".png", ".ico");
+            if (_viewModel.CanDeleteImagesAfterConversion) file.Delete();
+        }
+        catch (Exception ex) when (ex is MagickException or IOException)
+        {
+            HandleException(file, ex);
+        }
+    }
 
-                collection.Write(targetIconPath, MagickFormat.Icon);
-            }
+    private string GetTargetIconPath(string sourceImagePath)
+    {
+        return Path.ChangeExtension(sourceImagePath, ".ico");
+    }
 
-            if (_viewModel.CanDeletePngImages)
-            {
-                file.Delete();
-            }
+    private static void RemoveExistingFile(string targetIconPath)
+    {
+        if (File.Exists(targetIconPath)) File.Delete(targetIconPath);
+    }
+
+    private void ConvertImage(string sourceImagePath, string targetIconPath)
+    {
+        using var collection = new MagickImageCollection();
+
+        foreach (var size in IconSizes)
+        {
+            var image = new MagickImage(sourceImagePath);
+            image.Resize(size, size);
+            collection.Add(image);
         }
 
-        _viewModel.DialogService.ShowInformation("Successfully converted PNG images to ICOs!", "Conversion Successful");
+        collection.Write(targetIconPath, MagickFormat.Icon);
+    }
+
+    private void HandleException(FileInfo file, Exception ex)
+    {
+        var errorType = ex is MagickException
+            ? "Failed to convert image to icon"
+            : "An error occurred while processing the file";
+        throw new InvalidOperationException($"{errorType}: {file.Name}\n{ex.Message}", ex);
+    }
+
+    private void NotifyCompletion()
+    {
+        _viewModel.DialogService.ShowInformation("Successfully converted images to ICOs!", "Conversion Successful");
         _viewModel.RefreshGui();
     }
 }

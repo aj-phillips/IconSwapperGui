@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using System.Drawing.Imaging;
 using System.Globalization;
 using System.IO;
 using System.Windows.Data;
@@ -19,21 +20,21 @@ public class IconPathToImageConverter : IValueConverter
         using var icon = Icon.ExtractAssociatedIcon(path);
 
         using var bmp = icon?.ToBitmap();
-        
+
         var stream = new MemoryStream();
-        
-        bmp?.Save(stream, System.Drawing.Imaging.ImageFormat.Png);
-        
+
+        bmp?.Save(stream, ImageFormat.Png);
+
         stream.Position = 0;
-        
+
         var bitmapImage = new BitmapImage();
-        
+
         bitmapImage.BeginInit();
         bitmapImage.StreamSource = stream;
         bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
         bitmapImage.EndInit();
         bitmapImage.Freeze();
-        
+
         return bitmapImage;
     }
 

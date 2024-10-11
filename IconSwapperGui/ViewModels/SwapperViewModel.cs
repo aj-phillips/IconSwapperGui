@@ -6,271 +6,305 @@ using IconSwapperGui.Commands;
 using IconSwapperGui.Commands.Swapper;
 using IconSwapperGui.Interfaces;
 using IconSwapperGui.Models;
+using IconSwapperGui.Services;
 using Application = IconSwapperGui.Models.Application;
 
-namespace IconSwapperGui.ViewModels
+namespace IconSwapperGui.ViewModels;
+
+public class SwapperViewModel : ViewModel, IIconViewModel, INotifyPropertyChanged, IDisposable
 {
-    public class SwapperViewModel : ViewModel, IIconViewModel, INotifyPropertyChanged, IDisposable
+    private ObservableCollection<Application> _applications;
+    private string _applicationsFolderPath;
+    private bool _isTickVisible;
+    private bool _canSwapIcons;
+    private ObservableCollection<Icon> _filteredIcons;
+    private string _filterString;
+    private ObservableCollection<Icon> _icons;
+
+    private IFileSystemWatcherService _iconsDirectoryWatcherService;
+    private IFileSystemWatcherService _applicationsDirectoryWatcherService;
+
+    private string _iconsFolderPath;
+    private Application? _selectedApplication;
+    private Icon? _selectedIcon;
+
+    private readonly IApplicationService _applicationService;
+    private readonly IIconManagementService _iconManagementService;
+    public readonly IDialogService DialogService;
+    public readonly IElevationService ElevationService;
+
+    public SwapperViewModel(IApplicationService applicationService, IIconManagementService iconManagementService,
+        ISettingsService settingsService, IDialogService dialogService, IElevationService elevationService)
     {
-        private readonly IApplicationService _applicationService;
-        private readonly IIconService _iconService;
-        public ISettingsService SettingsService { get; set; }
-        public readonly IDialogService DialogService;
-        public readonly IElevationService ElevationService;
+        _applicationService = applicationService ?? throw new ArgumentNullException(nameof(applicationService));
+        _iconManagementService =
+            iconManagementService ?? throw new ArgumentNullException(nameof(iconManagementService));
+        SettingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
+        DialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
+        ElevationService = elevationService ?? throw new ArgumentNullException(nameof(elevationService));
 
-        private ObservableCollection<Application> _applications;
-        private ObservableCollection<Icon> _icons;
-        private ObservableCollection<Icon> _filteredIcons;
-        private string _filterString;
-        private FileSystemWatcher _iconsDirectoryWatcher;
+        Applications = new ObservableCollection<Application>();
+        Icons = new ObservableCollection<Icon>();
+        FilteredIcons = new ObservableCollection<Icon>();
 
-        public ObservableCollection<Application> Applications
+        ChooseApplicationShortcutFolderCommand = new ChooseApplicationShortcutFolderCommand(this, null!, x => true);
+        ChooseIconFolderCommand = new ChooseIconFolderCommand<SwapperViewModel>(this, null!, x => true);
+        SwapCommand = new SwapCommand(this, null!, x => true);
+
+        LoadPreviousApplications();
+        LoadPreviousIcons();
+        UpdateSwapButtonEnabledState();
+    }
+
+    public ObservableCollection<Application> Applications
+    {
+        get => _applications;
+        set
         {
-            get => _applications;
-            set
+            _applications = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public ObservableCollection<Icon> FilteredIcons
+    {
+        get => _filteredIcons;
+        private set
+        {
+            _filteredIcons = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public Application? SelectedApplication
+    {
+        get => _selectedApplication;
+        set => SetField(ref _selectedApplication, value);
+    }
+
+    public Icon? SelectedIcon
+    {
+        get => _selectedIcon;
+        set => SetField(ref _selectedIcon, value);
+    }
+
+    public bool CanSwapIcons
+    {
+        get => _canSwapIcons;
+        set => SetField(ref _canSwapIcons, value);
+    }
+
+    public bool IsTickVisible
+    {
+        get => _isTickVisible;
+        set => SetField(ref _isTickVisible, value);
+    }
+
+    public async Task ShowSuccessTick()
+    {
+        IsTickVisible = true;
+        await Task.Delay(750);
+        IsTickVisible = false;
+    }
+
+    public event PropertyChangedEventHandler PropertyChanged;
+    
+    public RelayCommand ChooseApplicationShortcutFolderCommand { get; }
+    public RelayCommand ChooseIconFolderCommand { get; }
+    public RelayCommand SwapCommand { get; }
+
+    public string ApplicationsFolderPath
+    {
+        get => _applicationsFolderPath;
+        set
+        {
+            if (_applicationsFolderPath != value)
             {
-                _applications = value;
+                _applicationsFolderPath = value;
                 OnPropertyChanged();
+                SetupApplicationsDirectoryWatcher();
             }
         }
+    }
 
-        public ObservableCollection<Icon> Icons
+    public string FilterString
+    {
+        get => _filterString;
+        set
         {
-            get => _icons;
-            set
+            if (_filterString == value) return;
+            _filterString = value;
+            OnPropertyChanged();
+            FilterIcons();
+        }
+    }
+
+    public void Dispose()
+    {
+        _iconsDirectoryWatcherService?.Dispose();
+        _applicationsDirectoryWatcherService?.Dispose();
+    }
+
+    public ISettingsService SettingsService { get; set; }
+
+    public ObservableCollection<Icon> Icons
+    {
+        get => _icons;
+        set
+        {
+            _icons = value;
+            OnPropertyChanged();
+            FilterIcons();
+        }
+    }
+
+    public string IconsFolderPath
+    {
+        get => _iconsFolderPath;
+        set
+        {
+            if (_iconsFolderPath != value)
             {
-                _icons = value;
+                _iconsFolderPath = value;
                 OnPropertyChanged();
-                FilterIcons();
-            }
-        }
-
-        public ObservableCollection<Icon> FilteredIcons
-        {
-            get => _filteredIcons;
-            private set
-            {
-                _filteredIcons = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private Application? _selectedApplication;
-
-        public Application? SelectedApplication
-        {
-            get => _selectedApplication;
-            set => SetField(ref _selectedApplication, value, nameof(SelectedApplication));
-        }
-
-        private Icon? _selectedIcon;
-
-        public Icon? SelectedIcon
-        {
-            get => _selectedIcon;
-            set => SetField(ref _selectedIcon, value, nameof(SelectedIcon));
-        }
-
-        private bool _canSwapIcons;
-
-        public bool CanSwapIcons
-        {
-            get => _canSwapIcons;
-            set => SetField(ref _canSwapIcons, value);
-        }
-
-        public RelayCommand ChooseApplicationShortcutFolderCommand { get; }
-        public RelayCommand ChooseIconFolderCommand { get; }
-        public RelayCommand SwapCommand { get; }
-
-        private string _iconsFolderPath;
-
-        public string IconsFolderPath
-        {
-            get => _iconsFolderPath;
-            set
-            {
-                if (_iconsFolderPath != value)
-                {
-                    _iconsFolderPath = value;
-                    OnPropertyChanged();
-                    SetupIconsDirectoryWatcher();
-                }
-            }
-        }
-
-        private string _applicationsFolderPath;
-
-        public string ApplicationsFolderPath
-        {
-            get => _applicationsFolderPath;
-            set
-            {
-                if (_applicationsFolderPath != value)
-                {
-                    _applicationsFolderPath = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
-
-        public SwapperViewModel(IApplicationService applicationService, IIconService iconService,
-            ISettingsService settingsService, IDialogService dialogService, IElevationService elevationService)
-        {
-            Applications = new ObservableCollection<Application>();
-            Icons = new ObservableCollection<Icon>();
-            FilteredIcons = new ObservableCollection<Icon>();
-
-            _applicationService = applicationService;
-            _iconService = iconService;
-            SettingsService = settingsService;
-            DialogService = dialogService;
-            ElevationService = elevationService;
-
-            ChooseApplicationShortcutFolderCommand = new ChooseApplicationShortcutFolderCommand(this, null!, x => true);
-            ChooseIconFolderCommand = new ChooseIconFolderCommand<SwapperViewModel>(this, null!, x => true);
-            SwapCommand = new SwapCommand(this, null!, x => true);
-
-            LoadPreviousApplications();
-            LoadPreviousIcons();
-            UpdateSwapButtonEnabledState();
-        }
-
-        private void SetupIconsDirectoryWatcher()
-        {
-            if (string.IsNullOrEmpty(IconsFolderPath)) return;
-
-            _iconsDirectoryWatcher?.Dispose();
-            _iconsDirectoryWatcher = new FileSystemWatcher(IconsFolderPath)
-            {
-                NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName
-            };
-            _iconsDirectoryWatcher.Created += OnIconsDirectoryChanged;
-            _iconsDirectoryWatcher.Deleted += OnIconsDirectoryChanged;
-            _iconsDirectoryWatcher.Renamed += OnIconsDirectoryRenamed;
-            _iconsDirectoryWatcher.EnableRaisingEvents = true;
-        }
-
-        private void OnIconsDirectoryChanged(object sender, FileSystemEventArgs e)
-        {
-            PopulateIconsList(IconsFolderPath);
-        }
-
-        private void OnIconsDirectoryRenamed(object sender, RenamedEventArgs e)
-        {
-            PopulateIconsList(IconsFolderPath);
-        }
-
-        private void LoadPreviousApplications()
-        {
-            ApplicationsFolderPath = SettingsService.GetApplicationsLocation();
-
-            if (!string.IsNullOrEmpty(ApplicationsFolderPath))
-            {
-                PopulateApplicationsList(ApplicationsFolderPath);
-            }
-        }
-
-        private void LoadPreviousIcons()
-        {
-            IconsFolderPath = SettingsService.GetIconsLocation();
-
-            if (!string.IsNullOrEmpty(IconsFolderPath))
-            {
-                PopulateIconsList(IconsFolderPath);
                 SetupIconsDirectoryWatcher();
             }
         }
+    }
 
-        public void PopulateApplicationsList(string folderPath)
+    public void PopulateIconsList(string folderPath)
+    {
+        var supportedExtensions = new List<string> { ".ico" };
+
+        Icons.Clear();
+        var icons = _iconManagementService.GetIcons(folderPath, supportedExtensions);
+
+        foreach (var icon in icons)
         {
-            Applications.Clear();
-            var applications = _applicationService.GetApplications(folderPath);
-            foreach (var application in applications)
-            {
-                if (Applications.Any(x => x.Path == application.Path)) continue;
-                Applications.Add(application);
-            }
+            if (Icons.Any(x => x.Path == icon.Path)) continue;
+            Icons.Add(icon);
         }
 
-        public void PopulateIconsList(string folderPath)
+        FilterIcons();
+    }
+
+    private void SetupIconsDirectoryWatcher()
+    {
+        _iconsDirectoryWatcherService?.Dispose();
+
+        _iconsDirectoryWatcherService = new FileSystemWatcherService(IconsFolderPath,
+            OnIconsDirectoryChanged, OnIconsDirectoryRenamed);
+        _iconsDirectoryWatcherService.StartWatching();
+    }
+
+    private void SetupApplicationsDirectoryWatcher()
+    {
+        _applicationsDirectoryWatcherService?.Dispose();
+
+        _applicationsDirectoryWatcherService = new FileSystemWatcherService(ApplicationsFolderPath,
+            OnApplicationsDirectoryChanged, OnApplicationsDirectoryRenamed);
+        _applicationsDirectoryWatcherService.StartWatching();
+    }
+
+    private void OnIconsDirectoryChanged(object sender, FileSystemEventArgs e)
+    {
+        PopulateIconsList(IconsFolderPath);
+    }
+
+    private void OnIconsDirectoryRenamed(object sender, RenamedEventArgs e)
+    {
+        PopulateIconsList(IconsFolderPath);
+    }
+
+    private void OnApplicationsDirectoryChanged(object sender, FileSystemEventArgs e)
+    {
+        PopulateApplicationsList(ApplicationsFolderPath);
+    }
+
+    private void OnApplicationsDirectoryRenamed(object sender, RenamedEventArgs e)
+    {
+        PopulateApplicationsList(ApplicationsFolderPath);
+    }
+
+    private void LoadPreviousApplications()
+    {
+        ApplicationsFolderPath = SettingsService.GetApplicationsLocation();
+
+        if (!string.IsNullOrEmpty(ApplicationsFolderPath))
         {
-            Icons.Clear();
-            var icons = _iconService.GetIcons(folderPath); // Make sure this line calls the correct method for Swapper
-
-            foreach (var icon in icons)
-            {
-                if (Icons.Any(x => x.Path == icon.Path)) continue;
-                Icons.Add(icon);
-            }
-
-            FilterIcons();
-        }
-
-        public void ResetGui()
-        {
-            SelectedApplication = null;
-            SelectedIcon = null;
-            FilterIcons();
-            Applications.Clear();
             PopulateApplicationsList(ApplicationsFolderPath);
+            SetupApplicationsDirectoryWatcher();
         }
+    }
 
-        public void FilterIcons()
+    private void LoadPreviousIcons()
+    {
+        IconsFolderPath = SettingsService.GetIconsLocation();
+
+        if (!string.IsNullOrEmpty(IconsFolderPath))
         {
-            if (string.IsNullOrEmpty(_filterString))
-            {
-                FilteredIcons = new ObservableCollection<Icon>(Icons);
-            }
-            else
-            {
-                var filtered = Icons
-                    .Where(icon => icon.Name.Contains(_filterString, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-                FilteredIcons = new ObservableCollection<Icon>(filtered);
-            }
+            PopulateIconsList(IconsFolderPath);
+            SetupIconsDirectoryWatcher();
         }
+    }
 
-        public string FilterString
+    public void PopulateApplicationsList(string folderPath)
+    {
+        Applications.Clear();
+        var applications = _applicationService.GetApplications(folderPath);
+        foreach (var application in applications)
         {
-            get => _filterString;
-            set
-            {
-                if (_filterString == value) return;
-                _filterString = value;
-                OnPropertyChanged();
-                FilterIcons();
-            }
+            if (Applications.Any(x => x.Path == application.Path)) continue;
+            Applications.Add(application);
         }
+    }
 
-        public void UpdateSwapButtonEnabledState()
+    public void ResetGui()
+    {
+        var tempSelectedApplicationPath = SelectedApplication?.Path;
+        
+        Applications.Clear();
+        PopulateApplicationsList(ApplicationsFolderPath);
+        
+        if (tempSelectedApplicationPath != null)
         {
-            CanSwapIcons = SelectedApplication != null && SelectedIcon != null;
+            SelectedApplication = Applications.FirstOrDefault(app => app.Path == tempSelectedApplicationPath);
         }
+    }
 
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+    public void FilterIcons()
+    {
+        if (string.IsNullOrEmpty(_filterString))
         {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            FilteredIcons = new ObservableCollection<Icon>(Icons);
         }
-
-        protected bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
+        else
         {
-            if (EqualityComparer<T>.Default.Equals(field, value)) return false;
-            field = value;
-            OnPropertyChanged(propertyName);
-            if (propertyName == nameof(SelectedApplication) || propertyName == nameof(SelectedIcon))
-            {
-                UpdateSwapButtonEnabledState();
-            }
-
-            return true;
+            var filtered = Icons
+                .Where(icon => icon.Name.Contains(_filterString, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            FilteredIcons = new ObservableCollection<Icon>(filtered);
         }
+    }
 
-        public void Dispose()
-        {
-            _iconsDirectoryWatcher?.Dispose();
-        }
+    public void UpdateSwapButtonEnabledState()
+    {
+        CanSwapIcons = SelectedApplication != null && SelectedIcon != null;
+    }
+
+    protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    protected bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
+    {
+        if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+        field = value;
+        OnPropertyChanged(propertyName);
+        if (propertyName == nameof(SelectedApplication) || propertyName == nameof(SelectedIcon))
+            UpdateSwapButtonEnabledState();
+
+        return true;
     }
 }

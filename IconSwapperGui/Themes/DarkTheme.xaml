@@ -3,10 +3,11 @@
                     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
     <ResourceDictionary.MergedDictionaries>
         <materialDesign:BundledTheme BaseTheme="Dark" PrimaryColor="DeepPurple" SecondaryColor="Lime" />
-        <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
+        <ResourceDictionary
+            Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
         <ResourceDictionary Source="/UserControls/Styles/ToggleButtonStyles.xaml" />
     </ResourceDictionary.MergedDictionaries>
-    
+
     <Style TargetType="TextBlock">
         <Setter Property="Foreground" Value="White" />
     </Style>

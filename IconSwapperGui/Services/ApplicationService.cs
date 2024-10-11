@@ -1,42 +1,36 @@
-﻿using IWshRuntimeLibrary;
-using System.IO;
-using System.Windows;
+﻿using System.IO;
 using System.Text.RegularExpressions;
+using System.Windows;
 using IconSwapperGui.Interfaces;
-using Application = IconSwapperGui.Models.Application;
+using IWshRuntimeLibrary;
+using ApplicationModel = IconSwapperGui.Models.Application;
 
 namespace IconSwapperGui.Services;
 
 public class ApplicationService : IApplicationService
 {
-    private const string PublicDesktopPath = "C:\\Users\\Public\\Desktop";
-    
-    public IEnumerable<Application> GetApplications(string folderPath)
+    private const string PublicDesktopPath = @"C:\Users\Public\Desktop";
+    private readonly WshShell _shell;
+
+    public ApplicationService()
     {
-        var applications = new List<Application>();
+        _shell = new WshShell();
+    }
+
+    public IEnumerable<ApplicationModel> GetApplications(string folderPath)
+    {
+        var applications = new List<ApplicationModel>();
 
         try
         {
             if (!Directory.Exists(folderPath)) return applications;
 
-            var publicShortcutFiles = Directory.GetFiles(PublicDesktopPath, "*.lnk", SearchOption.AllDirectories);
-            var shortcutFiles = Directory.GetFiles(folderPath, "*.lnk", SearchOption.AllDirectories);
-            var steamShortcuts = Directory.GetFiles(folderPath, "*.url", SearchOption.AllDirectories);
-            shortcutFiles = shortcutFiles.Concat(publicShortcutFiles).Concat(steamShortcuts).ToArray();
-
-            foreach (var file in shortcutFiles)
-            {
-                var shell = new WshShell();
-
+            var allShortcuts = GetShortcutFiles(folderPath);
+            foreach (var file in allShortcuts)
                 if (Path.GetExtension(file).Equals(".url", StringComparison.CurrentCultureIgnoreCase))
-                {
                     CreateApplicationFromUrlFile(file, applications);
-                }
                 else
-                {
-                    CreateApplicationFromLnkFile(shell, file, applications);
-                }
-            }
+                    CreateApplicationFromLnkFile(file, applications);
         }
         catch (IOException ex)
         {
@@ -44,63 +38,74 @@ public class ApplicationService : IApplicationService
                 "Error Accessing Folder", MessageBoxButton.OK, MessageBoxImage.Error);
         }
 
-        return applications;
+        return applications.OrderBy(x => x.Name);
     }
 
-    private static void CreateApplicationFromLnkFile(WshShell shell, string file, List<Application> applications)
+    private IEnumerable<string> GetShortcutFiles(string folderPath)
     {
-        var shortcut = (IWshShortcut)shell.CreateShortcut(file);
+        var publicShortcutFiles = Directory.GetFiles(PublicDesktopPath, "*.lnk", SearchOption.AllDirectories);
+        var userShortcutFiles = Directory.GetFiles(folderPath, "*.lnk", SearchOption.AllDirectories);
+        var steamShortcutFiles = Directory.GetFiles(folderPath, "*.url", SearchOption.AllDirectories);
 
-        var iconPath = "";
-
-        if (!string.IsNullOrWhiteSpace(shortcut.IconLocation))
-        {
-            var iconLocationParts = shortcut.IconLocation.Split(',');
-
-            if (string.IsNullOrWhiteSpace(iconLocationParts[0]))
-            {
-                iconPath = shortcut.TargetPath;
-            }
-            else
-            {
-                iconPath = iconLocationParts.Length switch
-                {
-                    > 1 when int.TryParse(iconLocationParts[1], out var iconIndex) && iconIndex == 0 =>
-                        iconLocationParts[0],
-                    1 => shortcut.IconLocation,
-                    _ => iconPath
-                };
-            }
-        }
-
-        var app = new Application(Path.GetFileNameWithoutExtension(file), file, iconPath);
-                    
-        applications.Add(app);
+        return userShortcutFiles.Concat(publicShortcutFiles).Concat(steamShortcutFiles);
     }
 
-    private static void CreateApplicationFromUrlFile(string file, List<Application> applications)
+    private void CreateApplicationFromLnkFile(string file, List<ApplicationModel> applications)
     {
-        using var reader = new StreamReader(file);
-
-        var steamId = "";
-        var iconPath = "";
-
-        while (reader.ReadLine() is { } line)
+        try
         {
-            if (line.StartsWith("URL=steam://"))
-            {
-                steamId = line.Substring(11);
-            }
-            else if (line.StartsWith("IconFile="))
-            {
-                iconPath = Regex.Match(line, @"IconFile=(.*)").Groups[1].Value;
-            }
+            var shortcut = (IWshShortcut)_shell.CreateShortcut(file);
+            var iconPath = GetIconPathFromShortcut(shortcut);
+            var app = new ApplicationModel(Path.GetFileNameWithoutExtension(file), file, iconPath);
+
+            applications.Add(app);
         }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Failed to create application from link file: {file}\n{ex.Message}",
+                "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
 
-        if (string.IsNullOrEmpty(steamId)) return;
+    private static void CreateApplicationFromUrlFile(string file, List<ApplicationModel> applications)
+    {
+        try
+        {
+            using var reader = new StreamReader(file);
+            var steamId = string.Empty;
+            var iconPath = string.Empty;
 
-        var app = new Application(Path.GetFileNameWithoutExtension(file), file, iconPath);
+            while (reader.ReadLine() is { } line)
+                if (line.StartsWith("URL=steam://"))
+                    steamId = line.Substring(11);
+                else if (line.StartsWith("IconFile=")) iconPath = Regex.Match(line, @"IconFile=(.*)").Groups[1].Value;
 
-        applications.Add(app);
+            if (string.IsNullOrEmpty(steamId)) return;
+
+            var app = new ApplicationModel(Path.GetFileNameWithoutExtension(file), file, iconPath);
+            applications.Add(app);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Failed to create application from URL file: {file}\n{ex.Message}",
+                "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private string GetIconPathFromShortcut(IWshShortcut shortcut)
+    {
+        if (string.IsNullOrWhiteSpace(shortcut.IconLocation)) return string.Empty;
+
+        var iconLocationParts = shortcut.IconLocation.Split(',');
+
+        if (string.IsNullOrWhiteSpace(iconLocationParts[0])) return shortcut.TargetPath;
+
+        return iconLocationParts.Length switch
+        {
+            > 1 when int.TryParse(iconLocationParts[1], out var iconIndex) && iconIndex == 0 => iconLocationParts
+                [0],
+            1 => shortcut.IconLocation,
+            _ => string.Empty
+        };
     }
 }
