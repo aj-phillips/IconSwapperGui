@@ -4,10 +4,10 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using IconSwapperGui.Commands;
 using IconSwapperGui.Commands.Swapper;
+using IconSwapperGui.Commands.Swapper.ContextMenu;
 using IconSwapperGui.Interfaces;
 using IconSwapperGui.Models;
 using IconSwapperGui.Services;
-using Application = IconSwapperGui.Models.Application;
 
 namespace IconSwapperGui.ViewModels;
 
@@ -50,6 +50,10 @@ public class SwapperViewModel : ViewModel, IIconViewModel, INotifyPropertyChange
         ChooseApplicationShortcutFolderCommand = new ChooseApplicationShortcutFolderCommand(this, null!, x => true);
         ChooseIconFolderCommand = new ChooseIconFolderCommand<SwapperViewModel>(this, null!, x => true);
         SwapCommand = new SwapCommand(this, null!, x => true);
+        CopyPathContextCommand = new CopyPathContextCommand(this);
+        DeleteIconContextCommand = new DeleteIconContextCommand(this);
+        DuplicateIconContextCommand = new DuplicateIconContextCommand(this);
+        OpenExplorerContextCommand = new OpenExplorerContextCommand(this);
 
         LoadPreviousApplications();
         LoadPreviousIcons();
@@ -112,6 +116,10 @@ public class SwapperViewModel : ViewModel, IIconViewModel, INotifyPropertyChange
     public RelayCommand ChooseApplicationShortcutFolderCommand { get; }
     public RelayCommand ChooseIconFolderCommand { get; }
     public RelayCommand SwapCommand { get; }
+    public RelayCommand CopyPathContextCommand { get; }
+    public RelayCommand DeleteIconContextCommand { get; }
+    public RelayCommand DuplicateIconContextCommand { get; }
+    public RelayCommand OpenExplorerContextCommand { get; }
 
     public string ApplicationsFolderPath
     {
@@ -182,7 +190,11 @@ public class SwapperViewModel : ViewModel, IIconViewModel, INotifyPropertyChange
         foreach (var icon in icons)
         {
             if (Icons.Any(x => x.Path == icon.Path)) continue;
-            Icons.Add(icon);
+            
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                Icons.Add(icon);
+            });
         }
 
         FilterIcons();
@@ -208,7 +220,7 @@ public class SwapperViewModel : ViewModel, IIconViewModel, INotifyPropertyChange
 
     private void OnIconsDirectoryChanged(object sender, FileSystemEventArgs e)
     {
-        PopulateIconsList(IconsFolderPath);
+        System.Windows.Application.Current.Dispatcher.Invoke(() => PopulateIconsList(IconsFolderPath));
     }
 
     private void OnIconsDirectoryRenamed(object sender, RenamedEventArgs e)
