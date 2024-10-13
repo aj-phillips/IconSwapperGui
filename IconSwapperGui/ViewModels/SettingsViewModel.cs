@@ -104,7 +104,7 @@ public class SettingsViewModel : ViewModel
         var themeUri = IsDarkModeEnabled == true
             ? new Uri("pack://application:,,,/Themes/DarkTheme.xaml")
             : new Uri("pack://application:,,,/Themes/LightTheme.xaml");
-
+        
         Application.Current.Resources.MergedDictionaries.Clear();
         Application.Current.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = themeUri });
     }
