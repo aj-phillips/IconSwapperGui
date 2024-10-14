@@ -14,4 +14,10 @@
     <Style TargetType="Control">
         <Setter Property="Foreground" Value="White" />
     </Style>
+    
+    <Style TargetType="ToolTip">
+        <Setter Property="Background" Value="DarkSlateGray"></Setter>
+        <Setter Property="Foreground" Value="White"></Setter>
+        <Setter Property="Placement" Value="Center"></Setter>
+    </Style>
 </ResourceDictionary>
