@@ -15,6 +15,9 @@
         <TabItem Header="Converter">
             <userControls:ConverterUserControl />
         </TabItem>
+        <TabItem Header="Pixel Art Editor">
+            <userControls:PixelArtEditorUserControl />
+        </TabItem>
         <TabItem Header="Settings">
             <userControls:SettingsUserControl />
         </TabItem>

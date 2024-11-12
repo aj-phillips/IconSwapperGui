@@ -1,0 +1,114 @@
+<UserControl x:Class="IconSwapperGui.UserControls.PixelArtEditorUserControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:viewModels="clr-namespace:IconSwapperGui.ViewModels"
+             xmlns:helpers="clr-namespace:IconSwapperGui.Helpers"
+             mc:Ignorable="d"
+             d:DesignHeight="540" d:DesignWidth="995"
+             Loaded="UserControl_Loaded">
+
+    <UserControl.DataContext>
+        <viewModels:PixelArtEditorViewModel/>
+    </UserControl.DataContext>
+    
+    <Grid Margin="20">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*" />
+            <ColumnDefinition Width="5*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Settings Column -->
+        <materialDesign:Card Grid.Column="0" Margin="10" materialDesign:ElevationAssist.Elevation="Dp3">
+            <StackPanel>
+                <TextBlock Text="Settings"
+                           FontSize="16"
+                           Margin="10,10,10,5"
+                           HorizontalAlignment="Center"
+                           Style="{DynamicResource MaterialDesignHeadline6TextBlockStyle}" />
+
+                <!-- Grid Customization -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
+                    <StackPanel Orientation="Vertical">
+                        <TextBlock Text="Rows:" Margin="5" HorizontalAlignment="Center" />
+                        <TextBox Width="50" Text="{Binding Rows}" Margin="5"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Vertical">
+                        <TextBlock Text="Columns:" Margin="5" HorizontalAlignment="Center" />
+                        <TextBox Width="50" Text="{Binding Columns}" Margin="5"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}" />
+                    </StackPanel>
+                </StackPanel>
+                
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
+                    <StackPanel Orientation="Vertical">
+                        <Button
+                            Command="{Binding ApplyLayoutCommand}"
+                                Margin="10"
+                                Style="{StaticResource MaterialDesignRaisedDarkButton}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon Kind="TickCircle" Grid.Column="0" VerticalAlignment="Center"
+                                                         Margin="0,0,5,0" />
+                                <TextBlock Text="Apply Layout" Grid.Column="1" VerticalAlignment="Center"
+                                           HorizontalAlignment="Center" Foreground="White" />
+                            </Grid>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Color Picker -->
+                <StackPanel Orientation="Horizontal" Margin="10" HorizontalAlignment="Center">
+                    <TextBlock Text="Selected Color:" Margin="5" VerticalAlignment="Center" />
+                    <!-- Button to open the color picker dialog -->
+                    <StackPanel Orientation="Vertical" Margin="10">
+                        <xctk:ColorPicker SelectedColor="{Binding SelectedColor}"
+                                          Width="100" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Export Button -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
+                    <StackPanel Orientation="Vertical">
+                        <Button
+                            Command="{Binding ExportIconCommand}"
+                            Margin="10"
+                            Style="{StaticResource MaterialDesignRaisedDarkButton}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon Kind="Export" Grid.Column="0" VerticalAlignment="Center"
+                                                         Margin="0,0,5,0" />
+                                <TextBlock Text="Export Icon" Grid.Column="1" VerticalAlignment="Center"
+                                           HorizontalAlignment="Center" Foreground="White" />
+                            </Grid>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </materialDesign:Card>
+
+        <!-- Drawing Grid Column -->
+        <materialDesign:Card Grid.Column="1" Margin="10" materialDesign:ElevationAssist.Elevation="Dp3">
+            <StackPanel>
+                <TextBlock Text="Drawing Grid" FontSize="16" Margin="10" HorizontalAlignment="Center"
+                           Style="{DynamicResource MaterialDesignHeadline6TextBlockStyle}" />
+                <Canvas x:Name="DrawableCanvas" Margin="10" Height="400px" Background="White"
+                        MouseLeftButtonDown="DrawableCanvas_MouseDown"
+                        MouseMove="DrawableCanvas_MouseMove"
+                        MouseRightButtonDown="DrawableCanvas_MouseRightButtonDown"
+                        DataContext="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}"
+                        helpers:CanvasHelper.Canvas="{Binding DrawableCanvas, RelativeSource={RelativeSource AncestorType=viewModels:PixelArtEditorViewModel}}" />
+            </StackPanel>
+        </materialDesign:Card>
+    </Grid>
+</UserControl>
