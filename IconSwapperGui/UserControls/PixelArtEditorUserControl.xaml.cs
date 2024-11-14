@@ -12,6 +12,7 @@ namespace IconSwapperGui.UserControls
         public PixelArtEditorUserControl()
         {
             InitializeComponent();
+            DataContext = new PixelArtEditorViewModel();
         }
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
@@ -24,7 +25,7 @@ namespace IconSwapperGui.UserControls
             }
         }
 
-        private void HandleMouseEvent(MouseEventArgs e, ICommand command)
+        private void HandleEvent(EventArgs e, ICommand command)
         {
             if (command != null && command.CanExecute(e))
             {
@@ -34,17 +35,22 @@ namespace IconSwapperGui.UserControls
 
         private void DrawableCanvas_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            HandleMouseEvent(e, _viewModel?.DrawableCanvasMouseLeftButtonDownCommand);
+            HandleEvent(e, _viewModel?.DrawableCanvasMouseLeftButtonDownCommand);
         }
 
         private void DrawableCanvas_MouseMove(object sender, MouseEventArgs e)
         {
-            HandleMouseEvent(e, _viewModel?.DrawableCanvasMouseMoveCommand);
+            HandleEvent(e, _viewModel?.DrawableCanvasMouseMoveCommand);
         }
 
         private void DrawableCanvas_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
-            HandleMouseEvent(e, _viewModel?.DrawableCanvasMouseRightButtonDownCommand);
+            HandleEvent(e, _viewModel?.DrawableCanvasMouseRightButtonDownCommand);
+        }
+        
+        private void ZoomSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            HandleEvent(e, _viewModel?.ZoomSliderValueChangedCommand);
         }
     }
 }
