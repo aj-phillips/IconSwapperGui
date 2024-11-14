@@ -32,12 +32,21 @@ jobs:
         run: |
           powershell Compress-Archive -Path "./publish/IconSwapperGui.exe, ./publish/IconSwapperGui.Updater.exe" -DestinationPath ./IconSwapperGuiBundle.zip
 
+      - name: Upload ZIP as Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: IconSwapperGuiBundle
+          path: ./IconSwapperGuiBundle.zip
+
       - name: Get Assembly Version from version.json
         id: version
         run: |
           $json = Get-Content ./version.json | ConvertFrom-Json
           $version = $json.LatestVersion
-          echo "::set-output name=version::$version"
+          echo "version=$version" >> $GITHUB_ENV
+        shell: bash
+        env:
+          GITHUB_ENV: $GITHUB_ENV
 
   release:
     runs-on: ubuntu-latest
@@ -50,6 +59,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Download ZIP Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: IconSwapperGuiBundle
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -61,9 +75,6 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: List files in the publish directory
-        run: dir ./publish
-
       - name: Upload ZIP to Release
         uses: actions/upload-release-asset@v1
         with:
@@ -71,11 +82,3 @@ jobs:
           asset_path: ./IconSwapperGuiBundle.zip
           asset_name: IconSwapperGuiBundle.zip
           asset_content_type: application/zip
-
-      - name: Upload IconSwapperGui exe to Release
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./publish/IconSwapperGui.exe
-          asset_name: IconSwapperGui.exe
-          asset_content_type: application/octet-stream
