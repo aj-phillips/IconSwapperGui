@@ -40,13 +40,11 @@ jobs:
 
       - name: Get Assembly Version from version.json
         id: version
+        shell: pwsh
         run: |
           $json = Get-Content ./version.json | ConvertFrom-Json
           $version = $json.LatestVersion
-          echo "version=$version" >> $GITHUB_ENV
-        shell: bash
-        env:
-          GITHUB_ENV: $GITHUB_ENV
+          echo "version=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
 
   release:
     runs-on: ubuntu-latest
