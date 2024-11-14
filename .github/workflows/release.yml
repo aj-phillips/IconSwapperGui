@@ -22,7 +22,7 @@ jobs:
         run: dir
 
       - name: Restore dependencies
-        run: dotnet restore "./IconSwapperGui/IconSwapperGui/IconSwapperGui.sln"
+        run: dotnet restore "./IconSwapperGui/IconSwapperGui.sln"
 
       - name: Build and Publish application
         run: |
