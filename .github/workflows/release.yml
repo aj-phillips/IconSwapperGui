@@ -18,12 +18,15 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
+      - name: List Directory
+        run: dir
+
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore "./IconSwapperGui/IconSwapperGui.sln"
 
       - name: Build and Publish application
         run: |
-          dotnet publish -r win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true --configuration Release --no-self-contained --output ./publish
+          dotnet publish "./IconSwapperGui/IconSwapperGui.sln" -r win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true --configuration Release --no-self-contained --output ./publish
 
       - name: Zip executables
         run: |
@@ -34,7 +37,7 @@ jobs:
         run: |
           $json = Get-Content ./version.json | ConvertFrom-Json
           $version = $json.LatestVersion
-          echo "::set-output name=version::$version"
+          echo "version=$version" >> $GITHUB_ENV
 
   release:
     runs-on: ubuntu-latest
@@ -51,8 +54,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ steps.version.outputs.version }}
-          release_name: v${{ steps.version.outputs.version }}
+          tag_name: v${{ env.version }}
+          release_name: v${{ env.version }}
           draft: false
           prerelease: false
 
