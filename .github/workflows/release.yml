@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}  # Define 'version' as an output for the build job
 
     steps:
       - name: Checkout code
@@ -44,14 +46,12 @@ jobs:
         run: |
           $json = Get-Content ./version.json | ConvertFrom-Json
           $version = $json.LatestVersion
-          echo "version=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
+          echo "::set-output name=version::$version"  # Set version as an output of this step
 
   release:
     runs-on: ubuntu-latest
     needs: build
     if: github.ref == 'refs/heads/main'
-    env:
-      version: ${{ needs.build.outputs.version }}
 
     steps:
       - name: Checkout code
