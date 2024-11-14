@@ -20,6 +20,10 @@
 
     <ItemGroup>
         <Content Include="favicon.ico"/>
+        <None Remove="IWshRuntimeLibrary.dll" />
+        <Content Include="IWshRuntimeLibrary.dll">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
     </ItemGroup>
 
     <ItemGroup>
@@ -29,12 +33,6 @@
         <PackageReference Include="Newtonsoft.Json" Version="13.0.1"/>
         <PackageReference Include="System.Drawing.Common" Version="8.0.8"/>
         <PackageReference Include="WindowsAPICodePack" Version="8.0.4"/>
-    </ItemGroup>
-
-    <ItemGroup>
-      <None Update="IWshRuntimeLibrary.dll">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
     </ItemGroup>
 
 </Project>
