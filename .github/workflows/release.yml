@@ -19,7 +19,7 @@ jobs:
           dotnet-version: 8.0.x
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore "D:\a\IconSwapperGui\IconSwapperGui\IconSwapperGui.sln"
 
       - name: Build and Publish application
         run: |
