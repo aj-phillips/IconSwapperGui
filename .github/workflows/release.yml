@@ -40,6 +40,12 @@ jobs:
           name: IconSwapperGuiBundle
           path: ./IconSwapperGuiBundle.zip
 
+      - name: Upload EXE as Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: IconSwapperGui
+          path: ./publish/IconSwapperGui.exe
+
       - name: Get Assembly Version from version.json
         id: version
         shell: pwsh
@@ -61,6 +67,11 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: IconSwapperGuiBundle
+
+      - name: Download EXE Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: IconSwapperGui
 
       - name: Create Release
         id: create_release
@@ -89,6 +100,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./publish/IconSwapperGui.exe
+          asset_path: ./IconSwapperGui.exe
           asset_name: IconSwapperGui.exe
           asset_content_type: application/octet-stream
