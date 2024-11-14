@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using IconSwapperGui.ViewModels;
 
 namespace IconSwapperGui.Helpers;
@@ -31,6 +32,23 @@ public static class CanvasHelper
         if (viewModel != null)
         {
             viewModel.DrawableCanvas = canvas;
+        }
+    }
+    
+    public static void GetDpi(Canvas canvas, out double dpiX, out double dpiY)
+    {
+        var source = PresentationSource.FromVisual(canvas);
+
+        if (source?.CompositionTarget != null)
+        {
+            Matrix transformToDevice = source.CompositionTarget.TransformToDevice;
+            dpiX = transformToDevice.M11 * 96;
+            dpiY = transformToDevice.M22 * 96;
+        }
+        else
+        {
+            dpiX = 96;
+            dpiY = 96;
         }
     }
 }
