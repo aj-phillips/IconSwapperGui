@@ -31,4 +31,10 @@
         <PackageReference Include="WindowsAPICodePack" Version="8.0.4"/>
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="IWshRuntimeLibrary.dll">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>
