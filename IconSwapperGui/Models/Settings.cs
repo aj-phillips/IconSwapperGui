@@ -7,4 +7,5 @@ public class Settings
     public string? ApplicationsLocation { get; set; }
     public bool? EnableDarkMode { get; set; }
     public bool? EnableLaunchAtStartup { get; set; }
+    public bool? EnableAutoUpdate { get; set; }
 }

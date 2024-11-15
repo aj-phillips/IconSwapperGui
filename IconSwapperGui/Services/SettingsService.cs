@@ -54,6 +54,11 @@ public class SettingsService : ISettingsService
     {
         UpdateSettingsProperty((settings, value) => settings.EnableLaunchAtStartup = value, enableLaunchAtStartup);
     }
+    
+    public void SaveEnableAutoUpdate(bool? enableAutoUpdate)
+    {
+        UpdateSettingsProperty((settings, value) => settings.EnableAutoUpdate = value, enableAutoUpdate);
+    }
 
     public string? GetApplicationsLocation()
     {
@@ -68,6 +73,11 @@ public class SettingsService : ISettingsService
     public string? GetConverterIconsLocation()
     {
         return GetSettingsFieldValue<string>("ConverterIconLocation");
+    }
+    
+    public bool? GetAutoUpdateValue()
+    {
+        return GetSettingsFieldValue<bool>("EnableAutoUpdate");
     }
 
     private static string GetSettingsFilePath()
@@ -89,7 +99,8 @@ public class SettingsService : ISettingsService
             ConverterIconLocation = "",
             ApplicationsLocation = "",
             EnableDarkMode = false,
-            EnableLaunchAtStartup = false
+            EnableLaunchAtStartup = false,
+            EnableAutoUpdate = true
         };
     }
 
@@ -115,6 +126,7 @@ public class SettingsService : ISettingsService
         settings.ApplicationsLocation ??= "";
         settings.EnableDarkMode ??= false;
         settings.EnableLaunchAtStartup ??= false;
+        settings.EnableAutoUpdate ??= true;
 
         SaveSettings(settings);
     }

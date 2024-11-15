@@ -11,8 +11,10 @@ public interface ISettingsService
     void SaveApplicationsLocation(string? applicationsPath);
     void SaveEnableDarkMode(bool? enableDarkMode);
     void SaveEnableLaunchAtStartup(bool? enableLaunchAtStartup);
+    void SaveEnableAutoUpdate(bool? enableAutoUpdate);
 
     string? GetApplicationsLocation();
     string? GetIconsLocation();
     string? GetConverterIconsLocation();
+    bool? GetAutoUpdateValue();
 }

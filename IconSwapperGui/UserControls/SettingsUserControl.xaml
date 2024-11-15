@@ -36,6 +36,13 @@
                                   IsChecked="{Binding IsLaunchAtStartupEnabled, Mode=TwoWay}"
                                   Style="{StaticResource iOSToggleButton}"
                                   Command="{Binding ToggleLaunchAtStartupCommand}" />
+                        
+                        <!-- Auto Update -->
+                        <CheckBox x:Name="AutoUpdateToggle" Content="Auto Update"
+                                  Margin="20,0,0,0"
+                                  IsChecked="{Binding IsAutoUpdateEnabled, Mode=TwoWay}"
+                                  Style="{StaticResource iOSToggleButton}"
+                                  Command="{Binding ToggleAutoUpdateCommand}" />
                     </StackPanel>
                 </StackPanel>
             </materialDesign:Card>

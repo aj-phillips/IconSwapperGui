@@ -14,7 +14,7 @@ public partial class MainWindow : Window
     private const string AppName = "IconSwapperGui";
 
     private readonly string _currentVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
-    private readonly ISettingsService _settingsService;
+    private readonly SettingsService _settingsService;
 
     public MainWindow()
     {
@@ -28,7 +28,8 @@ public partial class MainWindow : Window
         RegisterInStartup();
 
         var args = Environment.GetCommandLineArgs();
-        if (!Debugger.IsAttached && !args.Contains("--updated")) CheckForUpdates();
+        if (!Debugger.IsAttached && !args.Contains("--updated") && _settingsService.GetAutoUpdateValue() == true)
+            CheckForUpdates();
     }
 
     private static Assembly OnResolveAssembly(object sender, ResolveEventArgs args)
