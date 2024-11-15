@@ -15,15 +15,19 @@ public class SettingsViewModel : ViewModel
     private bool? _isDarkModeEnabled;
 
     private bool? _isLaunchAtStartupEnabled;
+    
+    private bool? _isAutoUpdateEnabled;
 
     public SettingsViewModel(ISettingsService settingsService)
     {
         SettingsService = settingsService;
         _isDarkModeEnabled = SettingsService?.GetSettingsFieldValue<bool>("EnableDarkMode");
         _isLaunchAtStartupEnabled = SettingsService?.GetSettingsFieldValue<bool>("EnableLaunchAtStartup");
+        _isAutoUpdateEnabled = SettingsService?.GetSettingsFieldValue<bool>("EnableAutoUpdate");
 
         ToggleDarkModeCommand = new RelayCommand(param => ToggleDarkMode());
         ToggleLaunchAtStartupCommand = new RelayCommand(param => ToggleLaunchAtStartup());
+        ToggleAutoUpdateCommand = new RelayCommand(param => ToggleAutoUpdate());
 
         ApplyTheme();
     }
@@ -57,9 +61,23 @@ public class SettingsViewModel : ViewModel
             }
         }
     }
+    
+    public bool? IsAutoUpdateEnabled
+    {
+        get => _isAutoUpdateEnabled;
+        set
+        {
+            if (_isAutoUpdateEnabled != value)
+            {
+                _isAutoUpdateEnabled = value;
+                OnPropertyChanged();
+            }
+        }
+    }
 
     public RelayCommand ToggleDarkModeCommand { get; }
     public RelayCommand ToggleLaunchAtStartupCommand { get; }
+    public RelayCommand ToggleAutoUpdateCommand { get; }
 
     public void ToggleDarkMode()
     {
@@ -76,6 +94,14 @@ public class SettingsViewModel : ViewModel
         {
             SettingsService.SaveEnableLaunchAtStartup(IsLaunchAtStartupEnabled.Value);
             UpdateLaunchAtStartupRegistry(IsLaunchAtStartupEnabled.Value);
+        }
+    }
+    
+    public void ToggleAutoUpdate()
+    {
+        if (IsAutoUpdateEnabled.HasValue)
+        {
+            SettingsService.SaveEnableAutoUpdate(IsAutoUpdateEnabled.Value);
         }
     }
 
