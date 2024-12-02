@@ -9,19 +9,16 @@ jobs:
   build:
     runs-on: windows-latest
     outputs:
-      version: ${{ steps.version.outputs.version }}  # Define 'version' as an output for the build job
+      version: ${{ steps.version.outputs.version }}
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup .NET 8
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
-
-      - name: List Directory
-        run: dir
 
       - name: Restore dependencies
         run: dotnet restore "./IconSwapperGui/IconSwapperGui.sln"
@@ -35,16 +32,18 @@ jobs:
           powershell Compress-Archive -Path "./publish/IconSwapperGui.exe, ./publish/IconSwapperGui.Updater.exe" -DestinationPath ./IconSwapperGuiBundle.zip
 
       - name: Upload ZIP as Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: IconSwapperGuiBundle
           path: ./IconSwapperGuiBundle.zip
+          overwrite: true
 
       - name: Upload EXE as Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: IconSwapperGui
           path: ./publish/IconSwapperGui.exe
+          overwrite: true
 
       - name: Get Assembly Version from version.json
         id: version
@@ -52,7 +51,7 @@ jobs:
         run: |
           $json = Get-Content ./version.json | ConvertFrom-Json
           $version = $json.LatestVersion
-          echo "::set-output name=version::$version"  # Set version as an output of this step
+          echo "version=$version" >> $GITHUB_OUTPUT
 
   release:
     runs-on: ubuntu-latest
@@ -61,45 +60,27 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Download ZIP Artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: IconSwapperGuiBundle
 
       - name: Download EXE Artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: IconSwapperGui
 
       - name: Create Release
         id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ needs.build.outputs.version }}
-          release_name: v${{ needs.build.outputs.version }}
+          name: v${{ needs.build.outputs.version }}
+          generate_release_notes: true
           draft: false
           prerelease: false
-
-      - name: Upload ZIP to Release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./IconSwapperGuiBundle.zip
-          asset_name: IconSwapperGuiBundle.zip
-          asset_content_type: application/zip
-
-      - name: Upload IconSwapperGui exe to Release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./IconSwapperGui.exe
-          asset_name: IconSwapperGui.exe
-          asset_content_type: application/octet-stream
+          files: |
+            ./IconSwapperGuiBundle.zip
+            ./IconSwapperGui.exe
