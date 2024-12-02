@@ -7,7 +7,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <UseWPF>true</UseWPF>
         <ApplicationIcon>favicon.ico</ApplicationIcon>
-        <Version>1.7.1</Version>
+        <Version>1.7.2</Version>
         <Authors>Adam Phillips</Authors>
     </PropertyGroup>
 
@@ -20,14 +20,14 @@
 
     <ItemGroup>
         <Content Include="favicon.ico"/>
-        <None Remove="IWshRuntimeLibrary.dll" />
+        <None Remove="IWshRuntimeLibrary.dll"/>
         <Content Include="IWshRuntimeLibrary.dll">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Extended.Wpf.Toolkit" Version="4.6.1" />
+        <PackageReference Include="Extended.Wpf.Toolkit" Version="4.6.1"/>
         <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="14.0.0"/>
         <PackageReference Include="MaterialDesignThemes" Version="5.1.0"/>
         <PackageReference Include="Newtonsoft.Json" Version="13.0.1"/>
