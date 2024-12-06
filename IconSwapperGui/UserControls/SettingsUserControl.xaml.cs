@@ -1,12 +1,11 @@
 using System.Diagnostics;
 using System.Windows;
-using System.Windows.Controls;
 using IconSwapperGui.Services;
 using IconSwapperGui.ViewModels;
 
 namespace IconSwapperGui.UserControls;
 
-public partial class SettingsUserControl : UserControl
+public partial class SettingsUserControl
 {
     public SettingsUserControl()
     {
@@ -29,7 +28,7 @@ public partial class SettingsUserControl : UserControl
         OpenWebsite("https://github.com/aj-phillips/IconSwapperGui/issues/new/choose");
     }
 
-    private void OpenWebsite(string url)
+    private static void OpenWebsite(string url)
     {
         try
         {

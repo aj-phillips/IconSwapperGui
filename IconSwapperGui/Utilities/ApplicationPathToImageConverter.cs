@@ -17,7 +17,7 @@ public class ApplicationPathToImageConverter : IValueConverter
             return null;
 
         var shellFile = ShellFile.FromFilePath(path);
-        var shellThumbnail = shellFile.Thumbnail.ExtraLargeBitmapSource;
+        var shellThumbnail = shellFile.Thumbnail?.ExtraLargeBitmapSource;
 
         if (shellThumbnail == null)
             return null;

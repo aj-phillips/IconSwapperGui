@@ -6,6 +6,7 @@
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:utilities="clr-namespace:IconSwapperGui.Utilities"
              mc:Ignorable="d" Height="540" Width="995">
+
     <UserControl.Resources>
         <utilities:IconPathToImageConverter x:Key="IconPathToImageConverter" />
         <utilities:ApplicationPathToImageConverter x:Key="ApplicationPathToImageConverter" />

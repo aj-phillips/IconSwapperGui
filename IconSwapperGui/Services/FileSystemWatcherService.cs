@@ -5,9 +5,9 @@ namespace IconSwapperGui.Services;
 
 public class FileSystemWatcherService : IFileSystemWatcherService
 {
-    private readonly FileSystemWatcher _fileSystemWatcher;
+    private readonly FileSystemWatcher? _fileSystemWatcher;
 
-    public FileSystemWatcherService(string path, Action<object, FileSystemEventArgs> onChanged,
+    public FileSystemWatcherService(string? path, Action<object, FileSystemEventArgs> onChanged,
         Action<object, RenamedEventArgs> onRenamed)
     {
         if (string.IsNullOrWhiteSpace(path) || !Directory.Exists(path))

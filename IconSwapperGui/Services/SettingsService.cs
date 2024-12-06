@@ -131,7 +131,7 @@ public class SettingsService : ISettingsService
         SaveSettings(settings);
     }
 
-    public void SaveSettings(Settings settings)
+    private void SaveSettings(Settings settings)
     {
         var settingsData = SerializeSettings(settings);
         File.WriteAllText(_settingsFilePath, settingsData);

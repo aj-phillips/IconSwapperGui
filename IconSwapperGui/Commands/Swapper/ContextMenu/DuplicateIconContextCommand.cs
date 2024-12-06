@@ -7,7 +7,7 @@ public class DuplicateIconContextCommand : RelayCommand
 {
     private readonly SwapperViewModel _viewModel;
 
-    public DuplicateIconContextCommand(SwapperViewModel viewModel, Action<object> execute = null,
+    public DuplicateIconContextCommand(SwapperViewModel viewModel, Action<object> execute = null!,
         Func<object, bool>? canExecute = null)
         : base(execute, canExecute)
     {
@@ -23,14 +23,14 @@ public class DuplicateIconContextCommand : RelayCommand
         var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(_viewModel.SelectedIcon.Path);
         var extension = Path.GetExtension(_viewModel.SelectedIcon.Path);
         var newFileName = $"{fileNameWithoutExtension} - Copy{extension}";
-        var newFilePath = Path.Combine(directory, newFileName);
+        var newFilePath = Path.Combine(directory!, newFileName);
 
         var count = 1;
 
         while (File.Exists(newFilePath))
         {
             newFileName = $"{fileNameWithoutExtension} - Copy ({count++}){extension}";
-            newFilePath = Path.Combine(directory, newFileName);
+            newFilePath = Path.Combine(directory!, newFileName);
         }
 
         File.Copy(_viewModel.SelectedIcon.Path, newFilePath);

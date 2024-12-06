@@ -8,7 +8,7 @@ public class OpenExplorerContextCommand : RelayCommand
 {
     private readonly SwapperViewModel _viewModel;
 
-    public OpenExplorerContextCommand(SwapperViewModel viewModel, Action<object> execute = null,
+    public OpenExplorerContextCommand(SwapperViewModel viewModel, Action<object> execute = null!,
         Func<object, bool>? canExecute = null)
         : base(execute, canExecute)
     {

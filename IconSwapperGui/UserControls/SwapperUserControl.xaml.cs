@@ -1,10 +1,9 @@
-using System.Windows.Controls;
 using IconSwapperGui.Services;
 using IconSwapperGui.ViewModels;
 
 namespace IconSwapperGui.UserControls;
 
-public partial class SwapperUserControl : UserControl
+public partial class SwapperUserControl
 {
     public SwapperUserControl()
     {

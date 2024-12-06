@@ -7,7 +7,7 @@ public class CopyPathContextCommand : RelayCommand
 {
     private readonly SwapperViewModel _viewModel;
 
-    public CopyPathContextCommand(SwapperViewModel viewModel, Action<object> execute = null,
+    public CopyPathContextCommand(SwapperViewModel viewModel, Action<object> execute = null!,
         Func<object, bool>? canExecute = null)
         : base(execute, canExecute)
     {

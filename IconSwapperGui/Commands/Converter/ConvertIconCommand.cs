@@ -18,11 +18,14 @@ public class ConvertIconCommand : RelayCommand
 
     public override void Execute(object? parameter)
     {
-        var directoryInfo = new DirectoryInfo(_viewModel.IconsFolderPath);
+        if (_viewModel.IconsFolderPath != null)
+        {
+            var directoryInfo = new DirectoryInfo(_viewModel.IconsFolderPath);
 
-        foreach (var extension in SupportedExtensions)
-        foreach (var file in directoryInfo.GetFiles(extension, SearchOption.TopDirectoryOnly))
-            ProcessFile(file);
+            foreach (var extension in SupportedExtensions)
+            foreach (var file in directoryInfo.GetFiles(extension, SearchOption.TopDirectoryOnly))
+                ProcessFile(file);
+        }
 
         NotifyCompletion();
     }
@@ -69,7 +72,7 @@ public class ConvertIconCommand : RelayCommand
         collection.Write(targetIconPath, MagickFormat.Icon);
     }
 
-    private void HandleException(FileInfo file, Exception ex)
+    private static void HandleException(FileInfo file, Exception ex)
     {
         var errorType = ex is MagickException
             ? "Failed to convert image to icon"

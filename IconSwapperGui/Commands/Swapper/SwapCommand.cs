@@ -20,37 +20,44 @@ public class SwapCommand : RelayCommand
 
     public override async void Execute(object? parameter)
     {
-        if (_viewModel.SelectedApplication == null || _viewModel.SelectedIcon == null)
-        {
-            _viewModel.DialogService.ShowWarning("Please select an application and an icon to swap.",
-                "No Application or Icon Selected");
-            return;
-        }
-
         try
         {
-            var extension = Path.GetExtension(_viewModel.SelectedApplication.Path).ToLower();
-
-            switch (extension)
+            if (_viewModel.SelectedApplication == null || _viewModel.SelectedIcon == null)
             {
-                case ".lnk":
-                    _lnkIconSwapper.Swap(_viewModel.SelectedApplication.Path, _viewModel.SelectedIcon.Path,
-                        _viewModel.SelectedApplication.Name);
-                    break;
-                case ".url":
-                    _urlIconSwapper.Swap(_viewModel.SelectedApplication.Path, _viewModel.SelectedIcon.Path);
-                    break;
+                _viewModel.DialogService.ShowWarning("Please select an application and an icon to swap.",
+                    "No Application or Icon Selected");
+                return;
             }
 
-            await _viewModel.ShowSuccessTick();
+            try
+            {
+                var extension = Path.GetExtension(_viewModel.SelectedApplication.Path).ToLower();
 
-            _viewModel.ResetGui();
+                switch (extension)
+                {
+                    case ".lnk":
+                        _lnkIconSwapper.Swap(_viewModel.SelectedApplication.Path, _viewModel.SelectedIcon.Path,
+                            _viewModel.SelectedApplication.Name);
+                        break;
+                    case ".url":
+                        _urlIconSwapper.Swap(_viewModel.SelectedApplication.Path, _viewModel.SelectedIcon.Path);
+                        break;
+                }
+
+                await _viewModel.ShowSuccessTick();
+
+                _viewModel.ResetGui();
+            }
+            catch (Exception ex)
+            {
+                _viewModel.DialogService.ShowError(
+                    $"An error occurred while swapping the icon for {_viewModel.SelectedApplication.Name}: {ex.Message}",
+                    "Error Swapping Icon");
+            }
         }
-        catch (Exception ex)
+        catch (Exception e)
         {
-            _viewModel.DialogService.ShowError(
-                $"An error occurred while swapping the icon for {_viewModel.SelectedApplication.Name}: {ex.Message}",
-                "Error Swapping Icon");
+            _viewModel.DialogService.ShowError(e.Message, "Error");
         }
     }
 }
