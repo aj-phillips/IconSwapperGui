@@ -2,7 +2,6 @@
 using System.IO;
 using System.Reflection;
 using System.Windows;
-using IconSwapperGui.Interfaces;
 using IconSwapperGui.Services;
 using Microsoft.Win32;
 

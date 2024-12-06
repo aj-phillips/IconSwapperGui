@@ -12,11 +12,11 @@ public class SettingsViewModel : ViewModel
     private const string StartupKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
     private const string AppName = "IconSwapperGui";
 
+    private bool? _isAutoUpdateEnabled;
+
     private bool? _isDarkModeEnabled;
 
     private bool? _isLaunchAtStartupEnabled;
-    
-    private bool? _isAutoUpdateEnabled;
 
     public SettingsViewModel(ISettingsService settingsService)
     {
@@ -61,7 +61,7 @@ public class SettingsViewModel : ViewModel
             }
         }
     }
-    
+
     public bool? IsAutoUpdateEnabled
     {
         get => _isAutoUpdateEnabled;
@@ -96,13 +96,10 @@ public class SettingsViewModel : ViewModel
             UpdateLaunchAtStartupRegistry(IsLaunchAtStartupEnabled.Value);
         }
     }
-    
+
     public void ToggleAutoUpdate()
     {
-        if (IsAutoUpdateEnabled.HasValue)
-        {
-            SettingsService.SaveEnableAutoUpdate(IsAutoUpdateEnabled.Value);
-        }
+        if (IsAutoUpdateEnabled.HasValue) SettingsService.SaveEnableAutoUpdate(IsAutoUpdateEnabled.Value);
     }
 
     private void UpdateLaunchAtStartupRegistry(bool enable)
@@ -130,7 +127,7 @@ public class SettingsViewModel : ViewModel
         var themeUri = IsDarkModeEnabled == true
             ? new Uri("pack://application:,,,/Themes/DarkTheme.xaml")
             : new Uri("pack://application:,,,/Themes/LightTheme.xaml");
-        
+
         Application.Current.Resources.MergedDictionaries.Clear();
         Application.Current.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = themeUri });
     }

@@ -54,7 +54,7 @@ public class SettingsService : ISettingsService
     {
         UpdateSettingsProperty((settings, value) => settings.EnableLaunchAtStartup = value, enableLaunchAtStartup);
     }
-    
+
     public void SaveEnableAutoUpdate(bool? enableAutoUpdate)
     {
         UpdateSettingsProperty((settings, value) => settings.EnableAutoUpdate = value, enableAutoUpdate);
@@ -74,7 +74,7 @@ public class SettingsService : ISettingsService
     {
         return GetSettingsFieldValue<string>("ConverterIconLocation");
     }
-    
+
     public bool? GetAutoUpdateValue()
     {
         return GetSettingsFieldValue<bool>("EnableAutoUpdate");

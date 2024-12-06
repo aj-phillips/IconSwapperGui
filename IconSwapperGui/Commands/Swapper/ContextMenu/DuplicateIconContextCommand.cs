@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using IconSwapperGui.Models;
 using IconSwapperGui.ViewModels;
 
 namespace IconSwapperGui.Commands.Swapper.ContextMenu;
@@ -19,7 +18,7 @@ public class DuplicateIconContextCommand : RelayCommand
     {
         if (_viewModel.SelectedIcon is null)
             return;
-        
+
         var directory = Path.GetDirectoryName(_viewModel.SelectedIcon.Path);
         var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(_viewModel.SelectedIcon.Path);
         var extension = Path.GetExtension(_viewModel.SelectedIcon.Path);
@@ -27,7 +26,7 @@ public class DuplicateIconContextCommand : RelayCommand
         var newFilePath = Path.Combine(directory, newFileName);
 
         var count = 1;
-        
+
         while (File.Exists(newFilePath))
         {
             newFileName = $"{fileNameWithoutExtension} - Copy ({count++}){extension}";
@@ -35,7 +34,7 @@ public class DuplicateIconContextCommand : RelayCommand
         }
 
         File.Copy(_viewModel.SelectedIcon.Path, newFilePath);
-            
+
         _viewModel.PopulateIconsList(_viewModel.IconsFolderPath);
     }
 }

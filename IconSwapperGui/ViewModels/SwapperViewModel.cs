@@ -13,25 +13,24 @@ namespace IconSwapperGui.ViewModels;
 
 public class SwapperViewModel : ViewModel, IIconViewModel, INotifyPropertyChanged, IDisposable
 {
+    private readonly IApplicationService _applicationService;
+    private readonly IIconManagementService _iconManagementService;
+    public readonly IDialogService DialogService;
+    public readonly IElevationService ElevationService;
     private ObservableCollection<Application> _applications;
+    private IFileSystemWatcherService _applicationsDirectoryWatcherService;
     private string _applicationsFolderPath;
-    private bool _isTickVisible;
     private bool _canSwapIcons;
     private ObservableCollection<Icon> _filteredIcons;
     private string _filterString;
     private ObservableCollection<Icon> _icons;
 
     private IFileSystemWatcherService _iconsDirectoryWatcherService;
-    private IFileSystemWatcherService _applicationsDirectoryWatcherService;
 
     private string _iconsFolderPath;
+    private bool _isTickVisible;
     private Application? _selectedApplication;
     private Icon? _selectedIcon;
-
-    private readonly IApplicationService _applicationService;
-    private readonly IIconManagementService _iconManagementService;
-    public readonly IDialogService DialogService;
-    public readonly IElevationService ElevationService;
 
     public SwapperViewModel(IApplicationService applicationService, IIconManagementService iconManagementService,
         ISettingsService settingsService, IDialogService dialogService, IElevationService elevationService)
@@ -104,15 +103,6 @@ public class SwapperViewModel : ViewModel, IIconViewModel, INotifyPropertyChange
         set => SetField(ref _isTickVisible, value);
     }
 
-    public async Task ShowSuccessTick()
-    {
-        IsTickVisible = true;
-        await Task.Delay(750);
-        IsTickVisible = false;
-    }
-
-    public event PropertyChangedEventHandler PropertyChanged;
-    
     public RelayCommand ChooseApplicationShortcutFolderCommand { get; }
     public RelayCommand ChooseIconFolderCommand { get; }
     public RelayCommand SwapCommand { get; }
@@ -190,14 +180,20 @@ public class SwapperViewModel : ViewModel, IIconViewModel, INotifyPropertyChange
         foreach (var icon in icons)
         {
             if (Icons.Any(x => x.Path == icon.Path)) continue;
-            
-            System.Windows.Application.Current.Dispatcher.Invoke(() =>
-            {
-                Icons.Add(icon);
-            });
+
+            System.Windows.Application.Current.Dispatcher.Invoke(() => { Icons.Add(icon); });
         }
 
         FilterIcons();
+    }
+
+    public event PropertyChangedEventHandler PropertyChanged;
+
+    public async Task ShowSuccessTick()
+    {
+        IsTickVisible = true;
+        await Task.Delay(750);
+        IsTickVisible = false;
     }
 
     private void SetupIconsDirectoryWatcher()
@@ -274,14 +270,12 @@ public class SwapperViewModel : ViewModel, IIconViewModel, INotifyPropertyChange
     public void ResetGui()
     {
         var tempSelectedApplicationPath = SelectedApplication?.Path;
-        
+
         Applications.Clear();
         PopulateApplicationsList(ApplicationsFolderPath);
-        
+
         if (tempSelectedApplicationPath != null)
-        {
             SelectedApplication = Applications.FirstOrDefault(app => app.Path == tempSelectedApplicationPath);
-        }
     }
 
     public void FilterIcons()

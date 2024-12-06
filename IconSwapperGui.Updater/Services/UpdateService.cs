@@ -9,12 +9,12 @@ public class UpdateService
     private const int MaxRetry = 5;
 
     private readonly string _currentAssemblyDirectory = Path.GetDirectoryName(AppContext.BaseDirectory);
-    private readonly IProgress<string> _progressReporter;
-    private readonly Action<bool> _shouldCloseApplication;
-    private readonly string _tempFilePath = Path.Combine(Path.GetTempPath(), "IconSwapperGui.exe");
     private readonly FileDownloadService _fileDownloadService;
 
     private readonly GithubReleaseService _githubReleaseService;
+    private readonly IProgress<string> _progressReporter;
+    private readonly Action<bool> _shouldCloseApplication;
+    private readonly string _tempFilePath = Path.Combine(Path.GetTempPath(), "IconSwapperGui.exe");
 
     public UpdateService(GithubReleaseService githubReleaseService, FileDownloadService fileDownloadService,
         IProgress<string> progressReporter, Action<bool> shouldCloseApplication)

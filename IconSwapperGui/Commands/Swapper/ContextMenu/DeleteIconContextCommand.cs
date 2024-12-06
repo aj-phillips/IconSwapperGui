@@ -1,6 +1,5 @@
 ﻿using System.IO;
 using System.Windows;
-using IconSwapperGui.Models;
 using IconSwapperGui.ViewModels;
 using Application = System.Windows.Application;
 
