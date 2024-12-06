@@ -4,5 +4,5 @@ namespace IconSwapperGui.Interfaces;
 
 public interface IApplicationService
 {
-    IEnumerable<Application> GetApplications(string folderPath);
+    IEnumerable<Application> GetApplications(string? folderPath);
 }

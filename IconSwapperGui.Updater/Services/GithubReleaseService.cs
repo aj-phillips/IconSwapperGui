@@ -23,11 +23,11 @@ public class GithubReleaseService
             var data = JsonSerializer.Deserialize<VersionData>(json);
             return data?.LatestVersion ?? "1.0.0";
         }
-        catch (HttpRequestException e)
+        catch (HttpRequestException)
         {
             return "1.0.0";
         }
-        catch (JsonException e)
+        catch (JsonException)
         {
             return "1.0.0";
         }

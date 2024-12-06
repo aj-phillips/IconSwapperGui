@@ -1,5 +1,6 @@
 using System.IO;
 using System.Windows;
+using CommunityToolkit.Mvvm.ComponentModel;
 using IconSwapperGui.Commands;
 using IconSwapperGui.Interfaces;
 using Microsoft.Win32;
@@ -7,118 +8,85 @@ using Application = System.Windows.Application;
 
 namespace IconSwapperGui.ViewModels;
 
-public class SettingsViewModel : ViewModel
+public partial class SettingsViewModel : ObservableObject
 {
     private const string StartupKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
     private const string AppName = "IconSwapperGui";
 
-    private bool? _isAutoUpdateEnabled;
+    [ObservableProperty] private bool? _isAutoUpdateEnabled;
 
-    private bool? _isDarkModeEnabled;
+    [ObservableProperty] private bool? _isDarkModeEnabled;
 
-    private bool? _isLaunchAtStartupEnabled;
+    [ObservableProperty] private bool? _isLaunchAtStartupEnabled;
 
-    public SettingsViewModel(ISettingsService settingsService)
+    public SettingsViewModel(ISettingsService? settingsService)
     {
         SettingsService = settingsService;
         _isDarkModeEnabled = SettingsService?.GetSettingsFieldValue<bool>("EnableDarkMode");
         _isLaunchAtStartupEnabled = SettingsService?.GetSettingsFieldValue<bool>("EnableLaunchAtStartup");
         _isAutoUpdateEnabled = SettingsService?.GetSettingsFieldValue<bool>("EnableAutoUpdate");
 
-        ToggleDarkModeCommand = new RelayCommand(param => ToggleDarkMode());
-        ToggleLaunchAtStartupCommand = new RelayCommand(param => ToggleLaunchAtStartup());
-        ToggleAutoUpdateCommand = new RelayCommand(param => ToggleAutoUpdate());
+        ToggleDarkModeCommand = new RelayCommand(_ => ToggleDarkMode());
+        ToggleLaunchAtStartupCommand = new RelayCommand(_ => ToggleLaunchAtStartup());
+        ToggleAutoUpdateCommand = new RelayCommand(_ => ToggleAutoUpdate());
 
         ApplyTheme();
     }
 
-    public ISettingsService SettingsService { get; set; }
-
-    public bool? IsDarkModeEnabled
-    {
-        get => _isDarkModeEnabled;
-        set
-        {
-            if (_isDarkModeEnabled != value)
-            {
-                _isDarkModeEnabled = value;
-                OnPropertyChanged();
-                ApplyTheme();
-            }
-        }
-    }
-
-    public bool? IsLaunchAtStartupEnabled
-    {
-        get => _isLaunchAtStartupEnabled;
-        set
-        {
-            if (_isLaunchAtStartupEnabled != value)
-            {
-                _isLaunchAtStartupEnabled = value;
-                OnPropertyChanged();
-                ToggleLaunchAtStartup();
-            }
-        }
-    }
-
-    public bool? IsAutoUpdateEnabled
-    {
-        get => _isAutoUpdateEnabled;
-        set
-        {
-            if (_isAutoUpdateEnabled != value)
-            {
-                _isAutoUpdateEnabled = value;
-                OnPropertyChanged();
-            }
-        }
-    }
+    private ISettingsService? SettingsService { get; }
 
     public RelayCommand ToggleDarkModeCommand { get; }
     public RelayCommand ToggleLaunchAtStartupCommand { get; }
     public RelayCommand ToggleAutoUpdateCommand { get; }
 
+    partial void OnIsDarkModeEnabledChanged(bool? value)
+    {
+        ApplyTheme();
+    }
+
+    partial void OnIsLaunchAtStartupEnabledChanged(bool? value)
+    {
+        ToggleLaunchAtStartup();
+    }
+
     public void ToggleDarkMode()
     {
-        if (IsDarkModeEnabled.HasValue)
-        {
-            SettingsService.SaveEnableDarkMode(IsDarkModeEnabled.Value);
-            ApplyTheme();
-        }
+        if (!IsDarkModeEnabled.HasValue) return;
+
+        SettingsService?.SaveEnableDarkMode(IsDarkModeEnabled.Value);
+
+        ApplyTheme();
     }
 
     public void ToggleLaunchAtStartup()
     {
-        if (IsLaunchAtStartupEnabled.HasValue)
-        {
-            SettingsService.SaveEnableLaunchAtStartup(IsLaunchAtStartupEnabled.Value);
-            UpdateLaunchAtStartupRegistry(IsLaunchAtStartupEnabled.Value);
-        }
+        if (!IsLaunchAtStartupEnabled.HasValue) return;
+
+        SettingsService?.SaveEnableLaunchAtStartup(IsLaunchAtStartupEnabled.Value);
+
+        UpdateLaunchAtStartupRegistry(IsLaunchAtStartupEnabled.Value);
     }
 
-    public void ToggleAutoUpdate()
+    private void ToggleAutoUpdate()
     {
-        if (IsAutoUpdateEnabled.HasValue) SettingsService.SaveEnableAutoUpdate(IsAutoUpdateEnabled.Value);
+        if (IsAutoUpdateEnabled.HasValue) SettingsService?.SaveEnableAutoUpdate(IsAutoUpdateEnabled.Value);
     }
 
     private void UpdateLaunchAtStartupRegistry(bool enable)
     {
-        using (var key = Registry.CurrentUser.OpenSubKey(StartupKey, true))
+        using var key = Registry.CurrentUser.OpenSubKey(StartupKey, true);
+
+        if (key == null) return;
+
+        if (enable)
         {
-            if (key != null)
-            {
-                if (enable)
-                {
-                    var executablePath =
-                        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "IconSwapperGui.exe");
-                    key.SetValue(AppName, $"\"{executablePath}\"");
-                }
-                else
-                {
-                    key.DeleteValue(AppName, false);
-                }
-            }
+            var executablePath =
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "IconSwapperGui.exe");
+            key.SetValue(AppName, $"\"{executablePath}\"");
+        }
+        else
+        {
+            key.DeleteValue(AppName, false);
         }
     }
 

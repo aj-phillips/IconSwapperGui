@@ -8,7 +8,7 @@ public class UpdateService
 {
     private const int MaxRetry = 5;
 
-    private readonly string _currentAssemblyDirectory = Path.GetDirectoryName(AppContext.BaseDirectory);
+    private readonly string? _currentAssemblyDirectory = Path.GetDirectoryName(AppContext.BaseDirectory);
     private readonly FileDownloadService _fileDownloadService;
 
     private readonly GithubReleaseService _githubReleaseService;
@@ -29,11 +29,11 @@ public class UpdateService
 
         CurrentVersion = args.Length > 1
             ? args[1]
-            : FileVersionInfo.GetVersionInfo(Path.Combine(_currentAssemblyDirectory, "IconSwapperGui.exe"))
+            : FileVersionInfo.GetVersionInfo(Path.Combine(_currentAssemblyDirectory!, "IconSwapperGui.exe"))
                 .ProductVersion;
     }
 
-    private string CurrentVersion { get; }
+    private string? CurrentVersion { get; }
 
     public async void CheckForUpdates()
     {
@@ -62,7 +62,7 @@ public class UpdateService
 
     public async Task RunInstaller()
     {
-        var applicationPath = Path.Combine(_currentAssemblyDirectory, "IconSwapperGui.exe");
+        var applicationPath = Path.Combine(_currentAssemblyDirectory!, "IconSwapperGui.exe");
 
         try
         {

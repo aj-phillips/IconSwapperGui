@@ -10,7 +10,7 @@ public class RelayCommand : ICommand
     public RelayCommand(Action<object> execute, Func<object, bool>? canExecute = null)
     {
         _execute = execute;
-        _canExecute = canExecute ?? (x => true);
+        _canExecute = canExecute ?? (_ => true);
     }
 
     public event EventHandler? CanExecuteChanged

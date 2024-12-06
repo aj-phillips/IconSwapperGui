@@ -10,14 +10,9 @@ namespace IconSwapperGui.Services;
 public class ApplicationService : IApplicationService
 {
     private const string PublicDesktopPath = @"C:\Users\Public\Desktop";
-    private readonly WshShell _shell;
+    private readonly WshShell _shell = new();
 
-    public ApplicationService()
-    {
-        _shell = new WshShell();
-    }
-
-    public IEnumerable<ApplicationModel> GetApplications(string folderPath)
+    public IEnumerable<ApplicationModel> GetApplications(string? folderPath)
     {
         var applications = new List<ApplicationModel>();
 
@@ -41,9 +36,12 @@ public class ApplicationService : IApplicationService
         return applications.OrderBy(x => x.Name);
     }
 
-    private IEnumerable<string> GetShortcutFiles(string folderPath)
+    private IEnumerable<string> GetShortcutFiles(string? folderPath)
     {
         var publicShortcutFiles = Directory.GetFiles(PublicDesktopPath, "*.lnk", SearchOption.AllDirectories);
+
+        if (folderPath == null) return publicShortcutFiles;
+
         var userShortcutFiles = Directory.GetFiles(folderPath, "*.lnk", SearchOption.AllDirectories);
         var steamShortcutFiles = Directory.GetFiles(folderPath, "*.url", SearchOption.AllDirectories);
 

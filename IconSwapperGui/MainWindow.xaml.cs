@@ -7,19 +7,19 @@ using Microsoft.Win32;
 
 namespace IconSwapperGui;
 
-public partial class MainWindow : Window
+public partial class MainWindow
 {
     private const string StartupKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
     private const string AppName = "IconSwapperGui";
 
-    private readonly string _currentVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+    private readonly string? _currentVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString();
     private readonly SettingsService _settingsService;
 
     public MainWindow()
     {
         InitializeComponent();
 
-        AppDomain.CurrentDomain.AssemblyResolve += OnResolveAssembly;
+        AppDomain.CurrentDomain.AssemblyResolve += OnResolveAssembly!;
 
         Title = $"Icon Swapper - v{_currentVersion}";
 
@@ -31,32 +31,26 @@ public partial class MainWindow : Window
             CheckForUpdates();
     }
 
-    private static Assembly OnResolveAssembly(object sender, ResolveEventArgs args)
+    private static Assembly? OnResolveAssembly(object sender, ResolveEventArgs args)
     {
         var assemblyName = new AssemblyName(args.Name).Name + ".dll";
         var assemblyPath = Path.Combine(AppContext.BaseDirectory, assemblyName);
-        if (File.Exists(assemblyPath)) return Assembly.LoadFrom(assemblyPath);
-        return null;
+        return File.Exists(assemblyPath) ? Assembly.LoadFrom(assemblyPath) : null;
     }
 
-    public void CheckForUpdates()
+    private void CheckForUpdates()
     {
         var updaterExePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "IconSwapperGui.Updater.exe");
 
         if (File.Exists(updaterExePath))
         {
-            var updaterProcess = Process.Start(updaterExePath, _currentVersion);
-            if (updaterProcess != null)
-            {
-                updaterProcess.WaitForExit();
-                if (updaterProcess.ExitCode == 0)
-                {
-                    var newExecutablePath =
-                        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "IconSwapperGui.exe");
-                    Process.Start(newExecutablePath, "--updated");
-                    Application.Current.Shutdown();
-                }
-            }
+            var updaterProcess = Process.Start(updaterExePath, _currentVersion!);
+            updaterProcess.WaitForExit();
+            if (updaterProcess.ExitCode != 0) return;
+            var newExecutablePath =
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "IconSwapperGui.exe");
+            Process.Start(newExecutablePath, "--updated");
+            Application.Current.Shutdown();
         }
         else
         {
@@ -67,23 +61,21 @@ public partial class MainWindow : Window
 
     private void RegisterInStartup()
     {
-        var enableStartup = _settingsService?.GetSettingsFieldValue<bool>("EnableLaunchAtStartup") ?? false;
+        var enableStartup = _settingsService.GetSettingsFieldValue<bool>("EnableLaunchAtStartup");
 
-        using (var key = Registry.CurrentUser.OpenSubKey(StartupKey, true))
+        using var key = Registry.CurrentUser.OpenSubKey(StartupKey, true);
+
+        if (key == null) return;
+
+        if (enableStartup)
         {
-            if (key != null)
-            {
-                if (enableStartup)
-                {
-                    var executablePath =
-                        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "IconSwapperGui.exe");
-                    key.SetValue(AppName, $"\"{executablePath}\"");
-                }
-                else
-                {
-                    key.DeleteValue(AppName, false);
-                }
-            }
+            var executablePath =
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "IconSwapperGui.exe");
+            key.SetValue(AppName, $"\"{executablePath}\"");
+        }
+        else
+        {
+            key.DeleteValue(AppName, false);
         }
     }
 }

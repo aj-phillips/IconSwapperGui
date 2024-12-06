@@ -17,22 +17,23 @@ public class ChooseIconFolderCommand<TViewModel> : RelayCommand where TViewModel
 
     public override void Execute(object? parameter)
     {
-        if (_viewModel is SwapperViewModel iconSwapperViewModel)
+        switch (_viewModel)
         {
-            ExecuteCommand(iconSwapperViewModel);
-            iconSwapperViewModel.SettingsService.SaveIconsLocation(iconSwapperViewModel.IconsFolderPath);
-        }
-        else if (_viewModel is ConverterViewModel iconConverterViewModel)
-        {
-            ExecuteCommand(iconConverterViewModel);
-            iconConverterViewModel.SettingsService.SaveConverterIconsLocation(
-                iconConverterViewModel.IconsFolderPath);
+            case SwapperViewModel iconSwapperViewModel:
+                ExecuteCommand(iconSwapperViewModel);
+                iconSwapperViewModel.SettingsService.SaveIconsLocation(iconSwapperViewModel.IconsFolderPath);
+                break;
+            case ConverterViewModel iconConverterViewModel:
+                ExecuteCommand(iconConverterViewModel);
+                iconConverterViewModel.SettingsService.SaveConverterIconsLocation(
+                    iconConverterViewModel.IconsFolderPath);
+                break;
         }
     }
 
     private void ExecuteCommand(IIconViewModel viewModel)
     {
-        if (viewModel.Icons != null && viewModel.Icons.Count > 0) viewModel.Icons.Clear();
+        if (viewModel.Icons.Count > 0) viewModel.Icons.Clear();
 
         var openFolderDialog = new CommonOpenFileDialog
         {
@@ -42,8 +43,8 @@ public class ChooseIconFolderCommand<TViewModel> : RelayCommand where TViewModel
         if (openFolderDialog.ShowDialog() != CommonFileDialogResult.Ok) return;
 
         var folderPath = openFolderDialog.FileName;
-        viewModel.IconsFolderPath = folderPath;
+        viewModel.IconsFolderPath = folderPath!;
 
-        viewModel.PopulateIconsList(folderPath);
+        viewModel.PopulateIconsList(folderPath!);
     }
 }

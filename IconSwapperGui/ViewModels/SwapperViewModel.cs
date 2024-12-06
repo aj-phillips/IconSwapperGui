@@ -1,7 +1,6 @@
 ﻿using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.IO;
-using System.Runtime.CompilerServices;
+using CommunityToolkit.Mvvm.ComponentModel;
 using IconSwapperGui.Commands;
 using IconSwapperGui.Commands.Swapper;
 using IconSwapperGui.Commands.Swapper.ContextMenu;
@@ -11,26 +10,36 @@ using IconSwapperGui.Services;
 
 namespace IconSwapperGui.ViewModels;
 
-public class SwapperViewModel : ViewModel, IIconViewModel, INotifyPropertyChanged, IDisposable
+public partial class SwapperViewModel : ObservableObject, IIconViewModel
 {
     private readonly IApplicationService _applicationService;
     private readonly IIconManagementService _iconManagementService;
     public readonly IDialogService DialogService;
     public readonly IElevationService ElevationService;
-    private ObservableCollection<Application> _applications;
-    private IFileSystemWatcherService _applicationsDirectoryWatcherService;
-    private string _applicationsFolderPath;
-    private bool _canSwapIcons;
-    private ObservableCollection<Icon> _filteredIcons;
-    private string _filterString;
-    private ObservableCollection<Icon> _icons;
 
-    private IFileSystemWatcherService _iconsDirectoryWatcherService;
+    [ObservableProperty] private ObservableCollection<Application> _applications;
 
-    private string _iconsFolderPath;
-    private bool _isTickVisible;
-    private Application? _selectedApplication;
-    private Icon? _selectedIcon;
+    private IFileSystemWatcherService? _applicationsDirectoryWatcherService;
+
+    [ObservableProperty] private string? _applicationsFolderPath;
+
+    [ObservableProperty] private bool _canSwapIcons;
+
+    [ObservableProperty] private ObservableCollection<Icon> _filteredIcons;
+
+    [ObservableProperty] private string? _filterString;
+
+    [ObservableProperty] private ObservableCollection<Icon> _icons;
+
+    private FileSystemWatcherService? _iconsDirectoryWatcherService;
+
+    [ObservableProperty] private string? _iconsFolderPath;
+
+    [ObservableProperty] private bool _isTickVisible;
+
+    [ObservableProperty] private Application? _selectedApplication;
+
+    [ObservableProperty] private Icon? _selectedIcon;
 
     public SwapperViewModel(IApplicationService applicationService, IIconManagementService iconManagementService,
         ISettingsService settingsService, IDialogService dialogService, IElevationService elevationService)
@@ -46,9 +55,9 @@ public class SwapperViewModel : ViewModel, IIconViewModel, INotifyPropertyChange
         Icons = new ObservableCollection<Icon>();
         FilteredIcons = new ObservableCollection<Icon>();
 
-        ChooseApplicationShortcutFolderCommand = new ChooseApplicationShortcutFolderCommand(this, null!, x => true);
-        ChooseIconFolderCommand = new ChooseIconFolderCommand<SwapperViewModel>(this, null!, x => true);
-        SwapCommand = new SwapCommand(this, null!, x => true);
+        ChooseApplicationShortcutFolderCommand = new ChooseApplicationShortcutFolderCommand(this, null!, _ => true);
+        ChooseIconFolderCommand = new ChooseIconFolderCommand<SwapperViewModel>(this, null!, _ => true);
+        SwapCommand = new SwapCommand(this, null!, _ => true);
         CopyPathContextCommand = new CopyPathContextCommand(this);
         DeleteIconContextCommand = new DeleteIconContextCommand(this);
         DuplicateIconContextCommand = new DuplicateIconContextCommand(this);
@@ -59,50 +68,6 @@ public class SwapperViewModel : ViewModel, IIconViewModel, INotifyPropertyChange
         UpdateSwapButtonEnabledState();
     }
 
-    public ObservableCollection<Application> Applications
-    {
-        get => _applications;
-        set
-        {
-            _applications = value;
-            OnPropertyChanged();
-        }
-    }
-
-    public ObservableCollection<Icon> FilteredIcons
-    {
-        get => _filteredIcons;
-        private set
-        {
-            _filteredIcons = value;
-            OnPropertyChanged();
-        }
-    }
-
-    public Application? SelectedApplication
-    {
-        get => _selectedApplication;
-        set => SetField(ref _selectedApplication, value);
-    }
-
-    public Icon? SelectedIcon
-    {
-        get => _selectedIcon;
-        set => SetField(ref _selectedIcon, value);
-    }
-
-    public bool CanSwapIcons
-    {
-        get => _canSwapIcons;
-        set => SetField(ref _canSwapIcons, value);
-    }
-
-    public bool IsTickVisible
-    {
-        get => _isTickVisible;
-        set => SetField(ref _isTickVisible, value);
-    }
-
     public RelayCommand ChooseApplicationShortcutFolderCommand { get; }
     public RelayCommand ChooseIconFolderCommand { get; }
     public RelayCommand SwapCommand { get; }
@@ -111,66 +76,9 @@ public class SwapperViewModel : ViewModel, IIconViewModel, INotifyPropertyChange
     public RelayCommand DuplicateIconContextCommand { get; }
     public RelayCommand OpenExplorerContextCommand { get; }
 
-    public string ApplicationsFolderPath
-    {
-        get => _applicationsFolderPath;
-        set
-        {
-            if (_applicationsFolderPath != value)
-            {
-                _applicationsFolderPath = value;
-                OnPropertyChanged();
-                SetupApplicationsDirectoryWatcher();
-            }
-        }
-    }
-
-    public string FilterString
-    {
-        get => _filterString;
-        set
-        {
-            if (_filterString == value) return;
-            _filterString = value;
-            OnPropertyChanged();
-            FilterIcons();
-        }
-    }
-
-    public void Dispose()
-    {
-        _iconsDirectoryWatcherService?.Dispose();
-        _applicationsDirectoryWatcherService?.Dispose();
-    }
-
     public ISettingsService SettingsService { get; set; }
 
-    public ObservableCollection<Icon> Icons
-    {
-        get => _icons;
-        set
-        {
-            _icons = value;
-            OnPropertyChanged();
-            FilterIcons();
-        }
-    }
-
-    public string IconsFolderPath
-    {
-        get => _iconsFolderPath;
-        set
-        {
-            if (_iconsFolderPath != value)
-            {
-                _iconsFolderPath = value;
-                OnPropertyChanged();
-                SetupIconsDirectoryWatcher();
-            }
-        }
-    }
-
-    public void PopulateIconsList(string folderPath)
+    public void PopulateIconsList(string? folderPath)
     {
         var supportedExtensions = new List<string> { ".ico" };
 
@@ -187,7 +95,35 @@ public class SwapperViewModel : ViewModel, IIconViewModel, INotifyPropertyChange
         FilterIcons();
     }
 
-    public event PropertyChangedEventHandler PropertyChanged;
+    partial void OnIconsChanged(ObservableCollection<Icon> value)
+    {
+        FilterIcons();
+    }
+
+    partial void OnIconsFolderPathChanged(string? value)
+    {
+        SetupIconsDirectoryWatcher();
+    }
+
+    partial void OnFilterStringChanged(string? value)
+    {
+        FilterIcons();
+    }
+
+    partial void OnApplicationsFolderPathChanged(string? value)
+    {
+        SetupApplicationsDirectoryWatcher();
+    }
+
+    partial void OnSelectedApplicationChanged(Application? value)
+    {
+        UpdateSwapButtonEnabledState();
+    }
+
+    partial void OnSelectedIconChanged(Icon? value)
+    {
+        UpdateSwapButtonEnabledState();
+    }
 
     public async Task ShowSuccessTick()
     {
@@ -238,28 +174,30 @@ public class SwapperViewModel : ViewModel, IIconViewModel, INotifyPropertyChange
     {
         ApplicationsFolderPath = SettingsService.GetApplicationsLocation();
 
-        if (!string.IsNullOrEmpty(ApplicationsFolderPath))
-        {
-            PopulateApplicationsList(ApplicationsFolderPath);
-            SetupApplicationsDirectoryWatcher();
-        }
+        if (string.IsNullOrEmpty(ApplicationsFolderPath)) return;
+
+        PopulateApplicationsList(ApplicationsFolderPath);
+
+        SetupApplicationsDirectoryWatcher();
     }
 
     private void LoadPreviousIcons()
     {
         IconsFolderPath = SettingsService.GetIconsLocation();
 
-        if (!string.IsNullOrEmpty(IconsFolderPath))
-        {
-            PopulateIconsList(IconsFolderPath);
-            SetupIconsDirectoryWatcher();
-        }
+        if (string.IsNullOrEmpty(IconsFolderPath)) return;
+
+        PopulateIconsList(IconsFolderPath);
+
+        SetupIconsDirectoryWatcher();
     }
 
-    public void PopulateApplicationsList(string folderPath)
+    public void PopulateApplicationsList(string? folderPath)
     {
         Applications.Clear();
+
         var applications = _applicationService.GetApplications(folderPath);
+
         foreach (var application in applications)
         {
             if (Applications.Any(x => x.Path == application.Path)) continue;
@@ -272,6 +210,7 @@ public class SwapperViewModel : ViewModel, IIconViewModel, INotifyPropertyChange
         var tempSelectedApplicationPath = SelectedApplication?.Path;
 
         Applications.Clear();
+
         PopulateApplicationsList(ApplicationsFolderPath);
 
         if (tempSelectedApplicationPath != null)
@@ -280,37 +219,21 @@ public class SwapperViewModel : ViewModel, IIconViewModel, INotifyPropertyChange
 
     public void FilterIcons()
     {
-        if (string.IsNullOrEmpty(_filterString))
+        if (string.IsNullOrEmpty(FilterString))
         {
             FilteredIcons = new ObservableCollection<Icon>(Icons);
         }
         else
         {
             var filtered = Icons
-                .Where(icon => icon.Name.Contains(_filterString, StringComparison.OrdinalIgnoreCase))
+                .Where(icon => icon.Name.Contains(FilterString, StringComparison.OrdinalIgnoreCase))
                 .ToList();
             FilteredIcons = new ObservableCollection<Icon>(filtered);
         }
     }
 
-    public void UpdateSwapButtonEnabledState()
+    private void UpdateSwapButtonEnabledState()
     {
         CanSwapIcons = SelectedApplication != null && SelectedIcon != null;
-    }
-
-    protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-    }
-
-    protected bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
-    {
-        if (EqualityComparer<T>.Default.Equals(field, value)) return false;
-        field = value;
-        OnPropertyChanged(propertyName);
-        if (propertyName == nameof(SelectedApplication) || propertyName == nameof(SelectedIcon))
-            UpdateSwapButtonEnabledState();
-
-        return true;
     }
 }

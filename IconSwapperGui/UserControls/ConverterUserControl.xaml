@@ -7,9 +7,11 @@
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              mc:Ignorable="d"
              d:DesignHeight="365" d:DesignWidth="765">
+
     <UserControl.Resources>
         <utilities:ApplicationPathToImageConverter x:Key="ApplicationPathToImageConverter" />
     </UserControl.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />

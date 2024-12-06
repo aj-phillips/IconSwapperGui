@@ -26,14 +26,12 @@ public static class CanvasHelper
     {
         if (d is not FrameworkElement element || e.NewValue is not Canvas canvas) return;
 
-        var viewModel = element.DataContext as PixelArtEditorViewModel;
-
-        if (viewModel != null) viewModel.DrawableCanvas = canvas;
+        if (element.DataContext is PixelArtEditorViewModel viewModel) viewModel.DrawableCanvas = canvas;
     }
 
-    public static void GetDpi(Canvas canvas, out double dpiX, out double dpiY)
+    public static void GetDpi(Canvas? canvas, out double dpiX, out double dpiY)
     {
-        var source = PresentationSource.FromVisual(canvas);
+        var source = PresentationSource.FromVisual(canvas!);
 
         if (source?.CompositionTarget != null)
         {

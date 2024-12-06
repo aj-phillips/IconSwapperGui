@@ -4,24 +4,25 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using CommunityToolkit.Mvvm.ComponentModel;
 using IconSwapperGui.Commands;
 using IconSwapperGui.Commands.PixelArtEditor;
 
 namespace IconSwapperGui.ViewModels;
 
-public class PixelArtEditorViewModel : ViewModel
+public partial class PixelArtEditorViewModel : ObservableObject
 {
-    private Color _backgroundColor = Colors.White;
+    [ObservableProperty] private Color _backgroundColor = Colors.White;
 
-    private int _columns = 32;
+    [ObservableProperty] private int _columns = 32;
 
-    private Canvas _drawableCanvas;
+    [ObservableProperty] private Canvas? _drawableCanvas;
 
-    private int _rows = 32;
+    [ObservableProperty] private int _rows = 32;
 
-    private Color _selectedColor = Colors.Black;
+    [ObservableProperty] private Color _selectedColor = Colors.Black;
 
-    private double _zoomLevel = 1.0;
+    [ObservableProperty] private double _zoomLevel = 1.0;
 
     public PixelArtEditorViewModel()
     {
@@ -34,7 +35,7 @@ public class PixelArtEditorViewModel : ViewModel
             new RelayCommand(e => DrawableCanvas_MouseRightButtonDown((MouseButtonEventArgs)e));
         ZoomSliderValueChangedCommand =
             new RelayCommand(e => ZoomSlider_ValueChanged((RoutedPropertyChangedEventArgs<double>)e));
-        ExportIconCommand = new ExportIconCommand(this, null!, x => true);
+        ExportIconCommand = new ExportIconCommand(this, null!, _ => true);
     }
 
     public ObservableCollection<Rectangle> Pixels { get; }
@@ -45,86 +46,12 @@ public class PixelArtEditorViewModel : ViewModel
     public ICommand ZoomSliderValueChangedCommand { get; private set; }
     public RelayCommand ExportIconCommand { get; }
 
-    public int Rows
+    partial void OnDrawableCanvasChanged(Canvas? value)
     {
-        get => _rows;
-        set
-        {
-            if (_rows != value)
-            {
-                _rows = value;
-                OnPropertyChanged();
-            }
-        }
+        ApplyLayout();
     }
 
-    public int Columns
-    {
-        get => _columns;
-        set
-        {
-            if (_columns != value)
-            {
-                _columns = value;
-                OnPropertyChanged();
-            }
-        }
-    }
-
-    public double ZoomLevel
-    {
-        get => _zoomLevel;
-        set
-        {
-            if (_zoomLevel != value)
-            {
-                _zoomLevel = value;
-                OnPropertyChanged();
-            }
-        }
-    }
-
-    public Color BackgroundColor
-    {
-        get => _backgroundColor;
-        set
-        {
-            if (_backgroundColor != value)
-            {
-                _backgroundColor = value;
-                OnPropertyChanged();
-            }
-        }
-    }
-
-    public Color SelectedColor
-    {
-        get => _selectedColor;
-        set
-        {
-            if (_selectedColor != value)
-            {
-                _selectedColor = value;
-                OnPropertyChanged();
-            }
-        }
-    }
-
-    public Canvas DrawableCanvas
-    {
-        get => _drawableCanvas;
-        set
-        {
-            if (_drawableCanvas != value)
-            {
-                _drawableCanvas = value;
-                OnPropertyChanged();
-                ApplyLayout();
-            }
-        }
-    }
-
-    public void ApplyLayout()
+    private void ApplyLayout()
     {
         if (DrawableCanvas == null || !PerformMaxSizeValidation(Rows, Columns))
             return;
@@ -162,55 +89,55 @@ public class PixelArtEditorViewModel : ViewModel
         }
     }
 
-    public bool PerformMaxSizeValidation(int rows, int columns)
+    private bool PerformMaxSizeValidation(int rows, int columns)
     {
         const int maxRows = 96;
         const int maxColumns = 96;
 
-        if (rows > maxRows || columns > maxColumns)
-        {
-            var message = $"The grid size exceeds the maximum allowed values.\n\n" +
-                          $"Maximum Rows: {maxRows}\nMaximum Columns: {maxColumns}";
-            MessageBox.Show(message, "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-            return false;
-        }
+        if (rows <= maxRows && columns <= maxColumns) return true;
 
-        return true;
+        var message = $"The grid size exceeds the maximum allowed values.\n\n" +
+                      $"Maximum Rows: {maxRows}\nMaximum Columns: {maxColumns}";
+
+        MessageBox.Show(message, "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+
+        return false;
     }
 
-    public void DrawableCanvas_MouseLeftButtonDown(MouseButtonEventArgs? e)
+    private void DrawableCanvas_MouseLeftButtonDown(MouseButtonEventArgs? e)
     {
-        if (e != null)
-        {
-            var position = e.GetPosition(DrawableCanvas);
-            DrawPixel(position);
-        }
+        if (e == null) return;
+
+        var position = e.GetPosition(DrawableCanvas);
+        DrawPixel(position);
     }
 
-    public void DrawableCanvas_MouseMove(MouseEventArgs? e)
+    private void DrawableCanvas_MouseMove(MouseEventArgs? e)
     {
+        if (e == null) return;
+
         var position = e.GetPosition(DrawableCanvas);
 
-        if (e?.LeftButton == MouseButtonState.Pressed && e != null)
+        if (e.LeftButton == MouseButtonState.Pressed)
             DrawPixel(position);
-        else if (e?.RightButton == MouseButtonState.Pressed && e != null) ResetPixel(position);
+        else if (e.RightButton == MouseButtonState.Pressed) ResetPixel(position);
     }
 
-    public void DrawableCanvas_MouseRightButtonDown(MouseButtonEventArgs? e)
+    private void DrawableCanvas_MouseRightButtonDown(MouseButtonEventArgs? e)
     {
-        if (e != null)
-        {
-            var position = e.GetPosition(DrawableCanvas);
-            ResetPixel(position);
-        }
+        if (e == null) return;
+
+        var position = e.GetPosition(DrawableCanvas);
+
+        ResetPixel(position);
     }
 
     private void ZoomSlider_ValueChanged(RoutedPropertyChangedEventArgs<double> e)
     {
-        if (e != null) ZoomLevel = e.NewValue;
+        ZoomLevel = e.NewValue;
     }
 
-    public void DrawPixel(Point position)
+    private void DrawPixel(Point position)
     {
         foreach (var rect in Pixels)
             if (IsPointInRectangle(position, rect))
@@ -220,7 +147,7 @@ public class PixelArtEditorViewModel : ViewModel
             }
     }
 
-    public void ResetPixel(Point position)
+    private void ResetPixel(Point position)
     {
         foreach (var rect in Pixels)
             if (IsPointInRectangle(position, rect))
@@ -230,7 +157,7 @@ public class PixelArtEditorViewModel : ViewModel
             }
     }
 
-    private bool IsPointInRectangle(Point point, Rectangle rect)
+    private static bool IsPointInRectangle(Point point, Rectangle rect)
     {
         var left = Canvas.GetLeft(rect);
         var top = Canvas.GetTop(rect);

@@ -9,7 +9,7 @@ public class IconManagementService : IIconManagementService
 {
     private readonly List<string> _supportedExtensions = new() { ".png", ".jpg", ".jpeg" };
 
-    public IEnumerable<Icon> GetIcons(string folderPath, IEnumerable<string> extensions)
+    public IEnumerable<Icon> GetIcons(string? folderPath, IEnumerable<string> extensions)
     {
         if (string.IsNullOrWhiteSpace(folderPath))
             throw new ArgumentException("Folder path cannot be null or empty.", nameof(folderPath));
@@ -38,23 +38,22 @@ public class IconManagementService : IIconManagementService
         }
     }
 
-    public ObservableCollection<Icon> GetIcons(string folderPath)
+    public ObservableCollection<Icon> GetIcons(string? folderPath)
     {
         var icons = new ObservableCollection<Icon>();
 
-        if (!string.IsNullOrEmpty(folderPath))
-        {
-            var iconList = GetIcons(folderPath, _supportedExtensions);
+        if (string.IsNullOrEmpty(folderPath)) return icons;
 
-            foreach (var icon in iconList)
-                if (!icons.Any(x => x.Path == icon.Path))
-                    icons.Add(icon);
-        }
+        var iconList = GetIcons(folderPath, _supportedExtensions);
+
+        foreach (var icon in iconList)
+            if (icons.All(x => x.Path != icon.Path))
+                icons.Add(icon);
 
         return icons;
     }
 
-    public ObservableCollection<Icon> FilterIcons(ObservableCollection<Icon> icons, string filterString)
+    public ObservableCollection<Icon> FilterIcons(ObservableCollection<Icon> icons, string? filterString)
     {
         if (string.IsNullOrEmpty(filterString)) return new ObservableCollection<Icon>(icons);
 

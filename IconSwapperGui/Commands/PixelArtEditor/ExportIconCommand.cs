@@ -48,6 +48,8 @@ public class ExportIconCommand : RelayCommand
 
     private string SaveCanvasAsPngForExport(string folderPath)
     {
+        if (_viewModel.DrawableCanvas == null) return string.Empty;
+
         var exportCanvas = new Canvas
         {
             Width = _viewModel.DrawableCanvas.ActualWidth,

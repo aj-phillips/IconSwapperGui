@@ -9,7 +9,7 @@ public class DeleteIconContextCommand : RelayCommand
 {
     private readonly SwapperViewModel _viewModel;
 
-    public DeleteIconContextCommand(SwapperViewModel viewModel, Action<object> execute = null,
+    public DeleteIconContextCommand(SwapperViewModel viewModel, Action<object> execute = null!,
         Func<object, bool>? canExecute = null)
         : base(execute, canExecute)
     {

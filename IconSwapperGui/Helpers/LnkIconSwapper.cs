@@ -17,9 +17,9 @@ public class LnkIconSwapper
 
     public void Swap(string applicationPath, string iconPath, string applicationName)
     {
-        const string publicDesktopPath = "C:\\Users\\Public\\Desktop";
+        const string publicDesktopPath = @"C:\Users\Public\Desktop";
 
-        if (Path.GetDirectoryName(applicationPath).Equals(publicDesktopPath) &&
+        if (Path.GetDirectoryName(applicationPath)!.Equals(publicDesktopPath) &&
             !_elevationService.IsRunningAsAdministrator())
         {
             _dialogService.ShowInformation(
@@ -29,7 +29,7 @@ public class LnkIconSwapper
             _elevationService.ElevateApplicationViaUac();
         }
 
-        var wshShell = (WshShell)Activator.CreateInstance(Type.GetTypeFromProgID("WScript.Shell"));
+        var wshShell = (WshShell)Activator.CreateInstance(Type.GetTypeFromProgID("WScript.Shell")!)!;
         var shortcut = (IWshShortcut)wshShell.CreateShortcut(applicationPath);
         shortcut.IconLocation = $"{iconPath},0";
         shortcut.Save();

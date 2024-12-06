@@ -5,7 +5,7 @@ namespace IconSwapperGui.Interfaces;
 
 public interface IIconManagementService
 {
-    IEnumerable<Icon> GetIcons(string folderPath, IEnumerable<string> extensions);
-    ObservableCollection<Icon> GetIcons(string folderPath);
-    ObservableCollection<Icon> FilterIcons(ObservableCollection<Icon> icons, string filterString);
+    IEnumerable<Icon> GetIcons(string? folderPath, IEnumerable<string> extensions);
+    ObservableCollection<Icon> GetIcons(string? folderPath);
+    ObservableCollection<Icon> FilterIcons(ObservableCollection<Icon> icons, string? filterString);
 }
