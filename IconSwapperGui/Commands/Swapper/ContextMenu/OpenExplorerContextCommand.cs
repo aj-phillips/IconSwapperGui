@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics;
 using System.IO;
-using IconSwapperGui.Models;
 using IconSwapperGui.ViewModels;
 
 namespace IconSwapperGui.Commands.Swapper.ContextMenu;
@@ -19,9 +18,7 @@ public class OpenExplorerContextCommand : RelayCommand
     public override void Execute(object? parameter)
     {
         if (_viewModel.SelectedIcon is not null && File.Exists(_viewModel.SelectedIcon.Path))
-        {
             Process.Start(new ProcessStartInfo("explorer.exe", $"/select, \"{_viewModel.SelectedIcon.Path}\"")
                 { UseShellExecute = true });
-        }
     }
 }

@@ -15,14 +15,14 @@
     <Style TargetType="Control">
         <Setter Property="Foreground" Value="Black" />
     </Style>
-    
+
     <Style TargetType="ToolTip">
-        <Setter Property="Background" Value="LightGray"></Setter>
-        <Setter Property="Foreground" Value="Black"></Setter>
-        <Setter Property="Placement" Value="Center"></Setter>
+        <Setter Property="Background" Value="LightGray" />
+        <Setter Property="Foreground" Value="Black" />
+        <Setter Property="Placement" Value="Center" />
     </Style>
-    
+
     <Style TargetType="xctk:ColorPicker">
-        <Setter Property="HeaderBackground" Value="Transparent"></Setter>
+        <Setter Property="HeaderBackground" Value="Transparent" />
     </Style>
 </ResourceDictionary>

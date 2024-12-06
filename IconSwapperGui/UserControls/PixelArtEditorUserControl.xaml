@@ -43,7 +43,7 @@
                                  Style="{StaticResource MaterialDesignOutlinedTextBox}" />
                     </StackPanel>
                 </StackPanel>
-                
+
                 <!-- Background Color Picker -->
                 <StackPanel Orientation="Horizontal" Margin="10" HorizontalAlignment="Center">
                     <TextBlock Text="Background Color:" Margin="5" VerticalAlignment="Center" />

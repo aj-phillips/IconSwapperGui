@@ -1,5 +1,4 @@
 ﻿using System.Windows;
-using IconSwapperGui.Models;
 using IconSwapperGui.ViewModels;
 
 namespace IconSwapperGui.Commands.Swapper.ContextMenu;
@@ -17,9 +16,6 @@ public class CopyPathContextCommand : RelayCommand
 
     public override void Execute(object? parameter)
     {
-        if (_viewModel.SelectedIcon is not null)
-        {
-            Clipboard.SetText(_viewModel.SelectedIcon.Path);
-        }
+        if (_viewModel.SelectedIcon is not null) Clipboard.SetText(_viewModel.SelectedIcon.Path);
     }
 }

@@ -63,7 +63,7 @@ public class ExportIconCommand : RelayCommand
                 Height = pixelRect.Height,
                 Fill = pixelRect.Fill,
                 Stroke = pixelRect.Stroke,
-                StrokeThickness = _viewModel.BackgroundColor == Colors.Transparent ? 0 : pixelRect.StrokeThickness
+                StrokeThickness = 0
             };
 
             Canvas.SetLeft(exportRect, Canvas.GetLeft(pixelRect));

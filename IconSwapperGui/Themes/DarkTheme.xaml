@@ -15,18 +15,18 @@
     <Style TargetType="Control">
         <Setter Property="Foreground" Value="White" />
     </Style>
-    
+
     <Style TargetType="ToolTip">
-        <Setter Property="Background" Value="DarkSlateGray"></Setter>
-        <Setter Property="Foreground" Value="White"></Setter>
-        <Setter Property="Placement" Value="Center"></Setter>
+        <Setter Property="Background" Value="DarkSlateGray" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="Placement" Value="Center" />
     </Style>
-    
+
     <Style TargetType="xctk:ColorPicker">
-        <Setter Property="Background" Value="DarkSlateGray"></Setter>
-        <Setter Property="DropDownBackground" Value="SlateGray"></Setter>
-        <Setter Property="TabBackground" Value="LightSlateGray"></Setter>
-        <Setter Property="HeaderBackground" Value="Transparent"></Setter>
-        <Setter Property="HeaderForeground" Value="White"></Setter>
+        <Setter Property="Background" Value="DarkSlateGray" />
+        <Setter Property="DropDownBackground" Value="SlateGray" />
+        <Setter Property="TabBackground" Value="LightSlateGray" />
+        <Setter Property="HeaderBackground" Value="Transparent" />
+        <Setter Property="HeaderForeground" Value="White" />
     </Style>
 </ResourceDictionary>
