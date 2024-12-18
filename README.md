@@ -7,6 +7,7 @@ Welcome to IconSwapperGui, your all-in-one solution for changing shortcut icons 
   - Have a dedicated folder for all your icons? We got you covered!
 - Change Icons of Shortcuts
   - Currently supports .url and .lnk shortcut types.
+  - Right click on any icon. giving you options of opening it in Windows Explorer, copying the path, duplicating or deleting the icon!
 - Search Functionality
   - Have a specific icon in mind for your chosen shortcut? Use the search bar and easily filter through your icons!
 - Auto-Refresh
@@ -22,11 +23,24 @@ Welcome to IconSwapperGui, your all-in-one solution for changing shortcut icons 
 - Delete Images After Conversion
   - Don't want your PNGs after conversion has finished? Tick the box and enjoy!
  
+### Pixel Art Editor
+- Layout Customisation
+  - Change the number of rows and columns displayed, up to the maximum of 96x96
+  - Choose your own background colour using a colour picker, including transparency!
+- Drawing
+  - Choose your own brush colour via "Selected Colour" and create your work of art!
+  - Left click on a square to apply your selected colour to the canvas.
+  - Right click on a square to revert it back to the assigned background colour
+- Zoom Level
+  - Move the slider to zoom in or out of your canvas, increasing drawing accuracy!
+ 
 ### Settings
 - Dark Mode
   - Are you Dracula and afraid of the light? Be free in the realm of darkness!
 - Launch At Startup
   - Getting tired of launching the application after powering on your computer? Have no fear, launch at startup is here!
+- Auto Update
+  - Does the updater popping up at startup get a little bit annoying? Well, now you can disable it! Do you really want to miss out on amazing new features though?
 - Support Buttons
   - There are currently two buttons, one that will take you to this GitHub page and the other will take you to the issues page.
 
