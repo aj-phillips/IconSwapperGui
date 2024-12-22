@@ -4,9 +4,10 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using IconSwapperGui.Commands;
 using IconSwapperGui.Commands.Swapper;
 using IconSwapperGui.Commands.Swapper.ContextMenu;
-using IconSwapperGui.Interfaces;
 using IconSwapperGui.Models;
 using IconSwapperGui.Services;
+using IconSwapperGui.Services.Interfaces;
+using IconSwapperGui.ViewModels.Interfaces;
 
 namespace IconSwapperGui.ViewModels;
 
@@ -62,6 +63,7 @@ public partial class SwapperViewModel : ObservableObject, IIconViewModel
         DeleteIconContextCommand = new DeleteIconContextCommand(this);
         DuplicateIconContextCommand = new DuplicateIconContextCommand(this);
         OpenExplorerContextCommand = new OpenExplorerContextCommand(this);
+        ResetIconContextCommand = new ResetIconContextCommand(this);
 
         LoadPreviousApplications();
         LoadPreviousIcons();
@@ -75,6 +77,7 @@ public partial class SwapperViewModel : ObservableObject, IIconViewModel
     public RelayCommand DeleteIconContextCommand { get; }
     public RelayCommand DuplicateIconContextCommand { get; }
     public RelayCommand OpenExplorerContextCommand { get; }
+    public RelayCommand ResetIconContextCommand { get; }
 
     public ISettingsService SettingsService { get; set; }
 
