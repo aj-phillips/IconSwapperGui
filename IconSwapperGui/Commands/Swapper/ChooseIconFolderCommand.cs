@@ -1,5 +1,5 @@
-﻿using IconSwapperGui.Interfaces;
-using IconSwapperGui.ViewModels;
+﻿using IconSwapperGui.ViewModels;
+using IconSwapperGui.ViewModels.Interfaces;
 using Microsoft.WindowsAPICodePack.Dialogs;
 
 namespace IconSwapperGui.Commands.Swapper;

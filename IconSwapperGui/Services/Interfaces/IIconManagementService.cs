@@ -1,7 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using IconSwapperGui.Models;
 
-namespace IconSwapperGui.Interfaces;
+namespace IconSwapperGui.Services.Interfaces;
 
 public interface IIconManagementService
 {

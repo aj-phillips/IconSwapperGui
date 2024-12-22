@@ -4,9 +4,10 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using IconSwapperGui.Commands;
 using IconSwapperGui.Commands.Converter;
 using IconSwapperGui.Commands.Swapper;
-using IconSwapperGui.Interfaces;
 using IconSwapperGui.Models;
 using IconSwapperGui.Services;
+using IconSwapperGui.Services.Interfaces;
+using IconSwapperGui.ViewModels.Interfaces;
 
 namespace IconSwapperGui.ViewModels;
 
