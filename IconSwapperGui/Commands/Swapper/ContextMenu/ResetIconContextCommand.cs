@@ -96,7 +96,7 @@ public class ResetIconContextCommand : RelayCommand
 
     private static string? GetManualIconPath(ApplicationModel application)
     {
-        var steamPath = GetSteamPath() + "/steam/games";
+        var steamPath = GetSteamPath() + "steam\\games";
 
         using var chooseIconDialog = new CommonOpenFileDialog();
         chooseIconDialog.Title = "Choose Icon";
@@ -129,7 +129,9 @@ public class ResetIconContextCommand : RelayCommand
 
     private static string? GetSteamPath()
     {
-        return Registry.CurrentUser.OpenSubKey(SteamRegistryPath)?.GetValue(SteamPathKey)?.ToString();
+        var steamPath = Registry.CurrentUser.OpenSubKey(SteamRegistryPath)?.GetValue(SteamPathKey)?.ToString();
+
+        return steamPath?.Replace("/", "\\") + (steamPath.EndsWith('\\') ? string.Empty : "\\");
     }
 
     private static string GetInitialDirectory(ApplicationModel application, string? steamPath)
