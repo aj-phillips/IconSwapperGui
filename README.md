@@ -7,7 +7,9 @@ Welcome to IconSwapperGui, your all-in-one solution for changing shortcut icons 
   - Have a dedicated folder for all your icons? We got you covered!
 - Change Icons of Shortcuts
   - Currently supports .url and .lnk shortcut types.
-  - Right click on any icon. giving you options of opening it in Windows Explorer, copying the path, duplicating or deleting the icon!
+  - Right click on any icon, giving you options of opening it in Windows Explorer, copying the path, duplicating or deleting the icon!
+- Reset Shortcuts To Default Icons
+  - Right click on any shortcut, allowing you to reset an icon automatically or manually as a fallback.
 - Search Functionality
   - Have a specific icon in mind for your chosen shortcut? Use the search bar and easily filter through your icons!
 - Auto-Refresh

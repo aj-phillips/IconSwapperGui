@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using System.Text.Json;
-using IconSwapperGui.Interfaces;
 using IconSwapperGui.Models;
+using IconSwapperGui.Services.Interfaces;
 using Newtonsoft.Json.Linq;
 
 namespace IconSwapperGui.Services;

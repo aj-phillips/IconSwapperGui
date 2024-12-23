@@ -1,9 +1,11 @@
 ﻿using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
-using IconSwapperGui.Interfaces;
+using IconSwapperGui.Services.Interfaces;
 using IWshRuntimeLibrary;
 using ApplicationModel = IconSwapperGui.Models.Application;
+using File = System.IO.File;
 
 namespace IconSwapperGui.Services;
 
@@ -36,7 +38,7 @@ public class ApplicationService : IApplicationService
         return applications.OrderBy(x => x.Name);
     }
 
-    private IEnumerable<string> GetShortcutFiles(string? folderPath)
+    private static IEnumerable<string> GetShortcutFiles(string? folderPath)
     {
         var publicShortcutFiles = Directory.GetFiles(PublicDesktopPath, "*.lnk", SearchOption.AllDirectories);
 
@@ -53,8 +55,9 @@ public class ApplicationService : IApplicationService
         try
         {
             var shortcut = (IWshShortcut)_shell.CreateShortcut(file);
+            var defaultIconPath = GetOriginalExePathFromLnkShortcut(file);
             var iconPath = GetIconPathFromShortcut(shortcut);
-            var app = new ApplicationModel(Path.GetFileNameWithoutExtension(file), file, iconPath);
+            var app = new ApplicationModel(Path.GetFileNameWithoutExtension(file), file, defaultIconPath, iconPath);
 
             applications.Add(app);
         }
@@ -72,6 +75,7 @@ public class ApplicationService : IApplicationService
             using var reader = new StreamReader(file);
             var steamId = string.Empty;
             var iconPath = string.Empty;
+            var defaultIconPath = GetOriginalExePathFromUrlShortcut(file);
 
             while (reader.ReadLine() is { } line)
                 if (line.StartsWith("URL=steam://"))
@@ -80,7 +84,7 @@ public class ApplicationService : IApplicationService
 
             if (string.IsNullOrEmpty(steamId)) return;
 
-            var app = new ApplicationModel(Path.GetFileNameWithoutExtension(file), file, iconPath);
+            var app = new ApplicationModel(Path.GetFileNameWithoutExtension(file), file, defaultIconPath, iconPath);
             applications.Add(app);
         }
         catch (Exception ex)
@@ -90,7 +94,7 @@ public class ApplicationService : IApplicationService
         }
     }
 
-    private string GetIconPathFromShortcut(IWshShortcut shortcut)
+    private static string GetIconPathFromShortcut(IWshShortcut shortcut)
     {
         if (string.IsNullOrWhiteSpace(shortcut.IconLocation)) return string.Empty;
 
@@ -105,5 +109,65 @@ public class ApplicationService : IApplicationService
             1 => shortcut.IconLocation,
             _ => string.Empty
         };
+    }
+
+    private static string GetOriginalExePathFromLnkShortcut(string shortcutPath)
+    {
+        try
+        {
+            var wshShell = (WshShell)Activator.CreateInstance(Type.GetTypeFromProgID("WScript.Shell")!)!;
+            var shortcut = (IWshShortcut)wshShell.CreateShortcut(shortcutPath);
+
+            if (!string.IsNullOrWhiteSpace(shortcut.TargetPath) && File.Exists(shortcut.TargetPath))
+                return shortcut.TargetPath;
+
+            return GetExePathFromMetadata(shortcutPath);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Failed to get the original executable path from shortcut: {shortcutPath}\n{ex.Message}",
+                "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            return string.Empty;
+        }
+    }
+
+    private static string GetOriginalExePathFromUrlShortcut(string urlFilePath)
+    {
+        try
+        {
+            using var reader = new StreamReader(urlFilePath);
+            while (reader.ReadLine() is { } line)
+                if (line.StartsWith("URL="))
+                    return line.Substring(4);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Failed to get the original URL path from URL file: {urlFilePath}\n{ex.Message}",
+                "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+
+        return string.Empty;
+    }
+
+    private static string GetExePathFromMetadata(string shortcutPath)
+    {
+        try
+        {
+            using var fileStream = new FileStream(shortcutPath, FileMode.Open, FileAccess.Read);
+            using var binaryReader = new BinaryReader(fileStream);
+
+            fileStream.Seek(0x14, SeekOrigin.Begin);
+            var bytes = binaryReader.ReadBytes(260);
+
+            var originalPath = Encoding.UTF8.GetString(bytes).Trim('\0');
+
+            if (!string.IsNullOrWhiteSpace(originalPath) && File.Exists(originalPath)) return originalPath;
+        }
+        catch
+        {
+            // Swallow errors during fallback
+        }
+
+        return string.Empty;
     }
 }

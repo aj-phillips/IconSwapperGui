@@ -2,7 +2,7 @@ using System.IO;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using IconSwapperGui.Commands;
-using IconSwapperGui.Interfaces;
+using IconSwapperGui.Services.Interfaces;
 using Microsoft.Win32;
 using Application = System.Windows.Application;
 

@@ -1,4 +1,4 @@
-﻿namespace IconSwapperGui.Interfaces;
+﻿namespace IconSwapperGui.Services.Interfaces;
 
 public interface IElevationService
 {

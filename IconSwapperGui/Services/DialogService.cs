@@ -1,5 +1,5 @@
 ﻿using System.Windows;
-using IconSwapperGui.Interfaces;
+using IconSwapperGui.Services.Interfaces;
 
 namespace IconSwapperGui.Services;
 

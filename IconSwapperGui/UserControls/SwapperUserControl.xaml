@@ -79,6 +79,13 @@
                             </StackPanel>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
+
+                    <ListBox.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="Reset Icon"
+                                      Command="{Binding ResetIconContextCommand}" />
+                        </ContextMenu>
+                    </ListBox.ContextMenu>
                 </ListBox>
             </StackPanel>
         </materialDesign:Card>
