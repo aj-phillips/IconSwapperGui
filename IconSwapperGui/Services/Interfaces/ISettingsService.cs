@@ -12,9 +12,10 @@ public interface ISettingsService
     void SaveEnableDarkMode(bool? enableDarkMode);
     void SaveEnableLaunchAtStartup(bool? enableLaunchAtStartup);
     void SaveEnableAutoUpdate(bool? enableAutoUpdate);
-
+    void SaveEnableSeasonalEffects(bool? enableSeasonalEffects);
     string? GetApplicationsLocation();
     string? GetIconsLocation();
     string? GetConverterIconsLocation();
     bool? GetAutoUpdateValue();
+    bool? GetSeasonalEffectsValue();
 }

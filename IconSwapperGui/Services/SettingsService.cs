@@ -1,8 +1,11 @@
-﻿using System.IO;
+﻿using System.Diagnostics;
+using System.IO;
 using System.Text.Json;
+using System.Windows;
 using IconSwapperGui.Models;
 using IconSwapperGui.Services.Interfaces;
 using Newtonsoft.Json.Linq;
+using Application = System.Windows.Application;
 
 namespace IconSwapperGui.Services;
 
@@ -60,6 +63,23 @@ public class SettingsService : ISettingsService
         UpdateSettingsProperty((settings, value) => settings.EnableAutoUpdate = value, enableAutoUpdate);
     }
 
+    public void SaveEnableSeasonalEffects(bool? enableSeasonalEffects)
+    {
+        UpdateSettingsProperty((settings, value) => settings.EnableSeasonalEffects = value, enableSeasonalEffects);
+
+        var restartMessageBoxResult = MessageBox.Show(
+            "Please restart the application to apply the changes.\n\nWould you like to do this now?", "Restart",
+            MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+        if (restartMessageBoxResult != MessageBoxResult.Yes) return;
+
+        var executablePath =
+            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "IconSwapperGui.exe");
+        Process.Start(executablePath);
+
+        Application.Current.Shutdown();
+    }
+
     public string? GetApplicationsLocation()
     {
         return GetSettingsFieldValue<string>("ApplicationsLocation");
@@ -78,6 +98,11 @@ public class SettingsService : ISettingsService
     public bool? GetAutoUpdateValue()
     {
         return GetSettingsFieldValue<bool>("EnableAutoUpdate");
+    }
+
+    public bool? GetSeasonalEffectsValue()
+    {
+        return GetSettingsFieldValue<bool>("EnableSeasonalEffects");
     }
 
     private static string GetSettingsFilePath()
@@ -100,7 +125,8 @@ public class SettingsService : ISettingsService
             ApplicationsLocation = "",
             EnableDarkMode = false,
             EnableLaunchAtStartup = false,
-            EnableAutoUpdate = true
+            EnableAutoUpdate = true,
+            EnableSeasonalEffects = true
         };
     }
 
@@ -127,6 +153,7 @@ public class SettingsService : ISettingsService
         settings.EnableDarkMode ??= false;
         settings.EnableLaunchAtStartup ??= false;
         settings.EnableAutoUpdate ??= true;
+        settings.EnableSeasonalEffects ??= true;
 
         SaveSettings(settings);
     }

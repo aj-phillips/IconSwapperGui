@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Windows;
 using IconSwapperGui.Services;
 using Microsoft.Win32;
+using Application = System.Windows.Application;
 
 namespace IconSwapperGui;
 
@@ -13,6 +14,7 @@ public partial class MainWindow
     private const string AppName = "IconSwapperGui";
 
     private readonly string? _currentVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString();
+    private readonly EffectsService _effectsService;
     private readonly SettingsService _settingsService;
 
     public MainWindow()
@@ -24,6 +26,8 @@ public partial class MainWindow
         Title = $"Icon Swapper - v{_currentVersion}";
 
         _settingsService = new SettingsService();
+        _effectsService = new EffectsService(_settingsService);
+
         RegisterInStartup();
 
         var args = Environment.GetCommandLineArgs();
@@ -36,6 +40,12 @@ public partial class MainWindow
         var assemblyName = new AssemblyName(args.Name).Name + ".dll";
         var assemblyPath = Path.Combine(AppContext.BaseDirectory, assemblyName);
         return File.Exists(assemblyPath) ? Assembly.LoadFrom(assemblyPath) : null;
+    }
+
+    protected override void OnContentRendered(EventArgs e)
+    {
+        base.OnContentRendered(e);
+        _effectsService.ApplySeasonalEffect(this);
     }
 
     private void CheckForUpdates()

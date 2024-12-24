@@ -18,6 +18,7 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private bool? _isDarkModeEnabled;
 
     [ObservableProperty] private bool? _isLaunchAtStartupEnabled;
+    [ObservableProperty] private bool? _isSeasonalEffectsEnabled;
 
     public SettingsViewModel(ISettingsService? settingsService)
     {
@@ -25,10 +26,12 @@ public partial class SettingsViewModel : ObservableObject
         _isDarkModeEnabled = SettingsService?.GetSettingsFieldValue<bool>("EnableDarkMode");
         _isLaunchAtStartupEnabled = SettingsService?.GetSettingsFieldValue<bool>("EnableLaunchAtStartup");
         _isAutoUpdateEnabled = SettingsService?.GetSettingsFieldValue<bool>("EnableAutoUpdate");
+        _isSeasonalEffectsEnabled = SettingsService?.GetSettingsFieldValue<bool>("EnableSeasonalEffects");
 
         ToggleDarkModeCommand = new RelayCommand(_ => ToggleDarkMode());
         ToggleLaunchAtStartupCommand = new RelayCommand(_ => ToggleLaunchAtStartup());
         ToggleAutoUpdateCommand = new RelayCommand(_ => ToggleAutoUpdate());
+        ToggleSeasonalEffectsCommand = new RelayCommand(_ => ToggleSeasonalEffects());
 
         ApplyTheme();
     }
@@ -38,16 +41,7 @@ public partial class SettingsViewModel : ObservableObject
     public RelayCommand ToggleDarkModeCommand { get; }
     public RelayCommand ToggleLaunchAtStartupCommand { get; }
     public RelayCommand ToggleAutoUpdateCommand { get; }
-
-    partial void OnIsDarkModeEnabledChanged(bool? value)
-    {
-        ApplyTheme();
-    }
-
-    partial void OnIsLaunchAtStartupEnabledChanged(bool? value)
-    {
-        ToggleLaunchAtStartup();
-    }
+    public RelayCommand ToggleSeasonalEffectsCommand { get; }
 
     public void ToggleDarkMode()
     {
@@ -65,6 +59,22 @@ public partial class SettingsViewModel : ObservableObject
         SettingsService?.SaveEnableLaunchAtStartup(IsLaunchAtStartupEnabled.Value);
 
         UpdateLaunchAtStartupRegistry(IsLaunchAtStartupEnabled.Value);
+    }
+
+    public void ToggleSeasonalEffects()
+    {
+        if (IsSeasonalEffectsEnabled.HasValue)
+            SettingsService?.SaveEnableSeasonalEffects(IsSeasonalEffectsEnabled.Value);
+    }
+
+    partial void OnIsDarkModeEnabledChanged(bool? value)
+    {
+        ApplyTheme();
+    }
+
+    partial void OnIsLaunchAtStartupEnabledChanged(bool? value)
+    {
+        ToggleLaunchAtStartup();
     }
 
     private void ToggleAutoUpdate()
