@@ -12,7 +12,8 @@
                         </Grid.ColumnDefinitions>
                         <!-- Toggle Switch -->
                         <Grid Width="50" Height="25" Grid.Column="0">
-                            <Rectangle Fill="{DynamicResource MaterialDesignDivider}" RadiusX="12.5" RadiusY="12.5" />
+                            <Rectangle x:Name="SwitchBackground" Fill="{DynamicResource MaterialDesignDivider}"
+                                       RadiusX="12.5" RadiusY="12.5" />
                             <Ellipse x:Name="SwitchThumb" Fill="White" Width="20" Height="20"
                                      HorizontalAlignment="Left" Margin="2.5,2.5,0,2.5" />
                         </Grid>
@@ -25,6 +26,7 @@
                             <Setter TargetName="SwitchThumb" Property="Fill"
                                     Value="{DynamicResource MaterialDesignBody}" />
                             <Setter Property="Background" Value="{DynamicResource PrimaryHueMidBrush}" />
+                            <Setter TargetName="SwitchBackground" Property="Fill" Value="Green" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.56" />

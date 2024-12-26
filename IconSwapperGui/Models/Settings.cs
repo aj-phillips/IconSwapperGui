@@ -8,4 +8,5 @@ public class Settings
     public bool? EnableDarkMode { get; set; }
     public bool? EnableLaunchAtStartup { get; set; }
     public bool? EnableAutoUpdate { get; set; }
+    public bool? EnableSeasonalEffects { get; set; }
 }

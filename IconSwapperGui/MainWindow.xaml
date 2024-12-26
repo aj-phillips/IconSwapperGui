@@ -8,18 +8,20 @@
         mc:Ignorable="d"
         Title="Icon Swapper" Height="620" Width="1050" ResizeMode="NoResize" WindowStartupLocation="CenterScreen"
         UseLayoutRounding="True">
-    <TabControl Grid.Column="1" Margin="5">
-        <TabItem Header="Swapper">
-            <userControls:SwapperUserControl />
-        </TabItem>
-        <TabItem Header="Converter">
-            <userControls:ConverterUserControl />
-        </TabItem>
-        <TabItem Header="Pixel Art Editor">
-            <userControls:PixelArtEditorUserControl />
-        </TabItem>
-        <TabItem Header="Settings">
-            <userControls:SettingsUserControl />
-        </TabItem>
-    </TabControl>
+    <Grid>
+        <TabControl Margin="5">
+            <TabItem Header="Swapper">
+                <userControls:SwapperUserControl />
+            </TabItem>
+            <TabItem Header="Converter">
+                <userControls:ConverterUserControl />
+            </TabItem>
+            <TabItem Header="Pixel Art Editor">
+                <userControls:PixelArtEditorUserControl />
+            </TabItem>
+            <TabItem Header="Settings">
+                <userControls:SettingsUserControl />
+            </TabItem>
+        </TabControl>
+    </Grid>
 </Window>

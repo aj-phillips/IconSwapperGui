@@ -131,7 +131,7 @@ public class ResetIconContextCommand : RelayCommand
     {
         var steamPath = Registry.CurrentUser.OpenSubKey(SteamRegistryPath)?.GetValue(SteamPathKey)?.ToString();
 
-        return steamPath?.Replace("/", "\\") + (steamPath.EndsWith('\\') ? string.Empty : "\\");
+        return steamPath?.Replace("/", "\\") + (steamPath != null && steamPath.EndsWith('\\') ? string.Empty : "\\");
     }
 
     private static string GetInitialDirectory(ApplicationModel application, string? steamPath)
