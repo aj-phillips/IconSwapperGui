@@ -66,3 +66,6 @@ Thank you for using IconSwapperGui! I look forward to your feedback and hope you
 
 ## Contributing
 We welcome contributions from the community! If you'd like to contribute, please read the Contributing Guidelines.
+
+## License
+This project is licensed under the [GNU General Public License v3.0](LICENSE).
