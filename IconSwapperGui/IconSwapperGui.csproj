@@ -7,7 +7,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <UseWPF>true</UseWPF>
         <ApplicationIcon>favicon.ico</ApplicationIcon>
-        <Version>1.8.4</Version>
+        <Version>1.8.5</Version>
         <Authors>Adam Phillips</Authors>
     </PropertyGroup>
 
@@ -29,7 +29,7 @@
     <ItemGroup>
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
         <PackageReference Include="Extended.Wpf.Toolkit" Version="4.7.25104.5739" />
-        <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="14.8.0"/>
+        <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="14.8.1"/>
         <PackageReference Include="MaterialDesignThemes" Version="5.2.1" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="System.Drawing.Common" Version="9.0.8"/>
