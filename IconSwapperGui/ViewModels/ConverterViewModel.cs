@@ -8,12 +8,14 @@ using IconSwapperGui.Models;
 using IconSwapperGui.Services;
 using IconSwapperGui.Services.Interfaces;
 using IconSwapperGui.ViewModels.Interfaces;
+using Serilog;
 
 namespace IconSwapperGui.ViewModels;
 
 public partial class ConverterViewModel : ObservableObject, IIconViewModel
 {
     private readonly IIconManagementService _iconManagementService;
+    private readonly ILogger _logger = Log.ForContext<ConverterViewModel>();
 
     [ObservableProperty] private string? _applicationsLocationPath;
 
@@ -32,6 +34,8 @@ public partial class ConverterViewModel : ObservableObject, IIconViewModel
         ISettingsService settingsService,
         IDialogService dialogService)
     {
+        _logger.Information("ConverterViewModel initializing");
+
         _iconManagementService = iconService ?? throw new ArgumentNullException(nameof(iconService));
         SettingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
         DialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
@@ -44,6 +48,10 @@ public partial class ConverterViewModel : ObservableObject, IIconViewModel
 
         IconsFolderPath = SettingsService.GetConverterIconsLocation();
         ApplicationsLocationPath = SettingsService.GetApplicationsLocation();
+
+        _logger.Information(
+            "ConverterViewModel initialized with IconsFolderPath: {IconsFolderPath}, ApplicationsLocationPath: {ApplicationsLocationPath}",
+            IconsFolderPath ?? "null", ApplicationsLocationPath ?? "null");
 
         LoadPreviousIcons();
     }
@@ -60,73 +68,157 @@ public partial class ConverterViewModel : ObservableObject, IIconViewModel
 
     public void PopulateIconsList(string? folderPath)
     {
-        if (string.IsNullOrEmpty(folderPath) || !Directory.Exists(folderPath)) return;
+        _logger.Information("PopulateIconsList called with folderPath: {FolderPath}", folderPath ?? "null");
 
-        Icons = _iconManagementService.GetIcons(folderPath);
+        if (string.IsNullOrEmpty(folderPath))
+        {
+            _logger.Warning("Folder path is null or empty, cannot populate icons list");
+            return;
+        }
 
-        FilterIcons();
+        if (!Directory.Exists(folderPath))
+        {
+            _logger.Warning("Folder path does not exist: {FolderPath}", folderPath);
+            return;
+        }
 
-        UpdateConvertButtonEnabledState();
+        try
+        {
+            Icons = _iconManagementService.GetIcons(folderPath);
+            _logger.Information("Populated icons list with {Count} icons", Icons.Count);
+
+            FilterIcons();
+            UpdateConvertButtonEnabledState();
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error populating icons list from folder: {FolderPath}", folderPath);
+        }
     }
 
     partial void OnIconsFolderPathChanged(string? value)
     {
+        _logger.Information("IconsFolderPath changed to: {IconsFolderPath}", value ?? "null");
         ValidateAndSetupFileSystemWatcher();
     }
 
     partial void OnIconsChanged(ObservableCollection<Icon> value)
     {
+        _logger.Information("Icons collection changed, new count: {Count}", value?.Count ?? 0);
         FilterIcons();
     }
 
     private void ValidateAndSetupFileSystemWatcher()
     {
+        _logger.Information("Validating and setting up file system watcher for: {IconsFolderPath}",
+            IconsFolderPath ?? "null");
+
         _fsWatcherService?.Dispose();
 
         if (!string.IsNullOrEmpty(IconsFolderPath) && Directory.Exists(IconsFolderPath))
         {
-            _fsWatcherService =
-                new FileSystemWatcherService(IconsFolderPath, OnIconsDirectoryChanged, OnIconsDirectoryRenamed);
-            _fsWatcherService.StartWatching();
+            try
+            {
+                _fsWatcherService =
+                    new FileSystemWatcherService(IconsFolderPath, OnIconsDirectoryChanged, OnIconsDirectoryRenamed);
+                _fsWatcherService.StartWatching();
+                _logger.Information("File system watcher started for: {IconsFolderPath}", IconsFolderPath);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Error setting up file system watcher for: {IconsFolderPath}", IconsFolderPath);
+            }
         }
         else
         {
             _fsWatcherService = null;
+            _logger.Warning("File system watcher not set up - invalid path: {IconsFolderPath}",
+                IconsFolderPath ?? "null");
         }
     }
 
     private void OnIconsDirectoryChanged(object sender, FileSystemEventArgs e)
     {
+        _logger.Information("Icons directory changed event fired for: {ChangeType} - {FullPath}", e.ChangeType,
+            e.FullPath);
         PopulateIconsList(IconsFolderPath);
     }
 
     private void OnIconsDirectoryRenamed(object sender, RenamedEventArgs e)
     {
+        _logger.Information("Icons directory renamed event fired from {OldFullPath} to {FullPath}", e.OldFullPath,
+            e.FullPath);
         PopulateIconsList(IconsFolderPath);
     }
 
     private void LoadPreviousIcons()
     {
-        if (string.IsNullOrEmpty(IconsFolderPath) || !Directory.Exists(IconsFolderPath)) return;
+        _logger.Information("Loading previous icons from saved location");
 
-        PopulateIconsList(IconsFolderPath);
+        if (string.IsNullOrEmpty(IconsFolderPath))
+        {
+            _logger.Warning("IconsFolderPath is null or empty, cannot load previous icons");
+            return;
+        }
 
-        ValidateAndSetupFileSystemWatcher();
+        if (!Directory.Exists(IconsFolderPath))
+        {
+            _logger.Warning("IconsFolderPath does not exist: {IconsFolderPath}", IconsFolderPath);
+            return;
+        }
+
+        try
+        {
+            PopulateIconsList(IconsFolderPath);
+            ValidateAndSetupFileSystemWatcher();
+            _logger.Information("Successfully loaded previous icons");
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error loading previous icons from: {IconsFolderPath}", IconsFolderPath);
+        }
     }
 
     private void FilterIcons()
     {
-        FilteredIcons = _iconManagementService.FilterIcons(Icons, FilterString);
+        try
+        {
+            var previousCount = FilteredIcons?.Count ?? 0;
+            FilteredIcons = _iconManagementService.FilterIcons(Icons, FilterString);
+            _logger.Information("Filtered icons: {FilteredCount} of {TotalCount} icons with filter: {FilterString}",
+                FilteredIcons.Count, Icons.Count, FilterString ?? "null");
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error filtering icons with filter string: {FilterString}", FilterString ?? "null");
+        }
     }
 
     public void RefreshGui()
     {
-        Icons.Clear();
-        PopulateIconsList(IconsFolderPath);
+        _logger.Information("Refreshing GUI, clearing icons and repopulating");
+
+        try
+        {
+            Icons.Clear();
+            PopulateIconsList(IconsFolderPath);
+            _logger.Information("GUI refresh completed successfully");
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error refreshing GUI");
+        }
     }
 
     private void UpdateConvertButtonEnabledState()
     {
+        var previousState = CanConvertImages;
         CanConvertImages = Icons.Count > 0;
+
+        if (previousState != CanConvertImages)
+        {
+            _logger.Information("Convert button enabled state changed to: {CanConvertImages} (Icons count: {Count})",
+                CanConvertImages, Icons.Count);
+        }
     }
 }
