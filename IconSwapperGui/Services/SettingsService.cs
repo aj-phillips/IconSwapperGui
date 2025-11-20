@@ -81,6 +81,12 @@ public class SettingsService : ISettingsService
         UpdateSettingsProperty((settings, value) => settings.IconLocation = value, iconsPath);
     }
 
+    public void SaveExportLocation(string? exportPath)
+    {
+        _logger.Information("Saving export location: {ExportPath}", exportPath ?? "null");
+        UpdateSettingsProperty((settings, value) => settings.ExportLocation = value, exportPath);
+    }
+
     public void SaveConverterIconsLocation(string? iconsPath)
     {
         _logger.Information("Saving converter icons location: {IconsPath}", iconsPath ?? "null");
@@ -164,6 +170,13 @@ public class SettingsService : ISettingsService
         return location;
     }
 
+    public string? GetExportLocation()
+    {
+        var location = GetSettingsFieldValue<string>("ExportLocation");
+        _logger.Information("Retrieved export location: {Location}", location ?? "null");
+        return location;
+    }
+
     public bool? GetAutoUpdateValue()
     {
         var value = GetSettingsFieldValue<bool>("EnableAutoUpdate");
@@ -202,6 +215,7 @@ public class SettingsService : ISettingsService
 
         return new Settings
         {
+            ExportLocation = "",
             IconLocation = "",
             ConverterIconLocation = "",
             ApplicationsLocation = "",
