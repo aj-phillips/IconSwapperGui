@@ -8,4 +8,6 @@ public interface IIconManagementService
     IEnumerable<Icon> GetIcons(string? folderPath, IEnumerable<string> extensions);
     ObservableCollection<Icon> GetIcons(string? folderPath);
     ObservableCollection<Icon> FilterIcons(ObservableCollection<Icon> icons, string? filterString);
+    Task<string?> GetCurrentIconPathAsync(string filePath);
+    Task<bool> ChangeIconAsync(string filePath, string iconPath);
 }

@@ -1,8 +1,11 @@
-﻿namespace IconSwapperGui.Services.Interfaces;
+﻿using System.Windows;
+
+namespace IconSwapperGui.Services.Interfaces;
 
 public interface IDialogService
 {
     public void ShowError(string message, string caption);
     public void ShowWarning(string message, string caption);
     public void ShowInformation(string message, string caption);
+    public bool ShowConfirmation(string message, string caption);
 }

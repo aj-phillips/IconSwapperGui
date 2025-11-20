@@ -82,8 +82,8 @@
 
                     <ListBox.ContextMenu>
                         <ContextMenu>
-                            <MenuItem Header="Reset Icon"
-                                      Command="{Binding ResetIconContextCommand}" />
+                            <MenuItem Header="Manage Icon Versions"
+                                      Command="{Binding ManageVersionsContextCommand}" />
                         </ContextMenu>
                     </ListBox.ContextMenu>
                 </ListBox>
