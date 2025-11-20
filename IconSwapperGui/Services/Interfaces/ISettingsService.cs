@@ -8,6 +8,7 @@ public interface ISettingsService
     T? GetSettingsFieldValue<T>(string fieldName);
     void SaveIconsLocation(string? iconsPath);
     void SaveConverterIconsLocation(string? iconsPath);
+    void SaveExportLocation(string? exportPath);
     void SaveApplicationsLocation(string? applicationsPath);
     void SaveEnableDarkMode(bool? enableDarkMode);
     void SaveEnableLaunchAtStartup(bool? enableLaunchAtStartup);

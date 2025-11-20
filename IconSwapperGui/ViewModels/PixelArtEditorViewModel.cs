@@ -26,6 +26,8 @@ public partial class PixelArtEditorViewModel : ObservableObject
     [ObservableProperty] private Color _selectedColor = Colors.Black;
 
     [ObservableProperty] private double _zoomLevel = 1.0;
+    
+    [ObservableProperty] private string _iconName = "Pixel_Art";
 
     public PixelArtEditorViewModel()
     {

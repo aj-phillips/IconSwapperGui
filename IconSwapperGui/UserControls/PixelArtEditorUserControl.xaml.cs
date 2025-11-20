@@ -52,4 +52,12 @@ public partial class PixelArtEditorUserControl
         if (_viewModel?.ZoomSliderValueChangedCommand != null)
             HandleEvent(e, _viewModel.ZoomSliderValueChangedCommand);
     }
+
+    private void ExportButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel?.ExportIconCommand != null && _viewModel.ExportIconCommand.CanExecute(null))
+        {
+            _viewModel.ExportIconCommand.Execute(null);
+        }
+    }
 }
