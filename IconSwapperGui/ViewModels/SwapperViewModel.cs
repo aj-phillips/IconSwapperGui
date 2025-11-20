@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.IO;
+using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using IconSwapperGui.Commands;
 using IconSwapperGui.Commands.Swapper;
@@ -8,6 +9,7 @@ using IconSwapperGui.Models;
 using IconSwapperGui.Services;
 using IconSwapperGui.Services.Interfaces;
 using IconSwapperGui.ViewModels.Interfaces;
+using IconSwapperGui.Windows;
 using Serilog;
 
 namespace IconSwapperGui.ViewModels;
@@ -16,6 +18,7 @@ public partial class SwapperViewModel : ObservableObject, IIconViewModel
 {
     private readonly IApplicationService _applicationService;
     private readonly IIconManagementService _iconManagementService;
+    private readonly IIconHistoryService _iconHistoryService;
     private readonly ILogger _logger = Log.ForContext<SwapperViewModel>();
     public readonly IDialogService DialogService;
     public readonly IElevationService ElevationService;
@@ -45,13 +48,14 @@ public partial class SwapperViewModel : ObservableObject, IIconViewModel
     [ObservableProperty] private Icon? _selectedIcon;
 
     public SwapperViewModel(IApplicationService applicationService, IIconManagementService iconManagementService,
-        ISettingsService settingsService, IDialogService dialogService, IElevationService elevationService)
+        ISettingsService settingsService, IDialogService dialogService, IElevationService elevationService, IIconHistoryService iconHistoryService)
     {
         _logger.Information("SwapperViewModel initializing");
 
         _applicationService = applicationService ?? throw new ArgumentNullException(nameof(applicationService));
         _iconManagementService =
             iconManagementService ?? throw new ArgumentNullException(nameof(iconManagementService));
+        _iconHistoryService = iconHistoryService ?? throw new ArgumentNullException(nameof(iconHistoryService));
         SettingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
         DialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
         ElevationService = elevationService ?? throw new ArgumentNullException(nameof(elevationService));
@@ -62,18 +66,23 @@ public partial class SwapperViewModel : ObservableObject, IIconViewModel
 
         ChooseApplicationShortcutFolderCommand = new ChooseApplicationShortcutFolderCommand(this, null!, _ => true);
         ChooseIconFolderCommand = new ChooseIconFolderCommand<SwapperViewModel>(this, null!, _ => true);
-        SwapCommand = new SwapCommand(this, null!, _ => true);
+        SwapCommand = new SwapCommand(this, null!, _ => true, iconHistoryService);
         CopyPathContextCommand = new CopyPathContextCommand(this);
         DeleteIconContextCommand = new DeleteIconContextCommand(this);
         DuplicateIconContextCommand = new DuplicateIconContextCommand(this);
         OpenExplorerContextCommand = new OpenExplorerContextCommand(this);
-        ResetIconContextCommand = new ResetIconContextCommand(this);
+        ManageVersionsContextCommand = new RelayCommand(async _ => await OpenVersionManagerAsync(), _ => SelectedApplication != null);
 
         LoadPreviousApplications();
         LoadPreviousIcons();
         UpdateSwapButtonEnabledState();
 
         _logger.Information("SwapperViewModel initialized successfully");
+    }
+
+    public Task<string?> GetCurrentIconPathAsync(string filePath)
+    {
+        return _iconManagementService.GetCurrentIconPathAsync(filePath);
     }
 
     public RelayCommand ChooseApplicationShortcutFolderCommand { get; }
@@ -83,7 +92,7 @@ public partial class SwapperViewModel : ObservableObject, IIconViewModel
     public RelayCommand DeleteIconContextCommand { get; }
     public RelayCommand DuplicateIconContextCommand { get; }
     public RelayCommand OpenExplorerContextCommand { get; }
-    public RelayCommand ResetIconContextCommand { get; }
+    public ICommand ManageVersionsContextCommand { get; }
 
     public ISettingsService SettingsService { get; set; }
 
@@ -381,5 +390,37 @@ public partial class SwapperViewModel : ObservableObject, IIconViewModel
                 "Swap button enabled state changed to: {CanSwapIcons} (Application: {HasApplication}, Icon: {HasIcon})",
                 CanSwapIcons, SelectedApplication != null, SelectedIcon != null);
         }
+    }
+    
+    private Task OpenVersionManagerAsync()
+    {
+        if (SelectedApplication == null) return Task.CompletedTask;
+
+        try
+        {
+            var viewModel = new IconVersionManagerViewModel(
+                _iconHistoryService,
+                DialogService,
+                SelectedApplication.Path);
+
+            var window = new IconVersionManagerWindow(viewModel.FilePath)
+            {
+                Owner = System.Windows.Application.Current.MainWindow,
+            };
+
+            var result = window.ShowDialog();
+
+            if (result == true)
+            {
+                LoadPreviousApplications();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error opening version manager");
+            DialogService.ShowError("Error", "Failed to open version manager");
+        }
+
+        return Task.CompletedTask;
     }
 }

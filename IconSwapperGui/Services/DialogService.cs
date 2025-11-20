@@ -9,16 +9,21 @@ public class DialogService : IDialogService
     {
         MessageBox.Show(message, caption, MessageBoxButton.OK, MessageBoxImage.Error);
     }
-
-
+    
     public void ShowWarning(string message, string caption)
     {
         MessageBox.Show(message, caption, MessageBoxButton.OK, MessageBoxImage.Warning);
     }
-
-
+    
     public void ShowInformation(string message, string caption)
     {
         MessageBox.Show(message, caption, MessageBoxButton.OK, MessageBoxImage.Information);
+    }
+
+    public bool ShowConfirmation(string message, string caption)
+    {
+        var messageBox = MessageBox.Show(message, caption, MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+        return messageBox == MessageBoxResult.Yes;
     }
 }

@@ -11,11 +11,12 @@ public partial class SwapperUserControl
 
         var settingsService = new SettingsService();
         var applicationService = new ApplicationService();
-        var iconService = new IconManagementService();
+        var iconManagementService = new IconManagementService();
         var dialogService = new DialogService();
         var elevationService = new ElevationService();
-        var viewModel = new SwapperViewModel(applicationService, iconService, settingsService, dialogService,
-            elevationService);
+        var iconHistoryService = new IconHistoryService(iconManagementService);
+        var viewModel = new SwapperViewModel(applicationService, iconManagementService, settingsService, dialogService,
+            elevationService, iconHistoryService);
 
         DataContext = viewModel;
     }
