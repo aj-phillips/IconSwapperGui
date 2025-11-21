@@ -7,7 +7,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <UseWPF>true</UseWPF>
         <ApplicationIcon>favicon.ico</ApplicationIcon>
-        <Version>1.8.6</Version>
+        <Version>1.9.0</Version>
         <Authors>Adam Phillips</Authors>
     </PropertyGroup>
 
@@ -19,8 +19,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Content Include="favicon.ico"/>
-        <None Remove="IWshRuntimeLibrary.dll"/>
+        <Content Include="favicon.ico" />
+        <None Remove="IWshRuntimeLibrary.dll" />
         <Content Include="IWshRuntimeLibrary.dll">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
@@ -29,12 +29,12 @@
     <ItemGroup>
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
         <PackageReference Include="Extended.Wpf.Toolkit" Version="4.7.25104.5739" />
-        <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="14.9.1"/>
+        <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="14.9.1" />
         <PackageReference Include="MaterialDesignThemes" Version="5.2.1" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-        <PackageReference Include="Serilog" Version="4.3.0"/>
-        <PackageReference Include="Serilog.Sinks.File" Version="7.0.0"/>
-        <PackageReference Include="System.Drawing.Common" Version="9.0.8"/>
+        <PackageReference Include="Serilog" Version="4.3.0" />
+        <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+        <PackageReference Include="System.Drawing.Common" Version="9.0.8" />
         <PackageReference Include="WindowsAPICodePack" Version="8.0.6" />
     </ItemGroup>
 
