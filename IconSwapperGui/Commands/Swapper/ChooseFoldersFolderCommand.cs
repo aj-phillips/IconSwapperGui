@@ -21,5 +21,7 @@ public class ChooseFoldersFolderCommand : RelayCommand
         _viewModel.FoldersFolderPath = folder;
         _viewModel.PopulateFoldersList(folder);
         _viewModel.SettingsService.SaveFoldersLocation(folder);
+        // Refresh GUI to include all configured locations (single + list)
+        _viewModel.RefreshGui();
     }
 }

@@ -22,6 +22,7 @@ public class ChooseIconFolderCommand<TViewModel> : RelayCommand where TViewModel
             case SwapperViewModel iconSwapperViewModel:
                 ExecuteCommand(iconSwapperViewModel);
                 iconSwapperViewModel.SettingsService.SaveIconsLocation(iconSwapperViewModel.IconsFolderPath);
+                iconSwapperViewModel.RefreshGui();
                 break;
             case ConverterViewModel iconConverterViewModel:
                 ExecuteCommand(iconConverterViewModel);

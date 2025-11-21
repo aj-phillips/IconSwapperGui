@@ -6,7 +6,7 @@
         xmlns:userControls="clr-namespace:IconSwapperGui.UserControls"
         Style="{StaticResource MaterialDesignWindow}"
         mc:Ignorable="d"
-        Title="Icon Swapper" Height="620" Width="1050" ResizeMode="NoResize" WindowStartupLocation="CenterScreen"
+        Title="Icon Swapper" Height="700" Width="1150" ResizeMode="NoResize" WindowStartupLocation="CenterScreen"
         UseLayoutRounding="True">
     <Grid>
         <TabControl Margin="5">

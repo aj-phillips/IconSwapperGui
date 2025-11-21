@@ -25,6 +25,20 @@ public class SettingsService : ISettingsService
         UpdateSettingsWithDefaults();
     }
 
+    public static event Action? LocationsChanged;
+
+    public static void TriggerLocationsChanged()
+    {
+        try
+        {
+            LocationsChanged?.Invoke();
+        }
+        catch
+        {
+            // ignore
+        }
+    }
+
     public Settings? GetSettings()
     {
         _logger.Information("Getting all settings from file");
@@ -78,7 +92,23 @@ public class SettingsService : ISettingsService
     public void SaveIconsLocation(string? iconsPath)
     {
         _logger.Information("Saving icons location: {IconsPath}", iconsPath ?? "null");
-        UpdateSettingsProperty((settings, value) => settings.IconLocation = value, iconsPath);
+        var currentSingle = GetIconsLocation();
+        if (string.IsNullOrWhiteSpace(currentSingle))
+        {
+            UpdateSettingsProperty((settings, value) => settings.IconLocation = value, iconsPath);
+        }
+        else
+        {
+            if (!string.IsNullOrWhiteSpace(iconsPath))
+            {
+                var list = GetIconsLocations() ?? new List<string>();
+                if (!list.Contains(iconsPath))
+                {
+                    list.Add(iconsPath);
+                    SaveIconsLocations(list);
+                }
+            }
+        }
     }
 
     public void SaveExportLocation(string? exportPath)
@@ -96,13 +126,92 @@ public class SettingsService : ISettingsService
     public void SaveFoldersLocation(string? foldersPath)
     {
         _logger.Information("Saving folders location: {FoldersPath}", foldersPath ?? "null");
-        UpdateSettingsProperty((settings, value) => settings.FoldersLocation = value, foldersPath);
+        var currentSingle = GetFoldersLocation();
+        if (string.IsNullOrWhiteSpace(currentSingle))
+        {
+            UpdateSettingsProperty((settings, value) => settings.FoldersLocation = value, foldersPath);
+        }
+        else
+        {
+            if (string.IsNullOrWhiteSpace(foldersPath)) return;
+
+            var list = GetFoldersLocations() ?? new List<string>();
+
+            if (list.Contains(foldersPath)) return;
+
+            list.Add(foldersPath);
+            UpdateSettingsProperty((settings, value) => settings.FoldersLocations = value, list);
+        }
     }
 
     public void SaveApplicationsLocation(string? applicationsPath)
     {
         _logger.Information("Saving applications location: {ApplicationsPath}", applicationsPath ?? "null");
-        UpdateSettingsProperty((settings, value) => settings.ApplicationsLocation = value, applicationsPath);
+        var currentSingle = GetApplicationsLocation();
+        if (string.IsNullOrWhiteSpace(currentSingle))
+        {
+            UpdateSettingsProperty((settings, value) => settings.ApplicationsLocation = value, applicationsPath);
+        }
+        else
+        {
+            if (string.IsNullOrWhiteSpace(applicationsPath)) return;
+
+            var list = GetApplicationsLocations() ?? new List<string>();
+
+            if (list.Contains(applicationsPath)) return;
+
+            list.Add(applicationsPath);
+            SaveApplicationsLocations(list);
+        }
+    }
+
+    public void SaveIconsLocations(List<string>? iconsPaths)
+    {
+        _logger.Information("Saving icons locations (list)");
+        var normalized = NormalizeLocations(iconsPaths);
+        UpdateSettingsProperty((settings, value) => settings.IconLocations = value, normalized);
+    }
+
+    public void SaveApplicationsLocations(List<string>? applicationsPaths)
+    {
+        _logger.Information("Saving applications locations (list)");
+        var normalized = NormalizeLocations(applicationsPaths);
+        UpdateSettingsProperty((settings, value) => settings.ApplicationsLocations = value, normalized);
+    }
+
+    public void SaveFoldersLocations(List<string>? foldersPaths)
+    {
+        _logger.Information("Saving folders locations (list)");
+        var normalized = NormalizeLocations(foldersPaths);
+        UpdateSettingsProperty((settings, value) => settings.FoldersLocations = value, normalized);
+    }
+
+    private static string NormalizePath(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return string.Empty;
+
+        try
+        {
+            var full = Path.GetFullPath(path.Trim());
+            full = full.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            return full;
+        }
+        catch
+        {
+            return path.Trim();
+        }
+    }
+
+    public List<string> NormalizeLocations(IEnumerable<string>? locations)
+    {
+        if (locations == null) return new List<string>();
+        var normalized = locations
+            .Where(p => !string.IsNullOrWhiteSpace(p))
+            .Select(NormalizePath)
+            .Where(p => !string.IsNullOrEmpty(p))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        return normalized;
     }
 
     public void SaveEnableDarkMode(bool? enableDarkMode)
@@ -162,11 +271,25 @@ public class SettingsService : ISettingsService
         return location;
     }
 
+    public List<string>? GetApplicationsLocations()
+    {
+        var locations = GetSettingsFieldValue<List<string>>("ApplicationsLocations");
+        _logger.Information("Retrieved applications locations count: {Count}", locations?.Count ?? 0);
+        return locations;
+    }
+
     public string? GetIconsLocation()
     {
         var location = GetSettingsFieldValue<string>("IconLocation");
         _logger.Information("Retrieved icons location: {Location}", location ?? "null");
         return location;
+    }
+
+    public List<string>? GetIconsLocations()
+    {
+        var locations = GetSettingsFieldValue<List<string>>("IconLocations");
+        _logger.Information("Retrieved icons locations count: {Count}", locations?.Count ?? 0);
+        return locations;
     }
 
     public string? GetConverterIconsLocation()
@@ -181,6 +304,13 @@ public class SettingsService : ISettingsService
         var location = GetSettingsFieldValue<string>("FoldersLocation");
         _logger.Information("Retrieved folders location: {Location}", location ?? "null");
         return location;
+    }
+
+    public List<string>? GetFoldersLocations()
+    {
+        var locations = GetSettingsFieldValue<List<string>>("FoldersLocations");
+        _logger.Information("Retrieved folders locations count: {Count}", locations?.Count ?? 0);
+        return locations;
     }
 
     public string? GetExportLocation()
@@ -230,10 +360,12 @@ public class SettingsService : ISettingsService
         {
             ExportLocation = "",
             IconLocation = "",
+            IconLocations = new List<string>(),
             FoldersLocation = "",
             ConverterIconLocation = "",
             ApplicationsLocation = "",
-            EnableDarkMode = false,
+            ApplicationsLocations = new List<string>(),
+            EnableDarkMode = true,
             EnableLaunchAtStartup = false,
             EnableAutoUpdate = true,
             EnableSeasonalEffects = true
@@ -283,9 +415,11 @@ public class SettingsService : ISettingsService
             var settings = GetSettings() ?? new Settings();
 
             settings.IconLocation ??= "";
+            settings.IconLocations ??= new List<string>();
             settings.ConverterIconLocation ??= "";
             settings.ApplicationsLocation ??= "";
-            settings.EnableDarkMode ??= false;
+            settings.ApplicationsLocations ??= new List<string>();
+            settings.EnableDarkMode ??= true;
             settings.EnableLaunchAtStartup ??= false;
             settings.EnableAutoUpdate ??= true;
             settings.EnableSeasonalEffects ??= true;

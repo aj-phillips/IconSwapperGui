@@ -1,5 +1,9 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using IconSwapperGui.Commands;
@@ -23,9 +27,12 @@ public partial class SwapperViewModel : ObservableObject, IIconViewModel
     public readonly IDialogService DialogService;
     public readonly IElevationService ElevationService;
 
-    [ObservableProperty] private ObservableCollection<Application> _applications;
+    public ISettingsService SettingsService { get; set; }
 
-    private IFileSystemWatcherService? _applicationsDirectoryWatcherService;
+    [ObservableProperty] private ObservableCollection<Application> _applications;
+    [ObservableProperty] private ObservableCollection<string> _applicationsFolders;
+
+    private List<IFileSystemWatcherService>? _applicationsDirectoryWatcherServices;
 
     [ObservableProperty] private string? _applicationsFolderPath;
 
@@ -34,30 +41,25 @@ public partial class SwapperViewModel : ObservableObject, IIconViewModel
     [ObservableProperty] private ObservableCollection<Icon> _filteredIcons;
 
     [ObservableProperty] private string? _filterString;
+    private CancellationTokenSource? _filterCts;
 
     [ObservableProperty] private ObservableCollection<Icon> _icons;
 
-    private FileSystemWatcherService? _iconsDirectoryWatcherService;
+    [ObservableProperty] private ObservableCollection<string> _iconsFolders;
+
+    private List<IFileSystemWatcherService>? _iconsDirectoryWatcherServices;
 
     [ObservableProperty] private string? _iconsFolderPath;
 
     [ObservableProperty] private ObservableCollection<FolderItem> _folders;
-    private FileSystemWatcherService? _foldersDirectoryWatcherService;
+    [ObservableProperty] private ObservableCollection<string> _foldersFolders;
+    private List<IFileSystemWatcherService>? _foldersDirectoryWatcherServices;
 
     [ObservableProperty] private string? _foldersFolderPath;
 
     [ObservableProperty] private FolderItem? _selectedFolder;
 
-    [ObservableProperty] private int _leftTabIndex;
-
     [ObservableProperty] private bool _isFolderTabSelected;
-
-    partial void OnLeftTabIndexChanged(int value)
-    {
-        IsFolderTabSelected = value == 1;
-        UpdateSwapButtonEnabledState();
-        System.Windows.Input.CommandManager.InvalidateRequerySuggested();
-    }
 
     [ObservableProperty] private bool _isTickVisible;
 
@@ -73,21 +75,22 @@ public partial class SwapperViewModel : ObservableObject, IIconViewModel
         _logger.Information("SwapperViewModel initializing");
 
         _applicationService = applicationService ?? throw new ArgumentNullException(nameof(applicationService));
-        _iconManagementService =
-            iconManagementService ?? throw new ArgumentNullException(nameof(iconManagementService));
+        _iconManagementService = iconManagementService ?? throw new ArgumentNullException(nameof(iconManagementService));
         _iconHistoryService = iconHistoryService ?? throw new ArgumentNullException(nameof(iconHistoryService));
         SettingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
         DialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
         ElevationService = elevationService ?? throw new ArgumentNullException(nameof(elevationService));
 
         Applications = new ObservableCollection<Application>();
+        ApplicationsFolders = new ObservableCollection<string>();
         Icons = new ObservableCollection<Icon>();
+        IconsFolders = new ObservableCollection<string>();
         Folders = new ObservableCollection<FolderItem>();
         FilteredIcons = new ObservableCollection<Icon>();
 
         ChooseApplicationShortcutFolderCommand = new ChooseApplicationShortcutFolderCommand(this, null!, _ => true);
         ChooseIconFolderCommand = new ChooseIconFolderCommand<SwapperViewModel>(this, null!, _ => true);
-        ChooseFoldersFolderCommand = new Commands.Swapper.ChooseFoldersFolderCommand(this, null!, _ => true);
+        ChooseFoldersFolderCommand = new ChooseFoldersFolderCommand(this, null!, _ => true);
         SwapFolderIconCommand = new SwapFolderIconCommand(this, new FolderService(), iconHistoryService, null!, _ => true);
         SwapCommand = new SwapCommand(this, null!, _ => true, iconHistoryService);
         DualSwapCommand = new RelayCommand(_ => ExecuteDualSwap(), _ => CanSwap);
@@ -96,6 +99,11 @@ public partial class SwapperViewModel : ObservableObject, IIconViewModel
         DuplicateIconContextCommand = new DuplicateIconContextCommand(this);
         OpenExplorerContextCommand = new OpenExplorerContextCommand(this);
         ManageVersionsContextCommand = new RelayCommand(async _ => await OpenVersionManagerAsync(), _ => SelectedApplication != null);
+        ManageDirectoriesCommand = new RelayCommand(_ => OpenManageDirectories(), _ => true);
+
+        SettingsService = settingsService;
+
+        Services.SettingsService.LocationsChanged += () => System.Windows.Application.Current.Dispatcher.Invoke(RefreshGui);
 
         LoadPreviousApplications();
         LoadPreviousIcons();
@@ -103,6 +111,67 @@ public partial class SwapperViewModel : ObservableObject, IIconViewModel
         UpdateSwapButtonEnabledState();
 
         _logger.Information("SwapperViewModel initialized successfully");
+    }
+
+    public RelayCommand ChooseApplicationShortcutFolderCommand { get; }
+    public RelayCommand ChooseIconFolderCommand { get; }
+    public RelayCommand ChooseFoldersFolderCommand { get; }
+    public RelayCommand SwapFolderIconCommand { get; }
+    public RelayCommand SwapCommand { get; }
+    public RelayCommand DualSwapCommand { get; }
+    public RelayCommand CopyPathContextCommand { get; }
+    public RelayCommand DeleteIconContextCommand { get; }
+    public RelayCommand DuplicateIconContextCommand { get; }
+    public RelayCommand OpenExplorerContextCommand { get; }
+    public RelayCommand ManageDirectoriesCommand { get; }
+    public ICommand ManageVersionsContextCommand { get; }
+
+    partial void OnSelectedApplicationChanged(Application? value)
+    {
+        UpdateSwapButtonEnabledState();
+        CommandManager.InvalidateRequerySuggested();
+    }
+
+    partial void OnSelectedIconChanged(Icon? value)
+    {
+        UpdateSwapButtonEnabledState();
+        CommandManager.InvalidateRequerySuggested();
+    }
+
+    partial void OnSelectedFolderChanged(FolderItem? value)
+    {
+        UpdateSwapButtonEnabledState();
+        CommandManager.InvalidateRequerySuggested();
+    }
+
+    partial void OnFilterStringChanged(string? value)
+    {
+        try
+        {
+            _filterCts?.Cancel();
+            _filterCts?.Dispose();
+            _filterCts = new CancellationTokenSource();
+            var token = _filterCts.Token;
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await Task.Delay(300, token).ConfigureAwait(false);
+                    if (token.IsCancellationRequested) return;
+                    System.Windows.Application.Current.Dispatcher.Invoke(() => FilterIcons());
+                }
+                catch (OperationCanceledException) { }
+                catch (Exception ex)
+                {
+                    _logger.Warning(ex, "Error applying debounced filter: {FilterString}", value);
+                }
+            }, token);
+        }
+        catch (Exception ex)
+        {
+            _logger.Warning(ex, "Error scheduling debounced filter: {FilterString}", value);
+        }
     }
 
     public void RefreshGui()
@@ -119,70 +188,109 @@ public partial class SwapperViewModel : ObservableObject, IIconViewModel
             Icons.Clear();
             Folders.Clear();
 
-            PopulateApplicationsList(ApplicationsFolderPath);
-            PopulateIconsList(IconsFolderPath);
-            PopulateFoldersList(FoldersFolderPath);
+            var appsList = new List<string>();
+            var apps = SettingsService.GetApplicationsLocations();
+
+            if (apps != null && apps.Any()) 
+                appsList.AddRange(apps);
+
+            var singleApp = SettingsService.GetApplicationsLocation();
+
+            if (!string.IsNullOrWhiteSpace(singleApp) && !appsList.Contains(singleApp)) 
+                appsList.Add(singleApp);
+
+            if (appsList.Any())
+            {
+                ApplicationsFolders = new ObservableCollection<string>(appsList);
+                PopulateApplicationsFromLocations(ApplicationsFolders);
+                ApplicationsFolderPath = ApplicationsFolders.FirstOrDefault();
+                SetupApplicationsDirectoryWatcher();
+            }
+            else
+            {
+                ApplicationsFolderPath = SettingsService.GetApplicationsLocation();
+
+                if (!string.IsNullOrEmpty(ApplicationsFolderPath))
+                {
+                    PopulateApplicationsList(ApplicationsFolderPath);
+                    SetupApplicationsDirectoryWatcher();
+                }
+            }
+
+            var iconsList = new List<string>();
+            var icons = SettingsService.GetIconsLocations();
+
+            if (icons != null && icons.Any()) 
+                iconsList.AddRange(icons);
+
+            var singleIcon = SettingsService.GetIconsLocation();
+
+            if (!string.IsNullOrWhiteSpace(singleIcon) && !iconsList.Contains(singleIcon)) 
+                iconsList.Add(singleIcon);
+
+            if (iconsList.Any())
+            {
+                IconsFolders = new ObservableCollection<string>(iconsList);
+                PopulateIconsFromLocations(IconsFolders);
+                IconsFolderPath = IconsFolders.FirstOrDefault();
+                SetupIconsDirectoryWatcher();
+            }
+            else
+            {
+                IconsFolderPath = SettingsService.GetIconsLocation();
+                if (!string.IsNullOrEmpty(IconsFolderPath))
+                {
+                    PopulateIconsList(IconsFolderPath);
+                    SetupIconsDirectoryWatcher();
+                }
+            }
+
+            var foldersList = new List<string>();
+            var folders = SettingsService.GetFoldersLocations();
+
+            if (folders != null && folders.Any()) 
+                foldersList.AddRange(folders);
+
+            var singleFolder = SettingsService.GetFoldersLocation();
+
+            if (!string.IsNullOrWhiteSpace(singleFolder) && !foldersList.Contains(singleFolder)) 
+                foldersList.Add(singleFolder);
+
+            if (foldersList.Any())
+            {
+                FoldersFolders = new ObservableCollection<string>(foldersList);
+                PopulateFoldersFromLocations(FoldersFolders);
+                FoldersFolderPath = FoldersFolders.FirstOrDefault();
+                SetupFoldersDirectoryWatcher();
+            }
+            else if (!string.IsNullOrEmpty(FoldersFolderPath))
+            {
+                PopulateFoldersList(FoldersFolderPath);
+                SetupFoldersDirectoryWatcher();
+            }
 
             if (prevSelectedApplicationPath != null)
             {
                 SelectedApplication = Applications.FirstOrDefault(app => app.Path == prevSelectedApplicationPath);
-                _logger.Information("Restored selected application after refresh: {ApplicationName}", SelectedApplication?.Name ?? "null");
             }
 
             if (prevSelectedIconPath != null)
             {
                 SelectedIcon = Icons.FirstOrDefault(icon => icon.Path == prevSelectedIconPath);
-                _logger.Information("Restored selected icon after refresh: {IconName}", SelectedIcon?.Name ?? "null");
             }
 
             if (prevSelectedFolderPath != null)
             {
                 SelectedFolder = Folders.FirstOrDefault(f => f.Path == prevSelectedFolderPath);
-                _logger.Information("Restored selected folder after refresh: {FolderPath}", SelectedFolder?.Path ?? "null");
             }
 
             UpdateSwapButtonEnabledState();
-
-            _logger.Information("GUI refresh completed successfully");
         }
         catch (Exception ex)
         {
             _logger.Error(ex, "Error refreshing GUI");
         }
     }
-
-    public bool CanSwap => (!IsFolderTabSelected && SelectedApplication != null && SelectedIcon != null) || (IsFolderTabSelected && SelectedFolder != null && SelectedIcon != null);
-
-    private void ExecuteDualSwap()
-    {
-        if (IsFolderTabSelected)
-        {
-            SwapFolderIconCommand.Execute(null);
-        }
-        else
-        {
-            SwapCommand.Execute(null);
-        }
-    }
-
-    public Task<string?> GetCurrentIconPathAsync(string filePath)
-    {
-        return _iconManagementService.GetCurrentIconPathAsync(filePath);
-    }
-
-    public RelayCommand ChooseApplicationShortcutFolderCommand { get; }
-    public RelayCommand ChooseIconFolderCommand { get; }
-    public RelayCommand ChooseFoldersFolderCommand { get; }
-    public RelayCommand SwapFolderIconCommand { get; }
-    public RelayCommand SwapCommand { get; }
-    public RelayCommand DualSwapCommand { get; }
-    public RelayCommand CopyPathContextCommand { get; }
-    public RelayCommand DeleteIconContextCommand { get; }
-    public RelayCommand DuplicateIconContextCommand { get; }
-    public RelayCommand OpenExplorerContextCommand { get; }
-    public ICommand ManageVersionsContextCommand { get; }
-
-    public ISettingsService SettingsService { get; set; }
 
     public void PopulateIconsList(string? folderPath)
     {
@@ -191,24 +299,17 @@ public partial class SwapperViewModel : ObservableObject, IIconViewModel
 
         try
         {
-            Icons.Clear();
             var icons = _iconManagementService.GetIcons(folderPath, supportedExtensions);
-
             var addedCount = 0;
+
             foreach (var icon in icons)
             {
-                if (Icons.Any(x => x.Path == icon.Path))
-                {
-                    continue;
-                }
-
-                System.Windows.Application.Current.Dispatcher.Invoke(() => { Icons.Add(icon); });
+                if (Icons.Any(x => x.Path == icon.Path)) continue;
+                Icons.Add(icon);
                 addedCount++;
             }
 
-            _logger.Information("Populated icons list with {AddedCount} new icons (total: {TotalCount})", addedCount,
-                Icons.Count);
-
+            _logger.Information("Populated icons list with {AddedCount} new icons (total: {TotalCount})", addedCount, Icons.Count);
             FilterIcons();
         }
         catch (Exception ex)
@@ -217,258 +318,29 @@ public partial class SwapperViewModel : ObservableObject, IIconViewModel
         }
     }
 
-    public void PopulateFoldersList(string? folderPath)
+    public void PopulateIconsFromLocations(IEnumerable<string>? folderPaths)
     {
-        _logger.Information("PopulateFoldersList called with folderPath: {FolderPath}", folderPath ?? "null");
+        _logger.Information("PopulateIconsFromLocations called");
+        var supportedExtensions = new List<string> { ".ico" };
 
         try
         {
-            Folders.Clear();
-
-            var folderService = new FolderService();
-            var folders = folderService.GetFolders(folderPath);
-
-            var added = 0;
-            foreach (var f in folders)
+            foreach (var folderPath in folderPaths ?? Enumerable.Empty<string>())
             {
-                if (Folders.Any(x => x.Path == f.Path)) continue;
-                Folders.Add(f);
-                added++;
+                var icons = _iconManagementService.GetIcons(folderPath, supportedExtensions);
+
+                foreach (var icon in icons)
+                {
+                    if (Icons.Any(x => x.Path == icon.Path)) continue;
+                    Icons.Add(icon);
+                }
             }
 
-            _logger.Information("Populated folders list with {Added} new folders (total: {Total})", added, Folders.Count);
+            FilterIcons();
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error populating folders list from folder: {FolderPath}", folderPath);
-        }
-    }
-
-    partial void OnIconsChanged(ObservableCollection<Icon> value)
-    {
-        _logger.Information("Icons collection changed, new count: {Count}", value?.Count ?? 0);
-        FilterIcons();
-    }
-
-    partial void OnIconsFolderPathChanged(string? value)
-    {
-        _logger.Information("IconsFolderPath changed to: {IconsFolderPath}", value ?? "null");
-        SetupIconsDirectoryWatcher();
-    }
-
-    partial void OnFilterStringChanged(string? value)
-    {
-        _logger.Information("FilterString changed to: {FilterString}", value ?? "null");
-        FilterIcons();
-    }
-
-    partial void OnApplicationsFolderPathChanged(string? value)
-    {
-        _logger.Information("ApplicationsFolderPath changed to: {ApplicationsFolderPath}", value ?? "null");
-        SetupApplicationsDirectoryWatcher();
-    }
-
-    partial void OnSelectedApplicationChanged(Application? value)
-    {
-        _logger.Information("SelectedApplication changed to: {ApplicationName}", value?.Name ?? "null");
-        UpdateSwapButtonEnabledState();
-        CommandManager.InvalidateRequerySuggested();
-    }
-
-    partial void OnSelectedIconChanged(Icon? value)
-    {
-        _logger.Information("SelectedIcon changed to: {IconName}", value?.Name ?? "null");
-        UpdateSwapButtonEnabledState();
-        CommandManager.InvalidateRequerySuggested();
-    }
-
-    partial void OnSelectedFolderChanged(FolderItem? value)
-    {
-        _logger.Information("SelectedFolder changed to: {FolderPath}", value?.Path ?? "null");
-        UpdateSwapButtonEnabledState();
-        CommandManager.InvalidateRequerySuggested();
-    }
-
-    public async Task ShowSuccessTick()
-    {
-        _logger.Information("Showing success tick");
-        IsTickVisible = true;
-        await Task.Delay(750);
-        IsTickVisible = false;
-        _logger.Information("Success tick hidden");
-    }
-
-    private void SetupIconsDirectoryWatcher()
-    {
-        _logger.Information("Setting up icons directory watcher for: {IconsFolderPath}", IconsFolderPath ?? "null");
-
-        try
-        {
-            _iconsDirectoryWatcherService?.Dispose();
-
-            _iconsDirectoryWatcherService = new FileSystemWatcherService(IconsFolderPath,
-                OnIconsDirectoryChanged, OnIconsDirectoryRenamed);
-            _iconsDirectoryWatcherService.StartWatching();
-
-            _logger.Information("Icons directory watcher started successfully");
-        }
-        catch (Exception ex)
-        {
-            _logger.Error(ex, "Error setting up icons directory watcher for: {IconsFolderPath}", IconsFolderPath);
-        }
-    }
-
-    private void SetupApplicationsDirectoryWatcher()
-    {
-        _logger.Information("Setting up applications directory watcher for: {ApplicationsFolderPath}",
-            ApplicationsFolderPath ?? "null");
-
-        try
-        {
-            _applicationsDirectoryWatcherService?.Dispose();
-
-            _applicationsDirectoryWatcherService = new FileSystemWatcherService(ApplicationsFolderPath,
-                OnApplicationsDirectoryChanged, OnApplicationsDirectoryRenamed);
-            _applicationsDirectoryWatcherService.StartWatching();
-
-            _logger.Information("Applications directory watcher started successfully");
-        }
-        catch (Exception ex)
-        {
-            _logger.Error(ex, "Error setting up applications directory watcher for: {ApplicationsFolderPath}",
-                ApplicationsFolderPath);
-        }
-    }
-
-    private void OnIconsDirectoryChanged(object sender, FileSystemEventArgs e)
-    {
-        _logger.Information("Icons directory changed event fired for: {ChangeType} - {FullPath}", e.ChangeType,
-            e.FullPath);
-        System.Windows.Application.Current.Dispatcher.Invoke(() => PopulateIconsList(IconsFolderPath));
-    }
-
-    private void OnIconsDirectoryRenamed(object sender, RenamedEventArgs e)
-    {
-        _logger.Information("Icons directory renamed event fired from {OldFullPath} to {FullPath}", e.OldFullPath,
-            e.FullPath);
-        PopulateIconsList(IconsFolderPath);
-    }
-
-    private void OnApplicationsDirectoryChanged(object sender, FileSystemEventArgs e)
-    {
-        _logger.Information("Applications directory changed event fired for: {ChangeType} - {FullPath}", e.ChangeType,
-            e.FullPath);
-        PopulateApplicationsList(ApplicationsFolderPath);
-    }
-
-    private void OnApplicationsDirectoryRenamed(object sender, RenamedEventArgs e)
-    {
-        _logger.Information("Applications directory renamed event fired from {OldFullPath} to {FullPath}",
-            e.OldFullPath, e.FullPath);
-        PopulateApplicationsList(ApplicationsFolderPath);
-    }
-
-    private void OnFoldersDirectoryChanged(object sender, FileSystemEventArgs e)
-    {
-        _logger.Information("Folders directory changed event fired for: {ChangeType} - {FullPath}", e.ChangeType, e.FullPath);
-        PopulateFoldersList(FoldersFolderPath);
-    }
-
-    private void OnFoldersDirectoryRenamed(object sender, RenamedEventArgs e)
-    {
-        _logger.Information("Folders directory renamed event fired from {OldFullPath} to {FullPath}", e.OldFullPath, e.FullPath);
-        PopulateFoldersList(FoldersFolderPath);
-    }
-
-    private void LoadPreviousApplications()
-    {
-        _logger.Information("Loading previous applications from saved location");
-
-        ApplicationsFolderPath = SettingsService.GetApplicationsLocation();
-
-        if (string.IsNullOrEmpty(ApplicationsFolderPath))
-        {
-            _logger.Warning("ApplicationsFolderPath is null or empty, cannot load previous applications");
-            return;
-        }
-
-        try
-        {
-            PopulateApplicationsList(ApplicationsFolderPath);
-            SetupApplicationsDirectoryWatcher();
-            _logger.Information("Successfully loaded previous applications");
-        }
-        catch (Exception ex)
-        {
-            _logger.Error(ex, "Error loading previous applications from: {ApplicationsFolderPath}",
-                ApplicationsFolderPath);
-        }
-    }
-
-    private void LoadPreviousIcons()
-    {
-        _logger.Information("Loading previous icons from saved location");
-
-        IconsFolderPath = SettingsService.GetIconsLocation();
-
-        if (string.IsNullOrEmpty(IconsFolderPath))
-        {
-            _logger.Warning("IconsFolderPath is null or empty, cannot load previous icons");
-            return;
-        }
-
-        try
-        {
-            PopulateIconsList(IconsFolderPath);
-            SetupIconsDirectoryWatcher();
-            _logger.Information("Successfully loaded previous icons");
-        }
-        catch (Exception ex)
-        {
-            _logger.Error(ex, "Error loading previous icons from: {IconsFolderPath}", IconsFolderPath);
-        }
-    }
-
-    private void LoadPreviousFolders()
-    {
-        _logger.Information("Loading previous folders from saved location");
-
-        FoldersFolderPath = SettingsService.GetFoldersLocation();
-
-        if (string.IsNullOrEmpty(FoldersFolderPath))
-        {
-            _logger.Warning("FoldersFolderPath is null or empty, cannot load previous folders");
-            return;
-        }
-
-        try
-        {
-            PopulateFoldersList(FoldersFolderPath);
-            SetupFoldersDirectoryWatcher();
-            _logger.Information("Successfully loaded previous folders");
-        }
-        catch (Exception ex)
-        {
-            _logger.Error(ex, "Error loading previous folders from: {FoldersFolderPath}", FoldersFolderPath);
-        }
-    }
-
-    private void SetupFoldersDirectoryWatcher()
-    {
-        _logger.Information("Setting up folders directory watcher for: {FoldersFolderPath}", FoldersFolderPath ?? "null");
-
-        try
-        {
-            _foldersDirectoryWatcherService?.Dispose();
-
-            _foldersDirectoryWatcherService = new FileSystemWatcherService(FoldersFolderPath, OnFoldersDirectoryChanged, OnFoldersDirectoryRenamed);
-            _foldersDirectoryWatcherService.StartWatching();
-
-            _logger.Information("Folders directory watcher started successfully");
-        }
-        catch (Exception ex)
-        {
-            _logger.Error(ex, "Error setting up folders directory watcher for: {FoldersFolderPath}", FoldersFolderPath);
+            _logger.Error(ex, "Error populating icons from locations");
         }
     }
 
@@ -478,24 +350,15 @@ public partial class SwapperViewModel : ObservableObject, IIconViewModel
 
         try
         {
-            Applications.Clear();
-
             var applications = _applicationService.GetApplications(folderPath);
 
-            var addedCount = 0;
             foreach (var application in applications)
             {
-                if (Applications.Any(x => x.Path == application.Path))
-                {
-                    continue;
-                }
-
+                if (Applications.Any(x => x.Path == application.Path)) continue;
                 Applications.Add(application);
-                addedCount++;
             }
 
-            _logger.Information("Populated applications list with {AddedCount} new applications (total: {TotalCount})",
-                addedCount, Applications.Count);
+            _logger.Information("Populated applications list (total: {TotalCount})", Applications.Count);
         }
         catch (Exception ex)
         {
@@ -503,32 +366,76 @@ public partial class SwapperViewModel : ObservableObject, IIconViewModel
         }
     }
 
-    public void ResetGui()
+    public void PopulateApplicationsFromLocations(IEnumerable<string>? folderPaths)
     {
-        _logger.Information("Resetting GUI");
+        _logger.Information("PopulateApplicationsFromLocations called");
 
         try
         {
-            var tempSelectedApplicationPath = SelectedApplication?.Path;
-            _logger.Information("Preserving selected application: {ApplicationPath}",
-                tempSelectedApplicationPath ?? "null");
-
-            Applications.Clear();
-
-            PopulateApplicationsList(ApplicationsFolderPath);
-
-            if (tempSelectedApplicationPath != null)
+            foreach (var folderPath in folderPaths ?? Enumerable.Empty<string>())
             {
-                SelectedApplication = Applications.FirstOrDefault(app => app.Path == tempSelectedApplicationPath);
-                _logger.Information("Restored selected application: {ApplicationName}",
-                    SelectedApplication?.Name ?? "null");
-            }
+                var applications = _applicationService.GetApplications(folderPath);
 
-            _logger.Information("GUI reset completed successfully");
+                foreach (var app in applications)
+                {
+                    if (Applications.Any(x => x.Path == app.Path)) continue;
+                    Applications.Add(app);
+                }
+            }
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error resetting GUI");
+            _logger.Error(ex, "Error populating applications from locations");
+        }
+    }
+
+    public void PopulateFoldersList(string? folderPath)
+    {
+        _logger.Information("PopulateFoldersList called with folderPath: {FolderPath}", folderPath ?? "null");
+
+        try
+        {
+            var folderService = new FolderService();
+            var folders = folderService.GetFolders(folderPath);
+
+            foreach (var f in folders)
+            {
+                if (Folders.Any(x => x.Path == f.Path)) continue;
+                Folders.Add(f);
+            }
+
+            _logger.Information("Populated folders list (total: {Total})", Folders.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error populating folders list from folder: {FolderPath}", folderPath);
+        }
+    }
+
+    public void PopulateFoldersFromLocations(IEnumerable<string>? folderPaths)
+    {
+        _logger.Information("PopulateFoldersFromLocations called");
+
+        try
+        {
+            var folderService = new FolderService();
+
+            foreach (var folderPath in folderPaths ?? Enumerable.Empty<string>())
+            {
+                var folders = folderService.GetFolders(folderPath);
+
+                foreach (var f in folders)
+                {
+                    if (Folders.Any(x => x.Path == f.Path)) continue;
+                    Folders.Add(f);
+                }
+            }
+
+            _logger.Information("Populated folders from locations (total: {Total})", Folders.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error populating folders from locations");
         }
     }
 
@@ -536,65 +443,105 @@ public partial class SwapperViewModel : ObservableObject, IIconViewModel
     {
         try
         {
-            if (string.IsNullOrEmpty(FilterString))
+            FilteredIcons ??= new ObservableCollection<Icon>();
+            FilteredIcons.Clear();
+
+            if (string.IsNullOrWhiteSpace(FilterString))
             {
-                FilteredIcons = new ObservableCollection<Icon>(Icons);
-                _logger.Information("No filter applied, showing all {Count} icons", Icons.Count);
+                foreach (var icon in Icons) FilteredIcons.Add(icon);
             }
             else
             {
-                var filtered = Icons
-                    .Where(icon => icon.Name.Contains(FilterString, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-                FilteredIcons = new ObservableCollection<Icon>(filtered);
-                _logger.Information(
-                    "Filtered icons: {FilteredCount} of {TotalCount} icons match filter '{FilterString}'",
-                    FilteredIcons.Count, Icons.Count, FilterString);
+                var filter = FilterString.Trim();
+                var filtered = Icons.Where(icon => icon.Name.Contains(filter, StringComparison.OrdinalIgnoreCase));
+
+                foreach (var icon in filtered) 
+                    FilteredIcons.Add(icon);
             }
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error filtering icons with filter string: {FilterString}", FilterString ?? "null");
+            _logger.Error(ex, "Error filtering icons");
         }
     }
 
     private void UpdateSwapButtonEnabledState()
     {
-        var previousState = CanSwapIcons;
         CanSwapIcons = SelectedApplication != null && SelectedIcon != null;
-        var previousFolderState = CanSwapFolderIcons;
         CanSwapFolderIcons = SelectedFolder != null && SelectedIcon != null;
+    }
 
-        if (previousState != CanSwapIcons)
+    public bool CanSwap => (!IsFolderTabSelected && CanSwapIcons) || (IsFolderTabSelected && CanSwapFolderIcons);
+
+    private void ExecuteDualSwap()
+    {
+        try
         {
-            _logger.Information(
-                "Swap button enabled state changed to: {CanSwapIcons} (Application: {HasApplication}, Icon: {HasIcon})",
-                CanSwapIcons, SelectedApplication != null, SelectedIcon != null);
+            if (IsFolderTabSelected)
+            {
+                SwapFolderIconCommand?.Execute(null);
+            }
+            else
+            {
+                SwapCommand?.Execute(null);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error executing dual swap");
         }
     }
-    
+
+    public Task<string?> GetCurrentIconPathAsync(string filePath)
+    {
+        return _iconManagementService.GetCurrentIconPathAsync(filePath);
+    }
+
+    public async Task ShowSuccessTick()
+    {
+        try
+        {
+            IsTickVisible = true;
+            await Task.Delay(800).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.Warning(ex, "Error showing success tick");
+        }
+        finally
+        {
+            System.Windows.Application.Current.Dispatcher.Invoke(() => { IsTickVisible = false; });
+        }
+    }
+
+    public void ResetGui()
+    {
+        try
+        {
+            SelectedIcon = null;
+            SelectedApplication = null;
+            SelectedFolder = null;
+            FilterString = null;
+            RefreshGui();
+        }
+        catch (Exception ex)
+        {
+            _logger.Warning(ex, "Error resetting GUI");
+        }
+    }
+
     private Task OpenVersionManagerAsync()
     {
         if (SelectedApplication == null) return Task.CompletedTask;
 
         try
         {
-            var viewModel = new IconVersionManagerViewModel(
-                _iconHistoryService,
-                DialogService,
-                SelectedApplication.Path);
-
-            var window = new IconVersionManagerWindow(viewModel.FilePath)
-            {
-                Owner = System.Windows.Application.Current.MainWindow,
-            };
-
+            var viewModel = new IconVersionManagerViewModel(_iconHistoryService, DialogService, SelectedApplication.Path);
+            var window = new IconVersionManagerWindow(viewModel.FilePath) { Owner = System.Windows.Application.Current.MainWindow };
             var result = window.ShowDialog();
 
-            if (result == true)
-            {
+            if (result == true) 
                 LoadPreviousApplications();
-            }
         }
         catch (Exception ex)
         {
@@ -603,5 +550,260 @@ public partial class SwapperViewModel : ObservableObject, IIconViewModel
         }
 
         return Task.CompletedTask;
+    }
+
+    private void OpenManageDirectories()
+    {
+        try
+        {
+            var vm = new ManageDirectoriesViewModel(SettingsService);
+
+            vm.LocationsChanged = () => System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                LoadPreviousIcons();
+                LoadPreviousApplications();
+                LoadPreviousFolders();
+            });
+
+            var window = new ManageDirectoriesWindow(vm) { Owner = System.Windows.Application.Current.MainWindow };
+
+            vm.CloseAction = () => { window.DialogResult = true; window.Close(); };
+
+            var result = window.ShowDialog();
+
+            if (result != true) return;
+
+            LoadPreviousIcons();
+            LoadPreviousApplications();
+            LoadPreviousFolders();
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error opening Manage Directories window");
+            DialogService.ShowError("Error", "Failed to open manage directories window");
+        }
+    }
+
+    private void SetupIconsDirectoryWatcher()
+    {
+        try
+        {
+            if (_iconsDirectoryWatcherServices != null)
+            {
+                foreach (var svc in _iconsDirectoryWatcherServices) svc.Dispose();
+                _iconsDirectoryWatcherServices = null;
+            }
+
+            var locations = IconsFolders?.Where(p => !string.IsNullOrWhiteSpace(p)).ToList() ?? new List<string>();
+
+            if (!string.IsNullOrWhiteSpace(IconsFolderPath) && Directory.Exists(IconsFolderPath) && !locations.Contains(IconsFolderPath))
+                locations.Add(IconsFolderPath);
+
+            if (locations.Any())
+            {
+                _iconsDirectoryWatcherServices = new List<IFileSystemWatcherService>();
+
+                foreach (var loc in locations)
+                {
+                    if (!Directory.Exists(loc)) continue;
+
+                    var svc = new FileSystemWatcherService(loc, OnIconsDirectoryChanged, OnIconsDirectoryRenamed);
+
+                    svc.StartWatching();
+
+                    _iconsDirectoryWatcherServices.Add(svc);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error setting up icons watcher");
+        }
+    }
+
+    private void SetupApplicationsDirectoryWatcher()
+    {
+        try
+        {
+            if (_applicationsDirectoryWatcherServices != null)
+            {
+                foreach (var svc in _applicationsDirectoryWatcherServices) svc.Dispose();
+                _applicationsDirectoryWatcherServices = null;
+            }
+
+            var locations = ApplicationsFolders?.Where(p => !string.IsNullOrWhiteSpace(p)).ToList() ?? new List<string>();
+
+            if (!string.IsNullOrWhiteSpace(ApplicationsFolderPath) && Directory.Exists(ApplicationsFolderPath) && !locations.Contains(ApplicationsFolderPath))
+                locations.Add(ApplicationsFolderPath);
+
+            if (locations.Any())
+            {
+                _applicationsDirectoryWatcherServices = new List<IFileSystemWatcherService>();
+
+                foreach (var loc in locations)
+                {
+                    if (!Directory.Exists(loc)) continue;
+                    var svc = new FileSystemWatcherService(loc, OnApplicationsDirectoryChanged, OnApplicationsDirectoryRenamed);
+                    svc.StartWatching();
+                    _applicationsDirectoryWatcherServices.Add(svc);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error setting up applications watcher");
+        }
+    }
+
+    private void SetupFoldersDirectoryWatcher()
+    {
+        try
+        {
+            if (_foldersDirectoryWatcherServices != null)
+            {
+                foreach (var svc in _foldersDirectoryWatcherServices) svc.Dispose();
+                _foldersDirectoryWatcherServices = null;
+            }
+
+            var locations = FoldersFolders?.Where(p => !string.IsNullOrWhiteSpace(p)).ToList() ?? new List<string>();
+
+            if (!string.IsNullOrWhiteSpace(FoldersFolderPath) && Directory.Exists(FoldersFolderPath) && !locations.Contains(FoldersFolderPath))
+                locations.Add(FoldersFolderPath);
+
+            if (locations.Any())
+            {
+                _foldersDirectoryWatcherServices = new List<IFileSystemWatcherService>();
+
+                foreach (var loc in locations)
+                {
+                    if (!Directory.Exists(loc)) continue;
+                    var svc = new FileSystemWatcherService(loc, OnFoldersDirectoryChanged, OnFoldersDirectoryRenamed);
+                    svc.StartWatching();
+                    _foldersDirectoryWatcherServices.Add(svc);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error setting up folders watcher");
+        }
+    }
+
+    private void OnIconsDirectoryChanged(object sender, FileSystemEventArgs e) => System.Windows.Application.Current.Dispatcher.Invoke(() => {
+        PopulateIconsFromLocations(IconsFolders);
+
+        if (!string.IsNullOrWhiteSpace(IconsFolderPath))
+            PopulateIconsList(IconsFolderPath);
+    });
+
+    private void OnIconsDirectoryRenamed(object sender, RenamedEventArgs e) => PopulateIconsFromLocations(IconsFolders);
+
+    private void OnApplicationsDirectoryChanged(object sender, FileSystemEventArgs e) => System.Windows.Application.Current.Dispatcher.Invoke(() => {
+        PopulateApplicationsFromLocations(ApplicationsFolders);
+
+        if (!string.IsNullOrWhiteSpace(ApplicationsFolderPath)) 
+            PopulateApplicationsList(ApplicationsFolderPath);
+    });
+
+    private void OnApplicationsDirectoryRenamed(object sender, RenamedEventArgs e) => PopulateApplicationsFromLocations(ApplicationsFolders);
+
+    private void OnFoldersDirectoryChanged(object sender, FileSystemEventArgs e) => System.Windows.Application.Current.Dispatcher.Invoke(() => {
+        PopulateFoldersFromLocations(FoldersFolders);
+
+        if (!string.IsNullOrWhiteSpace(FoldersFolderPath)) 
+            PopulateFoldersList(FoldersFolderPath);
+    });
+
+    private void OnFoldersDirectoryRenamed(object sender, RenamedEventArgs e) => PopulateFoldersFromLocations(FoldersFolders);
+
+    private void LoadPreviousApplications()
+    {
+        _logger.Information("Loading previous applications from saved location");
+
+        var appsList = new List<string>();
+        var savedList = SettingsService.GetApplicationsLocations();
+
+        if (savedList != null && savedList.Any()) 
+            appsList.AddRange(savedList);
+
+        var single = SettingsService.GetApplicationsLocation();
+
+        if (!string.IsNullOrWhiteSpace(single) && !appsList.Contains(single))
+            appsList.Add(single);
+
+        if (appsList.Any())
+        {
+            ApplicationsFolders = new ObservableCollection<string>(appsList);
+            PopulateApplicationsFromLocations(ApplicationsFolders);
+            ApplicationsFolderPath = ApplicationsFolders.FirstOrDefault();
+            SetupApplicationsDirectoryWatcher();
+            return;
+        }
+    }
+
+    private void LoadPreviousIcons()
+    {
+        _logger.Information("Loading previous icons from saved location");
+
+        var iconsList = new List<string>();
+        var saved = SettingsService.GetIconsLocations();
+
+        if (saved != null && saved.Any()) 
+            iconsList.AddRange(saved);
+
+        var single = SettingsService.GetIconsLocation();
+
+        if (!string.IsNullOrWhiteSpace(single) && !iconsList.Contains(single))
+            iconsList.Add(single);
+
+        if (iconsList.Any())
+        {
+            IconsFolders = new ObservableCollection<string>(iconsList);
+            PopulateIconsFromLocations(IconsFolders);
+            IconsFolderPath = IconsFolders.FirstOrDefault();
+            SetupIconsDirectoryWatcher();
+            return;
+        }
+
+        IconsFolderPath = SettingsService.GetIconsLocation();
+
+        if (!string.IsNullOrWhiteSpace(IconsFolderPath))
+        {
+            PopulateIconsList(IconsFolderPath);
+            SetupIconsDirectoryWatcher();
+        }
+    }
+
+    private void LoadPreviousFolders()
+    {
+        _logger.Information("Loading previous folders from saved location");
+
+        var foldersList = new List<string>();
+        var saved = SettingsService.GetFoldersLocations();
+
+        if (saved != null && saved.Any()) 
+            foldersList.AddRange(saved);
+
+        var single = SettingsService.GetFoldersLocation();
+
+        if (!string.IsNullOrWhiteSpace(single) && !foldersList.Contains(single))
+            foldersList.Add(single);
+
+        if (foldersList.Any())
+        {
+            FoldersFolders = new ObservableCollection<string>(foldersList);
+            PopulateFoldersFromLocations(FoldersFolders);
+            FoldersFolderPath = FoldersFolders.FirstOrDefault();
+            SetupFoldersDirectoryWatcher();
+            return;
+        }
+
+        FoldersFolderPath = SettingsService.GetFoldersLocation();
+
+        if (!string.IsNullOrWhiteSpace(FoldersFolderPath))
+        {
+            PopulateFoldersList(FoldersFolderPath);
+            SetupFoldersDirectoryWatcher();
+        }
     }
 }
