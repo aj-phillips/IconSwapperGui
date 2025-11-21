@@ -93,6 +93,12 @@ public class SettingsService : ISettingsService
         UpdateSettingsProperty((settings, value) => settings.ConverterIconLocation = value, iconsPath);
     }
 
+    public void SaveFoldersLocation(string? foldersPath)
+    {
+        _logger.Information("Saving folders location: {FoldersPath}", foldersPath ?? "null");
+        UpdateSettingsProperty((settings, value) => settings.FoldersLocation = value, foldersPath);
+    }
+
     public void SaveApplicationsLocation(string? applicationsPath)
     {
         _logger.Information("Saving applications location: {ApplicationsPath}", applicationsPath ?? "null");
@@ -170,6 +176,13 @@ public class SettingsService : ISettingsService
         return location;
     }
 
+    public string? GetFoldersLocation()
+    {
+        var location = GetSettingsFieldValue<string>("FoldersLocation");
+        _logger.Information("Retrieved folders location: {Location}", location ?? "null");
+        return location;
+    }
+
     public string? GetExportLocation()
     {
         var location = GetSettingsFieldValue<string>("ExportLocation");
@@ -217,6 +230,7 @@ public class SettingsService : ISettingsService
         {
             ExportLocation = "",
             IconLocation = "",
+            FoldersLocation = "",
             ConverterIconLocation = "",
             ApplicationsLocation = "",
             EnableDarkMode = false,

@@ -41,7 +41,27 @@ public partial class SwapperViewModel : ObservableObject, IIconViewModel
 
     [ObservableProperty] private string? _iconsFolderPath;
 
+    [ObservableProperty] private ObservableCollection<FolderItem> _folders;
+    private FileSystemWatcherService? _foldersDirectoryWatcherService;
+
+    [ObservableProperty] private string? _foldersFolderPath;
+
+    [ObservableProperty] private FolderItem? _selectedFolder;
+
+    [ObservableProperty] private int _leftTabIndex;
+
+    [ObservableProperty] private bool _isFolderTabSelected;
+
+    partial void OnLeftTabIndexChanged(int value)
+    {
+        IsFolderTabSelected = value == 1;
+        UpdateSwapButtonEnabledState();
+        System.Windows.Input.CommandManager.InvalidateRequerySuggested();
+    }
+
     [ObservableProperty] private bool _isTickVisible;
+
+    [ObservableProperty] private bool _canSwapFolderIcons;
 
     [ObservableProperty] private Application? _selectedApplication;
 
@@ -62,11 +82,15 @@ public partial class SwapperViewModel : ObservableObject, IIconViewModel
 
         Applications = new ObservableCollection<Application>();
         Icons = new ObservableCollection<Icon>();
+        Folders = new ObservableCollection<FolderItem>();
         FilteredIcons = new ObservableCollection<Icon>();
 
         ChooseApplicationShortcutFolderCommand = new ChooseApplicationShortcutFolderCommand(this, null!, _ => true);
         ChooseIconFolderCommand = new ChooseIconFolderCommand<SwapperViewModel>(this, null!, _ => true);
+        ChooseFoldersFolderCommand = new Commands.Swapper.ChooseFoldersFolderCommand(this, null!, _ => true);
+        SwapFolderIconCommand = new SwapFolderIconCommand(this, new FolderService(), iconHistoryService, null!, _ => true);
         SwapCommand = new SwapCommand(this, null!, _ => true, iconHistoryService);
+        DualSwapCommand = new RelayCommand(_ => ExecuteDualSwap(), _ => CanSwap);
         CopyPathContextCommand = new CopyPathContextCommand(this);
         DeleteIconContextCommand = new DeleteIconContextCommand(this);
         DuplicateIconContextCommand = new DuplicateIconContextCommand(this);
@@ -75,9 +99,70 @@ public partial class SwapperViewModel : ObservableObject, IIconViewModel
 
         LoadPreviousApplications();
         LoadPreviousIcons();
+        LoadPreviousFolders();
         UpdateSwapButtonEnabledState();
 
         _logger.Information("SwapperViewModel initialized successfully");
+    }
+
+    public void RefreshGui()
+    {
+        _logger.Information("Refreshing GUI, clearing icons/folders and repopulating");
+
+        try
+        {
+            var prevSelectedApplicationPath = SelectedApplication?.Path;
+            var prevSelectedIconPath = SelectedIcon?.Path;
+            var prevSelectedFolderPath = SelectedFolder?.Path;
+
+            Applications.Clear();
+            Icons.Clear();
+            Folders.Clear();
+
+            PopulateApplicationsList(ApplicationsFolderPath);
+            PopulateIconsList(IconsFolderPath);
+            PopulateFoldersList(FoldersFolderPath);
+
+            if (prevSelectedApplicationPath != null)
+            {
+                SelectedApplication = Applications.FirstOrDefault(app => app.Path == prevSelectedApplicationPath);
+                _logger.Information("Restored selected application after refresh: {ApplicationName}", SelectedApplication?.Name ?? "null");
+            }
+
+            if (prevSelectedIconPath != null)
+            {
+                SelectedIcon = Icons.FirstOrDefault(icon => icon.Path == prevSelectedIconPath);
+                _logger.Information("Restored selected icon after refresh: {IconName}", SelectedIcon?.Name ?? "null");
+            }
+
+            if (prevSelectedFolderPath != null)
+            {
+                SelectedFolder = Folders.FirstOrDefault(f => f.Path == prevSelectedFolderPath);
+                _logger.Information("Restored selected folder after refresh: {FolderPath}", SelectedFolder?.Path ?? "null");
+            }
+
+            UpdateSwapButtonEnabledState();
+
+            _logger.Information("GUI refresh completed successfully");
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error refreshing GUI");
+        }
+    }
+
+    public bool CanSwap => (!IsFolderTabSelected && SelectedApplication != null && SelectedIcon != null) || (IsFolderTabSelected && SelectedFolder != null && SelectedIcon != null);
+
+    private void ExecuteDualSwap()
+    {
+        if (IsFolderTabSelected)
+        {
+            SwapFolderIconCommand.Execute(null);
+        }
+        else
+        {
+            SwapCommand.Execute(null);
+        }
     }
 
     public Task<string?> GetCurrentIconPathAsync(string filePath)
@@ -87,7 +172,10 @@ public partial class SwapperViewModel : ObservableObject, IIconViewModel
 
     public RelayCommand ChooseApplicationShortcutFolderCommand { get; }
     public RelayCommand ChooseIconFolderCommand { get; }
+    public RelayCommand ChooseFoldersFolderCommand { get; }
+    public RelayCommand SwapFolderIconCommand { get; }
     public RelayCommand SwapCommand { get; }
+    public RelayCommand DualSwapCommand { get; }
     public RelayCommand CopyPathContextCommand { get; }
     public RelayCommand DeleteIconContextCommand { get; }
     public RelayCommand DuplicateIconContextCommand { get; }
@@ -129,6 +217,33 @@ public partial class SwapperViewModel : ObservableObject, IIconViewModel
         }
     }
 
+    public void PopulateFoldersList(string? folderPath)
+    {
+        _logger.Information("PopulateFoldersList called with folderPath: {FolderPath}", folderPath ?? "null");
+
+        try
+        {
+            Folders.Clear();
+
+            var folderService = new FolderService();
+            var folders = folderService.GetFolders(folderPath);
+
+            var added = 0;
+            foreach (var f in folders)
+            {
+                if (Folders.Any(x => x.Path == f.Path)) continue;
+                Folders.Add(f);
+                added++;
+            }
+
+            _logger.Information("Populated folders list with {Added} new folders (total: {Total})", added, Folders.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error populating folders list from folder: {FolderPath}", folderPath);
+        }
+    }
+
     partial void OnIconsChanged(ObservableCollection<Icon> value)
     {
         _logger.Information("Icons collection changed, new count: {Count}", value?.Count ?? 0);
@@ -157,12 +272,21 @@ public partial class SwapperViewModel : ObservableObject, IIconViewModel
     {
         _logger.Information("SelectedApplication changed to: {ApplicationName}", value?.Name ?? "null");
         UpdateSwapButtonEnabledState();
+        CommandManager.InvalidateRequerySuggested();
     }
 
     partial void OnSelectedIconChanged(Icon? value)
     {
         _logger.Information("SelectedIcon changed to: {IconName}", value?.Name ?? "null");
         UpdateSwapButtonEnabledState();
+        CommandManager.InvalidateRequerySuggested();
+    }
+
+    partial void OnSelectedFolderChanged(FolderItem? value)
+    {
+        _logger.Information("SelectedFolder changed to: {FolderPath}", value?.Path ?? "null");
+        UpdateSwapButtonEnabledState();
+        CommandManager.InvalidateRequerySuggested();
     }
 
     public async Task ShowSuccessTick()
@@ -244,6 +368,18 @@ public partial class SwapperViewModel : ObservableObject, IIconViewModel
         PopulateApplicationsList(ApplicationsFolderPath);
     }
 
+    private void OnFoldersDirectoryChanged(object sender, FileSystemEventArgs e)
+    {
+        _logger.Information("Folders directory changed event fired for: {ChangeType} - {FullPath}", e.ChangeType, e.FullPath);
+        PopulateFoldersList(FoldersFolderPath);
+    }
+
+    private void OnFoldersDirectoryRenamed(object sender, RenamedEventArgs e)
+    {
+        _logger.Information("Folders directory renamed event fired from {OldFullPath} to {FullPath}", e.OldFullPath, e.FullPath);
+        PopulateFoldersList(FoldersFolderPath);
+    }
+
     private void LoadPreviousApplications()
     {
         _logger.Information("Loading previous applications from saved location");
@@ -290,6 +426,49 @@ public partial class SwapperViewModel : ObservableObject, IIconViewModel
         catch (Exception ex)
         {
             _logger.Error(ex, "Error loading previous icons from: {IconsFolderPath}", IconsFolderPath);
+        }
+    }
+
+    private void LoadPreviousFolders()
+    {
+        _logger.Information("Loading previous folders from saved location");
+
+        FoldersFolderPath = SettingsService.GetFoldersLocation();
+
+        if (string.IsNullOrEmpty(FoldersFolderPath))
+        {
+            _logger.Warning("FoldersFolderPath is null or empty, cannot load previous folders");
+            return;
+        }
+
+        try
+        {
+            PopulateFoldersList(FoldersFolderPath);
+            SetupFoldersDirectoryWatcher();
+            _logger.Information("Successfully loaded previous folders");
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error loading previous folders from: {FoldersFolderPath}", FoldersFolderPath);
+        }
+    }
+
+    private void SetupFoldersDirectoryWatcher()
+    {
+        _logger.Information("Setting up folders directory watcher for: {FoldersFolderPath}", FoldersFolderPath ?? "null");
+
+        try
+        {
+            _foldersDirectoryWatcherService?.Dispose();
+
+            _foldersDirectoryWatcherService = new FileSystemWatcherService(FoldersFolderPath, OnFoldersDirectoryChanged, OnFoldersDirectoryRenamed);
+            _foldersDirectoryWatcherService.StartWatching();
+
+            _logger.Information("Folders directory watcher started successfully");
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error setting up folders directory watcher for: {FoldersFolderPath}", FoldersFolderPath);
         }
     }
 
@@ -383,6 +562,8 @@ public partial class SwapperViewModel : ObservableObject, IIconViewModel
     {
         var previousState = CanSwapIcons;
         CanSwapIcons = SelectedApplication != null && SelectedIcon != null;
+        var previousFolderState = CanSwapFolderIcons;
+        CanSwapFolderIcons = SelectedFolder != null && SelectedIcon != null;
 
         if (previousState != CanSwapIcons)
         {
