@@ -10,6 +10,7 @@
     <UserControl.Resources>
         <utilities:IconPathToImageConverter x:Key="IconPathToImageConverter" />
         <utilities:ApplicationPathToImageConverter x:Key="ApplicationPathToImageConverter" />
+        <utilities:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     </UserControl.Resources>
 
@@ -18,196 +19,214 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="2*" />
-            <ColumnDefinition Width="5*" />
-        </Grid.ColumnDefinitions>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="5*" />
+            </Grid.ColumnDefinitions>
 
-        <materialDesign:Card Grid.Row="0" Grid.Column="0" Margin="10" materialDesign:ElevationAssist.Elevation="Dp3">
-            <StackPanel>
-                <TextBlock Text="Applications"
-                           FontSize="16"
-                           Margin="10,10,10,5"
-                           HorizontalAlignment="Center"
-                           Style="{DynamicResource MaterialDesignHeadline6TextBlockStyle}" />
-                <Button Name="ChooseApplicationShortcutFolderButton"
-                        Command="{Binding ChooseApplicationShortcutFolderCommand}"
-                        Margin="10"
-                        Style="{StaticResource MaterialDesignRaisedDarkButton}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <materialDesign:PackIcon Kind="Folder" Grid.Column="0" VerticalAlignment="Center"
-                                                 Margin="0,0,5,0" />
-                        <TextBlock Text="Choose Shortcut Folder" Grid.Column="1" VerticalAlignment="Center"
-                                   HorizontalAlignment="Center" Foreground="White" />
-                    </Grid>
-                </Button>
-                <ListBox Name="ApplicationsListBox"
-                         ItemsSource="{Binding Applications}"
-                         SelectedItem="{Binding SelectedApplication, Mode=TwoWay}"
-                         Margin="10"
-                         ScrollViewer.VerticalScrollBarVisibility="Auto"
-                         Height="300">
-                    <ListBox.Resources>
-                        <Style TargetType="ListBoxItem">
-                            <Setter Property="Background" Value="Transparent" />
-                            <Setter Property="Padding" Value="10" />
-                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                            <Style.Triggers>
-                                <Trigger Property="IsSelected" Value="True">
-                                    <Setter Property="Background"
-                                            Value="{DynamicResource MaterialDesignSelectionColor}" />
-                                    <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </ListBox.Resources>
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal" ToolTip="{Binding Name}">
-                                <Image
-                                    Source="{Binding TargetPath, Converter={StaticResource IconPathToImageConverter}}"
-                                    Width="30" Height="30" Margin="5" />
-                                <TextBlock Text="{Binding Name}"
-                                           VerticalAlignment="Center"
-                                           FontSize="14"
-                                           TextTrimming="CharacterEllipsis"
-                                           MaxWidth="150" />
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-
-                    <ListBox.ContextMenu>
-                        <ContextMenu>
-                            <MenuItem Header="Manage Icon Versions"
-                                      Command="{Binding ManageVersionsContextCommand}" />
-                        </ContextMenu>
-                    </ListBox.ContextMenu>
-                </ListBox>
-            </StackPanel>
-        </materialDesign:Card>
-
-        <materialDesign:Card Grid.Row="0" Grid.Column="1" Margin="10" materialDesign:ElevationAssist.Elevation="Dp3">
-            <StackPanel>
-                <TextBlock Text="Icons"
-                           FontSize="16"
-                           Margin="10,10,10,5"
-                           HorizontalAlignment="Center"
-                           Style="{DynamicResource MaterialDesignHeadline6TextBlockStyle}" />
-                <Grid Margin="22,10,22,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <TextBox Width="250" Name="SearchTextBox" VerticalContentAlignment="Center"
-                             materialDesign:HintAssist.Hint="Search"
-                             Text="{Binding FilterString, UpdateSourceTrigger=PropertyChanged}" Height="45"
-                             Style="{StaticResource MaterialDesignOutlinedTextBox}" Grid.Column="0"
-                             HorizontalAlignment="Left" Margin="0,0,10,0" />
-
-                    <Button Name="ChooseIconFolderButton"
-                            Command="{Binding ChooseIconFolderCommand}"
-                            Style="{StaticResource MaterialDesignRaisedDarkButton}" Grid.Column="1">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <materialDesign:PackIcon Kind="Folder" Grid.Column="0" VerticalAlignment="Center"
-                                                     Margin="0,0,5,0" />
-                            <TextBlock Text="Choose Icon Folder" Grid.Column="1" VerticalAlignment="Center"
-                                       HorizontalAlignment="Center" Foreground="White" />
-                        </Grid>
-                    </Button>
-                </Grid>
-                <ListBox Name="IconsListBox"
-                         ItemsSource="{Binding FilteredIcons}"
-                         SelectedItem="{Binding SelectedIcon, Mode=TwoWay}"
-                         Margin="15"
-                         HorizontalAlignment="Center"
-                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                         ScrollViewer.VerticalScrollBarVisibility="Auto"
-                         Height="300">
-
-                    <ListBox.Resources>
-                        <Style TargetType="ListBoxItem">
-                            <Setter Property="Background" Value="Transparent" />
-                            <Setter Property="Padding" Value="10" />
-                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                            <Setter Property="VerticalContentAlignment" Value="Stretch" />
-                            <Style.Triggers>
-                                <Trigger Property="IsSelected" Value="True">
-                                    <Setter Property="Background"
-                                            Value="{DynamicResource MaterialDesignSelectionColor}" />
-                                    <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </ListBox.Resources>
-
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <Border HorizontalAlignment="Center" VerticalAlignment="Center" Width="100" Height="100">
-                                <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                    </Grid.RowDefinitions>
-                                    <Image
-                                        Source="{Binding Path, Converter={StaticResource ApplicationPathToImageConverter}}"
-                                        Width="60" Height="60" Stretch="Uniform"
-                                        HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    <TextBlock Text="{Binding Name}"
-                                               Grid.Row="1"
-                                               TextAlignment="Center"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               TextTrimming="CharacterEllipsis"
-                                               ToolTip="{Binding Name}"
-                                               MaxWidth="75" />
+            <materialDesign:Card Grid.Column="0" Margin="10" materialDesign:ElevationAssist.Elevation="Dp3">
+                <TabControl SelectedIndex="{Binding LeftTabIndex, Mode=TwoWay}">
+                    <TabItem Header="Shortcuts">
+                        <StackPanel>
+                            <Button Name="ChooseApplicationShortcutFolderButton"
+                                    Command="{Binding ChooseApplicationShortcutFolderCommand}"
+                                    Margin="10"
+                                    Style="{StaticResource MaterialDesignRaisedDarkButton}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <materialDesign:PackIcon Kind="Folder" Grid.Column="0" VerticalAlignment="Center"
+                                                             Margin="0,0,5,0" />
+                                    <TextBlock Text="Choose Shortcut Folder" Grid.Column="1" VerticalAlignment="Center"
+                                               HorizontalAlignment="Center" Foreground="White" />
                                 </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
+                            </Button>
+                            <ListBox Name="ApplicationsListBox"
+                                     ItemsSource="{Binding Applications}"
+                                     SelectedItem="{Binding SelectedApplication, Mode=TwoWay}"
+                                     Margin="10"
+                                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                     Height="300">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" ToolTip="{Binding Name}">
+                                            <Image
+                                                Source="{Binding TargetPath, Converter={StaticResource IconPathToImageConverter}}"
+                                                Width="30" Height="30" Margin="5" />
+                                            <TextBlock Text="{Binding Name}"
+                                                       VerticalAlignment="Center"
+                                                       FontSize="14"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       MaxWidth="150" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                                <ListBox.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="Manage Icon Versions"
+                                                  Command="{Binding ManageVersionsContextCommand}" />
+                                    </ContextMenu>
+                                </ListBox.ContextMenu>
+                            </ListBox>
+                        </StackPanel>
+                    </TabItem>
 
-                    <ListBox.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel HorizontalAlignment="Center" ItemHeight="100" ItemWidth="100" />
-                        </ItemsPanelTemplate>
-                    </ListBox.ItemsPanel>
+                    <TabItem Header="Folders">
+                        <StackPanel>
+                            <Button Name="ChooseFoldersFolderButton"
+                                    Command="{Binding ChooseFoldersFolderCommand}"
+                                    Margin="10"
+                                    Style="{StaticResource MaterialDesignRaisedDarkButton}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <materialDesign:PackIcon Kind="Folder" Grid.Column="0" VerticalAlignment="Center"
+                                                             Margin="0,0,5,0" />
+                                    <TextBlock Text="Choose Folder Root" Grid.Column="1" VerticalAlignment="Center"
+                                               HorizontalAlignment="Center" Foreground="White" />
+                                </Grid>
+                            </Button>
+                            <ListBox ItemsSource="{Binding Folders}"
+                                     SelectedItem="{Binding SelectedFolder, Mode=TwoWay}"
+                                     Margin="10"
+                                     Height="300">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" ToolTip="{Binding Name}">
+                                            <materialDesign:PackIcon Kind="Folder" Width="26" Height="26" Margin="4" />
+                                            <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </StackPanel>
+                    </TabItem>
+                </TabControl>
+            </materialDesign:Card>
 
-                    <ListBox.ContextMenu>
-                        <ContextMenu>
-                            <MenuItem Header="Open in Explorer"
-                                      Command="{Binding OpenExplorerContextCommand}" />
-                            <MenuItem Header="Copy Path"
-                                      Command="{Binding CopyPathContextCommand}" />
-                            <Separator />
-                            <MenuItem Header="Duplicate"
-                                      Command="{Binding DuplicateIconContextCommand}" />
-                            <Separator />
-                            <MenuItem Header="Delete"
-                                      Command="{Binding DeleteIconContextCommand}" />
-                        </ContextMenu>
-                    </ListBox.ContextMenu>
-                </ListBox>
-            </StackPanel>
-        </materialDesign:Card>
+            <materialDesign:Card Grid.Column="1" Margin="10" materialDesign:ElevationAssist.Elevation="Dp3">
+                <StackPanel>
+                    <TextBlock Text="Icons"
+                               FontSize="16"
+                               Margin="10,10,10,5"
+                               HorizontalAlignment="Center"
+                               Style="{DynamicResource MaterialDesignHeadline6TextBlockStyle}" />
+                    <Grid Margin="22,10,22,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox Width="250" Name="SearchTextBox" VerticalContentAlignment="Center"
+                                 materialDesign:HintAssist.Hint="Search"
+                                 Text="{Binding FilterString, UpdateSourceTrigger=PropertyChanged}" Height="45"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}" Grid.Column="0"
+                                 HorizontalAlignment="Left" Margin="0,0,10,0" />
+
+                        <Button Name="ChooseIconFolderButton"
+                                Command="{Binding ChooseIconFolderCommand}"
+                                Style="{StaticResource MaterialDesignRaisedDarkButton}" Grid.Column="1">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon Kind="Folder" Grid.Column="0" VerticalAlignment="Center"
+                                                         Margin="0,0,5,0" />
+                                <TextBlock Text="Choose Icon Folder" Grid.Column="1" VerticalAlignment="Center"
+                                           HorizontalAlignment="Center" Foreground="White" />
+                            </Grid>
+                        </Button>
+                    </Grid>
+                    <ListBox Name="IconsListBox"
+                             ItemsSource="{Binding FilteredIcons}"
+                             SelectedItem="{Binding SelectedIcon, Mode=TwoWay}"
+                             Margin="15"
+                             HorizontalAlignment="Center"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                             Height="300">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border HorizontalAlignment="Center" VerticalAlignment="Center" Width="100" Height="100">
+                                    <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+                                        <Image
+                                            Source="{Binding Path, Converter={StaticResource ApplicationPathToImageConverter}}"
+                                            Width="60" Height="60" Stretch="Uniform"
+                                            HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding Name}"
+                                                   Grid.Row="1"
+                                                   TextAlignment="Center"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   ToolTip="{Binding Name}"
+                                                   MaxWidth="75" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel HorizontalAlignment="Center" ItemHeight="100" ItemWidth="100" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+
+                        <ListBox.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Open in Explorer"
+                                          Command="{Binding OpenExplorerContextCommand}" />
+                                <MenuItem Header="Copy Path"
+                                          Command="{Binding CopyPathContextCommand}" />
+                                <Separator />
+                                <MenuItem Header="Duplicate"
+                                          Command="{Binding DuplicateIconContextCommand}" />
+                                <Separator />
+                                <MenuItem Header="Delete"
+                                          Command="{Binding DeleteIconContextCommand}" />
+                            </ContextMenu>
+                        </ListBox.ContextMenu>
+                    </ListBox>
+                </StackPanel>
+            </materialDesign:Card>
+        </Grid>
 
         <Grid Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="10" HorizontalAlignment="Center">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <Button Command="{Binding SwapCommand}"
+            <Button Command="{Binding DualSwapCommand}"
                     Width="140"
                     HorizontalAlignment="Center"
                     Style="{StaticResource MaterialDesignRaisedDarkButton}"
-                    IsEnabled="{Binding CanSwapIcons}">
+                    Visibility="{Binding IsFolderTabSelected, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <materialDesign:PackIcon Kind="SwapHorizontal" Grid.Column="0" VerticalAlignment="Center"
+                                             Margin="0,0,5,0" />
+                    <TextBlock Text="Swap Icon" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center"
+                               Foreground="White" />
+                </Grid>
+            </Button>
+            <!--<Folder-specific swap button retained but hidden; main DualSwapCommand handles behavior--> 
+            <Button Visibility="{Binding IsFolderTabSelected, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    Width="140"
+                    HorizontalAlignment="Center"
+                    Style="{StaticResource MaterialDesignRaisedDarkButton}"
+                    IsEnabled="{Binding CanSwapFolderIcons}"
+                    Command="{Binding SwapFolderIconCommand}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />

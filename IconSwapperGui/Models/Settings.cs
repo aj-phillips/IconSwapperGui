@@ -4,6 +4,7 @@ public class Settings
 {
     public string? ExportLocation { get; set; }
     public string? IconLocation { get; set; }
+    public string? FoldersLocation { get; set; }
     public string? ConverterIconLocation { get; set; }
     public string? ApplicationsLocation { get; set; }
     public bool? EnableDarkMode { get; set; }
