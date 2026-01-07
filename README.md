@@ -1,71 +1,109 @@
-# IconSwapperGui
-Welcome to IconSwapperGui, your all-in-one solution for changing shortcut icons on your Windows desktop! This application is designed to make the process of customizing your desktop icons easy and efficient, eliminating the need to navigate through the properties window for each shortcut.
+# IconSwapperGui – Windows Shortcut & Folder Icon Changer
 
-## Features
-### Swapper
-- Directory Selector
-  - Have a dedicated folder for all your icons? We got you covered!
-- Change Icons of Shortcuts
-  - Currently supports .url and .lnk shortcut types.
-  - Right click on any icon, giving you options of opening it in Windows Explorer, copying the path, duplicating or deleting the icon!
-- Reset Shortcuts To Default Icons
-  - Right click on any shortcut, allowing you to reset an icon automatically or manually as a fallback.
-- Search Functionality
-  - Have a specific icon in mind for your chosen shortcut? Use the search bar and easily filter through your icons!
-- Auto-Refresh
-  - Automatically refresh the contents of your applications list and icons folder if you added extra ones while the application is open.
+[![License](https://img.shields.io/github/license/aj-phillips/IconSwapperGui)](LICENSE)
+[![Latest Release](https://img.shields.io/github/v/release/aj-phillips/IconSwapperGui)](https://github.com/aj-phillips/IconSwapperGui/releases)
+[![Downloads](https://img.shields.io/github/downloads/aj-phillips/IconSwapperGui/total)](https://github.com/aj-phillips/IconSwapperGui/releases)
+[![Stars](https://img.shields.io/github/stars/aj-phillips/IconSwapperGui?style=social)](https://github.com/aj-phillips/IconSwapperGui/stargazers)
+[![Issues](https://img.shields.io/github/issues/aj-phillips/IconSwapperGui)](https://github.com/aj-phillips/IconSwapperGui/issues)
+[![Last Commit](https://img.shields.io/github/last-commit/aj-phillips/IconSwapperGui)](https://github.com/aj-phillips/IconSwapperGui/commits/main)
+![Platform](https://img.shields.io/badge/platform-Windows-blue)
+![Framework](https://img.shields.io/badge/.NET-WPF-purple)
 
-### Converter
-- Directory Selector
-  - Have a folder of .png, .jpg and .jpeg images that you want to use as icons? Have no fear!
-- Search Functionality
-  - Have a specific image you'd like to convert? Use the search bar and easily filter through them!
-- Conversion to ICO
-  - Easily convert .png, .jpg and .jpeg images to .ico files, ready for swapping!
-- Delete Images After Conversion
-  - Don't want your PNGs after conversion has finished? Tick the box and enjoy!
+
+**IconSwapperGui** is a powerful **Windows desktop application** for changing **shortcut and folder icons** without navigating Windows’ properties menus. It supports **.lnk shortcuts** and **Steam .url files**, making it ideal for customizing application and game icons on your Windows desktop.
+
+A standout feature of IconSwapperGui is **icon version management**, allowing you to track, preview, and restore **previously used icons** for any shortcut — making experimentation safe and fully reversible.
+
+---
+
+## 🚀 Features
+
+### 🔄 Icon Swapper
+- **Shortcut Folder Selector**  
+  - Easily select the directory containing your Windows shortcuts.
+- **Change Shortcut Icons**  
+  - Supports **.lnk** and **Steam .url** shortcut files
+- **Icon Version History & Restore** ⭐  
+  - Right-click any shortcut to view **current and previous icon versions**
+  - Instantly restore a previously used icon
+  - Safely experiment with icon styles without losing past versions
+- **Icon Search & Filtering**  
+  - Quickly find the perfect icon using the built-in search bar.
+- **Auto-Refresh**  
+  - Automatically detects newly added shortcuts or icons while the app is running.
+
+---
+
+### 🔁 Icon Converter (PNG / JPG → ICO)
+- **Image Folder Selector**  
+  - Convert entire folders of images into Windows icon files.
+- **Searchable Image List**  
+  - Quickly locate images before conversion.
+- **ICO Conversion**  
+  - Convert **.png**, **.jpg**, and **.jpeg** files into **.ico** format.
+- **Optional Image Cleanup**  
+  - Automatically delete original images after conversion.
+
+---
  
-### Pixel Art Editor
-- Layout Customisation
-  - Change the number of rows and columns displayed, up to the maximum of 96x96
-  - Choose your own background colour using a colour picker, including transparency!
-- Drawing
-  - Choose your own brush colour via "Selected Colour" and create your work of art!
-  - Left click on a square to apply your selected colour to the canvas.
-  - Right click on a square to revert it back to the assigned background colour
-- Zoom Level
-  - Move the slider to zoom in or out of your canvas, increasing drawing accuracy!
+### 🎨 Pixel Art Icon Editor
+- **Custom Canvas Size**  
+  - Adjustable grid up to **96×96**
+- **Background Customisation**  
+  - Choose any colour, including transparency
+- **Drawing Tools**  
+  - Select brush colours  
+  - Left-click to draw  
+  - Right-click to erase
+- **Zoom Control**  
+  - Zoom in and out for precise pixel-level editing.
+
+---
  
-### Settings
-- Dark Mode
-  - Are you Dracula and afraid of the light? Be free in the realm of darkness!
-- Launch At Startup
-  - Getting tired of launching the application after powering on your computer? Have no fear, launch at startup is here!
-- Auto Update
-  - Does the updater popping up at startup get a little bit annoying? Well, now you can disable it! Do you really want to miss out on amazing new features though?
-- Support Buttons
-  - There are currently two buttons, one that will take you to this GitHub page and the other will take you to the issues page.
+### ⚙️ Application Settings
+- **Dark Mode**  
+  For comfortable night-time usage.
+- **Launch at Startup**  
+  Automatically start IconSwapperGui when Windows boots.
+- **Auto-Update Toggle**  
+  Enable or disable update checks at startup.
+- **Support & Links**  
+  Quick access to the GitHub repository and issues page.
 
-### Updater
-- Automatic Updates
-  - IconSwapperGui includes an integrated updater that ensures you always have the latest features and improvements.
-  - The updater checks for new releases on our GitHub page and installs updates automatically.
+---
 
-## Getting Started
-- Download the ZIP File: Get the IconSwapperGui ZIP from the releases page.
-- Extract the ZIP Archive: Use 7-Zip, WinRAR, or Windows' built-in extractor to extract the contents of the ZIP file.
-- Launch IconSwapperGui.exe: Open the application from the extracted folder.
-- Choose Your Shortcut Location: Click "Choose Shortcut Folder" and select the folder containing shortcuts you want to change the icons for.
-- Choose Your Icon Folder: Click "Choose Icon Folder" and select the folder containing all of your beautiful icons.
-- Start Swapping: Use the interface to select and change the icons of your .lnk and Steam .url shortcuts.
+### 🔄 Built-In Updater
+- **Automatic Updates**  
+  - Always stay up to date with the latest features and fixes.
+- **GitHub Release Integration**  
+  - Updates are fetched directly from GitHub releases.
 
-## Feedback and Support
-Your feedback is invaluable to me! If you encounter any issues or have suggestions for future features, please open an issue on the GitHub issues page.
+---
 
-Thank you for using IconSwapperGui! I look forward to your feedback and hope you enjoy a more organized and personalized desktop experience.
+## 🏁 Getting Started
 
-## Contributing
-We welcome contributions from the community! If you'd like to contribute, please read the Contributing Guidelines.
+1. Download the ZIP file from the [**Releases**](https://github.com/aj-phillips/IconSwapperGui/releases) page  
+2. Extract the archive using Windows Explorer, 7-Zip, or WinRAR  
+3. Run `IconSwapperGui.exe`  
+4. Select your **shortcut folder**  
+5. Select your **icon folder**  
+6. Start swapping and managing icons for your Windows and Steam shortcuts
 
-## License
+---
+
+## 💬 Feedback & Support
+
+Your feedback is invaluable!  
+If you encounter bugs or have feature requests, please open an issue on the **GitHub Issues** page.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome!  
+Please read the **Contributing Guidelines** before submitting a pull request.
+
+---
+
+## 📄 License
 This project is licensed under the [GNU General Public License v3.0](LICENSE).
