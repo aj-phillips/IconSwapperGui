@@ -1,13 +1,14 @@
+using IconSwapperGui.Commands.Converter;
+using IconSwapperGui.Helpers;
+using IconSwapperGui.ViewModels;
+using Microsoft.Win32;
+using Serilog;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
-using IconSwapperGui.Helpers;
-using IconSwapperGui.ViewModels;
-using ImageMagick;
-using Microsoft.Win32;
 using Path = System.IO.Path;
 
 namespace IconSwapperGui.Commands.PixelArtEditor;
@@ -17,6 +18,7 @@ public class ExportIconCommand : RelayCommand
     private readonly PixelArtEditorViewModel _viewModel;
     private double _canvasDpiX;
     private double _canvasDpiY;
+    private readonly ILogger _logger = Log.ForContext<ExportIconCommand>();
 
     public ExportIconCommand(PixelArtEditorViewModel viewModel, Action<object> execute,
         Func<object, bool>? canExecute = null) : base(execute, canExecute)
@@ -108,8 +110,9 @@ public class ExportIconCommand : RelayCommand
 
             encoder.Save(fileStream);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.Error(ex, "Failed to save PNG file at {PngPath}", pngPath);
             return string.Empty;
         }
 
@@ -170,8 +173,9 @@ public class ExportIconCommand : RelayCommand
 
             encoder.Save(fileStream);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.Error(ex, "Failed to save PNG file at {PngPath}", pngPath);
             return string.Empty;
         }
 
@@ -180,23 +184,19 @@ public class ExportIconCommand : RelayCommand
 
     private void CreateAndSaveIconFromPng(string pngPath, string folderPath, string baseFileName)
     {
-        using var image = new MagickImage(pngPath);
-        image.Alpha(AlphaOption.On);
-
         const int targetSize = 128;
-        image.Resize(targetSize, targetSize);
-
-        using var finalImage = new MagickImage(MagickColors.Transparent, targetSize, targetSize);
-        finalImage.Alpha(AlphaOption.On);
-        var offsetX = (int)(targetSize - image.Width) / 2;
-        var offsetY = (int)(targetSize - image.Height) / 2;
-
-        finalImage.Composite(image, offsetX, offsetY, CompositeOperator.Over);
 
         var safeBase = GetSafeBaseNameFor(baseFileName);
         var icoPath = Path.Combine(folderPath, $"{safeBase}.ico");
-        finalImage.Format = MagickFormat.Icon;
-        finalImage.Write(icoPath);
+
+        try
+        {
+            IconCreator.CreateIcoFromPng(pngPath, icoPath, targetSize);
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Failed to create ICO file at {IcoPath}", icoPath);
+        }
     }
 
     private static string GetSafeBaseNameFor(string name)
@@ -216,14 +216,12 @@ public class ExportIconCommand : RelayCommand
     {
         var name = _viewModel.IconName ?? string.Empty;
         name = name.Trim();
+
         if (string.IsNullOrEmpty(name)) name = "Pixel_Art";
 
-        foreach (var c in Path.GetInvalidFileNameChars())
-        {
-            name = name.Replace(c, '_');
-        }
+        name = Path.GetInvalidFileNameChars()
+            .Aggregate(name, (current, c) => current.Replace(c, '_'));
 
-        // Collapse multiple underscores
         while (name.Contains("__")) name = name.Replace("__", "_");
 
         return name;

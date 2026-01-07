@@ -1,14 +1,16 @@
-using System.IO;
+using IconSwapperGui.Helpers;
 using IconSwapperGui.ViewModels;
-using ImageMagick;
+using Serilog;
+using System.IO;
 
 namespace IconSwapperGui.Commands.Converter;
 
 public class ConvertIconCommand : RelayCommand
 {
-    private static readonly uint[] IconSizes = [94];
-    private static readonly string[] SupportedExtensions = ["*.png", "*.jpg", "*.jpeg"];
+    private static readonly int[] IconSizes = new[] { 16, 32, 48, 64, 128, 256 };
+    private static readonly string[] SupportedExtensions = new[] { "*.png", "*.jpg", "*.jpeg" };
     private readonly ConverterViewModel _viewModel;
+    private readonly ILogger _logger = Log.ForContext<ConvertIconCommand>();
 
     public ConvertIconCommand(ConverterViewModel viewModel, Action<object> execute,
         Func<object, bool>? canExecute = null) : base(execute, canExecute)
@@ -42,7 +44,7 @@ public class ConvertIconCommand : RelayCommand
 
             if (_viewModel.CanDeleteImagesAfterConversion) file.Delete();
         }
-        catch (Exception ex) when (ex is MagickException or IOException)
+        catch (Exception ex)
         {
             HandleException(file, ex);
         }
@@ -60,24 +62,14 @@ public class ConvertIconCommand : RelayCommand
 
     private void ConvertImage(string sourceImagePath, string targetIconPath)
     {
-        using var collection = new MagickImageCollection();
-
-        foreach (var size in IconSizes)
-        {
-            var image = new MagickImage(sourceImagePath);
-            image.Resize(size, size);
-            collection.Add(image);
-        }
-
-        collection.Write(targetIconPath, MagickFormat.Icon);
+        IconCreator.CreateMultiSizeIcoFromImage(sourceImagePath, targetIconPath, IconSizes);
     }
 
-    private static void HandleException(FileInfo file, Exception ex)
+    private void HandleException(FileInfo file, Exception ex)
     {
-        var errorType = ex is MagickException
-            ? "Failed to convert image to icon"
-            : "An error occurred while processing the file";
-        throw new InvalidOperationException($"{errorType}: {file.Name}\n{ex.Message}", ex);
+        _logger.Error(ex, "Failed to convert image to icon: {FileName}", file.Name);
+        _viewModel.DialogService.ShowError("Conversion Error",
+            $"Failed to convert image '{file.Name}' to icon.\n\nError: {ex.Message}");
     }
 
     private void NotifyCompletion()
