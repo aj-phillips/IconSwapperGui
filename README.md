@@ -9,7 +9,6 @@
 ![Platform](https://img.shields.io/badge/platform-Windows-blue)
 ![Framework](https://img.shields.io/badge/.NET-WPF-purple)
 
-
 **IconSwapperGui** is a powerful **Windows desktop application** for changing **shortcut and folder icons** without navigating Windows’ properties menus. It supports **.lnk shortcuts** and **Steam .url files**, making it ideal for customizing application and game icons on your Windows desktop.
 
 A standout feature of IconSwapperGui is **icon version management**, allowing you to track, preview, and restore **previously used icons** for any shortcut — making experimentation safe and fully reversible.
@@ -62,13 +61,13 @@ A standout feature of IconSwapperGui is **icon version management**, allowing yo
  
 ### ⚙️ Application Settings
 - **Dark Mode**  
-  For comfortable night-time usage.
+  - For comfortable night-time usage.
 - **Launch at Startup**  
-  Automatically start IconSwapperGui when Windows boots.
+  - Automatically start IconSwapperGui when Windows boots.
 - **Auto-Update Toggle**  
-  Enable or disable update checks at startup.
+  - Enable or disable update checks at startup.
 - **Support & Links**  
-  Quick access to the GitHub repository and issues page.
+  - Quick access to the GitHub repository and issues page.
 
 ---
 
