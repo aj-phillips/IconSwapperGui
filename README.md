@@ -100,7 +100,7 @@ If you encounter bugs or have feature requests, please open an issue on the **Gi
 ## 🤝 Contributing
 
 Contributions are welcome!  
-Please read the **Contributing Guidelines** before submitting a pull request.
+Please read the [**Contributing Guidelines**](CONTRIBUTING.md) before submitting a pull request.
 
 ---
 
