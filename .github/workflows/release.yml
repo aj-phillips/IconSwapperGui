@@ -1,5 +1,6 @@
 permissions:
-  contents: read
+  contents: write
+
 name: Build and Release
 
 on:
@@ -11,83 +12,40 @@ on:
         type: boolean
 
 jobs:
-  
-
-  build:
+  build-and-release:
     runs-on: windows-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup .NET 8
+      - name: Setup .NET 9 (for Velopack CLI)
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: 9.0.x
 
-      - name: Restore dependencies
-        run: dotnet restore "./IconSwapperGui/IconSwapperGui.sln"
-
-      - name: Build and Publish application
-        run: |
-          dotnet publish "./IconSwapperGui/IconSwapperGui.sln" -r win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true --configuration Release --no-self-contained --output ./publish
-
-      - name: Zip executables
-        run: |
-          powershell Compress-Archive -Path "./publish/IconSwapperGui.exe, ./publish/IconSwapperGui.Updater.exe" -DestinationPath ./IconSwapperGuiBundle.zip
-
-      - name: Upload ZIP as Artifact
-        uses: actions/upload-artifact@v4
+      - name: Setup .NET 10 (for application build)
+        uses: actions/setup-dotnet@v4
         with:
-          name: IconSwapperGuiBundle
-          path: ./IconSwapperGuiBundle.zip
-          overwrite: true
+          dotnet-version: 10.0.x
 
-      - name: Upload EXE as Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: IconSwapperGui
-          path: ./publish/IconSwapperGui.exe
-          overwrite: true
-
-  release:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    needs: build
-    if: github.ref == 'refs/heads/main'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Extract Version from version.json
+      - name: Extract Version from csproj
         id: extract_version
         shell: bash
         run: |
-          json=$(cat ./version.json)
-          version=$(echo "$json" | grep -oP '"LatestVersion":\s*"\K[^"]+')
+          version=$(grep -oP '<Version>\K[^<]+' ./IconSwapperGui.UI/IconSwapperGui.UI.csproj)
           echo "version=$version" >> $GITHUB_OUTPUT
 
-      - name: Download ZIP Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: IconSwapperGuiBundle
+      - name: Restore dependencies
+        run: dotnet restore "./IconSwapperGui.sln"
 
-      - name: Download EXE Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: IconSwapperGui
+      - name: Publish application
+        run: |
+          dotnet publish "./IconSwapperGui.UI/IconSwapperGui.UI.csproj" -c Release -o publish -r win-x64 --self-contained false
 
-      - name: Create Release
-        id: create_release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ steps.extract_version.outputs.version }}
-          name: v${{ steps.extract_version.outputs.version }}
-          generate_release_notes: true
-          draft: false
-          prerelease: false
-          files: |
-            ./IconSwapperGuiBundle.zip
-            ./IconSwapperGui.exe
+      - name: Create Velopack Release
+        run: |
+          dotnet tool install -g vpk
+          vpk download github --repoUrl https://github.com/aj-phillips/IconSwapperGui --token ${{ secrets.GITHUB_TOKEN }} || echo "No previous releases found (expected for first release)"
+          vpk pack -u IconSwapperGui -v ${{ steps.extract_version.outputs.version }} -p publish -e IconSwapperGui.exe
+          vpk upload github --repoUrl https://github.com/aj-phillips/IconSwapperGui --publish --releaseName "IconSwapperGui v${{ steps.extract_version.outputs.version }}" --tag v${{ steps.extract_version.outputs.version }} --token ${{ secrets.GITHUB_TOKEN }}
