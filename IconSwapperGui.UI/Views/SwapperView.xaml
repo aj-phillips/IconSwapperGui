@@ -355,8 +355,43 @@
                                  Background="Transparent"
                                  BorderThickness="0"
                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                 ItemContainerStyle="{StaticResource IconTileContainerStyle}">
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem" BasedOn="{StaticResource IconTileContainerStyle}">
+                                    <Setter Property="Tag" Value="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                                    <Setter Property="ContextMenu">
+                                        <Setter.Value>
+                                            <ContextMenu Style="{StaticResource ModernContextMenuStyle}"
+                                                         DataContext="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}">
+                                                <MenuItem Style="{StaticResource ModernMenuItemStyle}"
+                                                          Header="Rename"
+                                                          Command="{Binding RenameIconContextCommand}"
+                                                          CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
+                                                    <MenuItem.Icon>
+                                                        <Viewbox Width="16" Height="16">
+                                                            <Path Data="{StaticResource RenameIconGeometry}"
+                                                                  Stretch="Uniform"
+                                                                  Fill="{DynamicResource SecondaryTextBrush}" />
+                                                        </Viewbox>
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                                <MenuItem Style="{StaticResource ModernMenuItemStyle}"
+                                                          Header="Delete"
+                                                          Command="{Binding DeleteIconContextCommand}"
+                                                          CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
+                                                    <MenuItem.Icon>
+                                                        <Viewbox Width="16" Height="16">
+                                                            <Path Data="{StaticResource DeleteIconGeometry}"
+                                                                  Stretch="Uniform"
+                                                                  Fill="{DynamicResource SecondaryTextBrush}" />
+                                                        </Viewbox>
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                            </ContextMenu>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
                             <ListBox.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <WrapPanel HorizontalAlignment="Center" />

@@ -556,6 +556,98 @@ namespace IconSwapperGui.UI.ViewModels
             return Task.CompletedTask;
         }
 
+        [RelayCommand]
+        private async Task DeleteIconContext(object parameter)
+        {
+            if (parameter is not Icon icon)
+                return;
+
+            try
+            {
+                var result = MessageBox.Show(
+                    $"Are you sure you want to delete '{icon.Name}'? This action cannot be undone.",
+                    "Confirm Delete",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+
+                if (result != MessageBoxResult.Yes)
+                    return;
+
+                var success = await _iconManagementService.DeleteIconAsync(icon.Path);
+
+                if (success)
+                {
+                    _notificationService.AddNotification("Icon Deleted", $"Successfully deleted '{icon.Name}'",
+                        NotificationType.Success);
+
+                    await RefreshGuiAsync();
+                }
+                else
+                {
+                    _notificationService.AddNotification("Delete Failed", $"Failed to delete '{icon.Name}'",
+                        NotificationType.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                _loggingService.LogError($"Error deleting icon: {icon.Path}", ex);
+                _notificationService.AddNotification("Error", "An error occurred while deleting the icon",
+                    NotificationType.Error);
+            }
+        }
+
+        [RelayCommand]
+        private async Task RenameIconContext(object parameter)
+        {
+            if (parameter is not Icon icon)
+                return;
+
+            try
+            {
+                var window = new RenameIconWindow
+                {
+                    Owner = Application.Current.MainWindow
+                };
+
+                var viewModel = new RenameIconViewModel(icon.Name, _iconManagementService, _loggingService);
+                viewModel.RequestClose += result =>
+                {
+                    window.DialogResult = result;
+                    window.Close();
+                };
+
+                window.DataContext = viewModel;
+
+                var dialogResult = window.ShowDialog();
+
+                if (dialogResult == true && !string.IsNullOrWhiteSpace(viewModel.NewName))
+                {
+                    var success = await _iconManagementService.RenameIconAsync(icon.Path, viewModel.NewName);
+
+                    if (success)
+                    {
+                        _notificationService.AddNotification("Icon Renamed", 
+                            $"Successfully renamed '{icon.Name}' to '{viewModel.NewName}'",
+                            NotificationType.Success);
+
+                        await RefreshGuiAsync();
+                    }
+                    else
+                    {
+                        _notificationService.AddNotification("Rename Failed", 
+                            $"Failed to rename '{icon.Name}'. The file may already exist or be in use.",
+                            NotificationType.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _loggingService.LogError($"Error renaming icon: {icon.Path}", ex);
+                _notificationService.AddNotification("Error", "An error occurred while renaming the icon",
+                    NotificationType.Error);
+            }
+        }
+
         [RelayCommand(CanExecute = nameof(CanSwap))]
         private void DualSwap()
         {

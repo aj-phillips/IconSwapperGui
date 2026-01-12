@@ -16,6 +16,7 @@
             </ResourceDictionary.MergedDictionaries>
             <converters:SectionVisibilityConverter x:Key="SectionVisibilityConverter" />
             <converters:BooleanNegationConverter x:Key="BooleanNegationConverter" />
+            <converters:BoolToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
             <converters:StringNotEmptyToVisibilityConverter x:Key="StringNotEmptyToVisibilityConverter" />
         </ResourceDictionary>
     </UserControl.Resources>
@@ -118,17 +119,260 @@
                                        Margin="0,0,0,16"
                                        TextWrapping="Wrap" />
 
-                            <StackPanel Orientation="Horizontal">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
                                 <RadioButton Content="Light"
+                                             Style="{StaticResource ThemeSelectorRadioButtonStyle}"
                                              GroupName="Theme"
                                              IsChecked="{Binding IsLightTheme}"
-                                             Margin="0,0,16,0"
-                                             Foreground="{DynamicResource PrimaryTextBrush}" />
+                                             Margin="0,0,10,0" />
                                 <RadioButton Content="Dark"
+                                             Style="{StaticResource ThemeSelectorRadioButtonStyle}"
                                              GroupName="Theme"
                                              IsChecked="{Binding IsDarkTheme}"
-                                             Foreground="{DynamicResource PrimaryTextBrush}" />
+                                             Margin="0,0,10,0" />
+                                <RadioButton Content="Custom"
+                                             Style="{StaticResource ThemeSelectorRadioButtonStyle}"
+                                             GroupName="Theme"
+                                             IsChecked="{Binding IsCustomTheme}" />
                             </StackPanel>
+                        </StackPanel>
+                    </Border>
+                    
+                    <!-- Custom Theme Colors -->
+                    <Border Style="{StaticResource SettingItemStyle}"
+                            Visibility="{Binding IsCustomTheme, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel>
+                            <TextBlock Text="Custom Colors"
+                                       FontSize="14"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource PrimaryTextBrush}"
+                                       Margin="0,0,0,8" />
+                            <TextBlock Text="Customize colors for your custom theme"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource SecondaryTextBrush}"
+                                       Margin="0,0,0,16"
+                                       TextWrapping="Wrap" />
+
+                            <!-- Accent Color -->
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                
+                                <TextBlock Grid.Column="0"
+                                           Text="Accent Color"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource PrimaryTextBrush}"
+                                           VerticalAlignment="Center" />
+                                
+                                <Grid Grid.Column="1">
+                                    <Button x:Name="AccentColorButton"
+                                            Style="{StaticResource ColorSwatchButtonStyle}"
+                                            Click="AccentColorButton_Click"
+                                            Width="40"
+                                            Height="40"
+                                            ToolTip="Click to change accent color">
+                                        <Border CornerRadius="8"
+                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                BorderThickness="1">
+                                            <Border.Background>
+                                                <SolidColorBrush Color="{Binding CustomAccentColor}" />
+                                            </Border.Background>
+                                        </Border>
+                                    </Button>
+
+                                    <Popup x:Name="AccentColorPopup"
+                                           Placement="Bottom"
+                                           PlacementTarget="{Binding ElementName=AccentColorButton}"
+                                           StaysOpen="False"
+                                           IsOpen="{Binding IsAccentColorPickerOpen, Mode=TwoWay}"
+                                           AllowsTransparency="True">
+                                        <components:ColorPickerPopup SelectedColor="{Binding CustomAccentColor, Mode=TwoWay}"
+                                                                     AutoCloseOnPick="True"
+                                                                     ColorPicked="AccentColorPicker_ColorPicked" />
+                                    </Popup>
+                                </Grid>
+                            </Grid>
+
+                            <!-- Background Color -->
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                
+                                <TextBlock Grid.Column="0"
+                                           Text="Background"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource PrimaryTextBrush}"
+                                           VerticalAlignment="Center" />
+                                
+                                <Grid Grid.Column="1">
+                                    <Button x:Name="BackgroundColorButton"
+                                            Style="{StaticResource ColorSwatchButtonStyle}"
+                                            Click="BackgroundColorButton_Click"
+                                            Width="40"
+                                            Height="40"
+                                            ToolTip="Click to change background color">
+                                        <Border CornerRadius="8"
+                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                BorderThickness="1">
+                                            <Border.Background>
+                                                <SolidColorBrush Color="{Binding CustomBackgroundColor}" />
+                                            </Border.Background>
+                                        </Border>
+                                    </Button>
+
+                                    <Popup x:Name="BackgroundColorPopup"
+                                           Placement="Bottom"
+                                           PlacementTarget="{Binding ElementName=BackgroundColorButton}"
+                                           StaysOpen="False"
+                                           IsOpen="{Binding IsBackgroundColorPickerOpen, Mode=TwoWay}"
+                                           AllowsTransparency="True">
+                                        <components:ColorPickerPopup SelectedColor="{Binding CustomBackgroundColor, Mode=TwoWay}"
+                                                                     AutoCloseOnPick="True"
+                                                                     ColorPicked="BackgroundColorPicker_ColorPicked" />
+                                    </Popup>
+                                </Grid>
+                            </Grid>
+
+                            <!-- Surface Color -->
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                
+                                <TextBlock Grid.Column="0"
+                                           Text="Surface"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource PrimaryTextBrush}"
+                                           VerticalAlignment="Center" />
+                                
+                                <Grid Grid.Column="1">
+                                    <Button x:Name="SurfaceColorButton"
+                                            Style="{StaticResource ColorSwatchButtonStyle}"
+                                            Click="SurfaceColorButton_Click"
+                                            Width="40"
+                                            Height="40"
+                                            ToolTip="Click to change surface color">
+                                        <Border CornerRadius="8"
+                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                BorderThickness="1">
+                                            <Border.Background>
+                                                <SolidColorBrush Color="{Binding CustomSurfaceColor}" />
+                                            </Border.Background>
+                                        </Border>
+                                    </Button>
+
+                                    <Popup x:Name="SurfaceColorPopup"
+                                           Placement="Bottom"
+                                           PlacementTarget="{Binding ElementName=SurfaceColorButton}"
+                                           StaysOpen="False"
+                                           IsOpen="{Binding IsSurfaceColorPickerOpen, Mode=TwoWay}"
+                                           AllowsTransparency="True">
+                                        <components:ColorPickerPopup SelectedColor="{Binding CustomSurfaceColor, Mode=TwoWay}"
+                                                                     AutoCloseOnPick="True"
+                                                                     ColorPicked="SurfaceColorPicker_ColorPicked" />
+                                    </Popup>
+                                </Grid>
+                            </Grid>
+
+                            <!-- Primary Text Color -->
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                
+                                <TextBlock Grid.Column="0"
+                                           Text="Primary Text"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource PrimaryTextBrush}"
+                                           VerticalAlignment="Center" />
+                                
+                                <Grid Grid.Column="1">
+                                    <Button x:Name="PrimaryTextColorButton"
+                                            Style="{StaticResource ColorSwatchButtonStyle}"
+                                            Click="PrimaryTextColorButton_Click"
+                                            Width="40"
+                                            Height="40"
+                                            ToolTip="Click to change primary text color">
+                                        <Border CornerRadius="8"
+                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                BorderThickness="1">
+                                            <Border.Background>
+                                                <SolidColorBrush Color="{Binding CustomPrimaryTextColor}" />
+                                            </Border.Background>
+                                        </Border>
+                                    </Button>
+
+                                    <Popup x:Name="PrimaryTextColorPopup"
+                                           Placement="Bottom"
+                                           PlacementTarget="{Binding ElementName=PrimaryTextColorButton}"
+                                           StaysOpen="False"
+                                           IsOpen="{Binding IsPrimaryTextColorPickerOpen, Mode=TwoWay}"
+                                           AllowsTransparency="True">
+                                        <components:ColorPickerPopup SelectedColor="{Binding CustomPrimaryTextColor, Mode=TwoWay}"
+                                                                     AutoCloseOnPick="True"
+                                                                     ColorPicked="PrimaryTextColorPicker_ColorPicked" />
+                                    </Popup>
+                                </Grid>
+                            </Grid>
+
+                            <!-- Secondary Text Color -->
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                
+                                <TextBlock Grid.Column="0"
+                                           Text="Secondary Text"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource PrimaryTextBrush}"
+                                           VerticalAlignment="Center" />
+                                
+                                <Grid Grid.Column="1">
+                                    <Button x:Name="SecondaryTextColorButton"
+                                            Style="{StaticResource ColorSwatchButtonStyle}"
+                                            Click="SecondaryTextColorButton_Click"
+                                            Width="40"
+                                            Height="40"
+                                            ToolTip="Click to change secondary text color">
+                                        <Border CornerRadius="8"
+                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                BorderThickness="1">
+                                            <Border.Background>
+                                                <SolidColorBrush Color="{Binding CustomSecondaryTextColor}" />
+                                            </Border.Background>
+                                        </Border>
+                                    </Button>
+
+                                    <Popup x:Name="SecondaryTextColorPopup"
+                                           Placement="Bottom"
+                                           PlacementTarget="{Binding ElementName=SecondaryTextColorButton}"
+                                           StaysOpen="False"
+                                           IsOpen="{Binding IsSecondaryTextColorPickerOpen, Mode=TwoWay}"
+                                           AllowsTransparency="True">
+                                        <components:ColorPickerPopup SelectedColor="{Binding CustomSecondaryTextColor, Mode=TwoWay}"
+                                                                     AutoCloseOnPick="True"
+                                                                     ColorPicked="SecondaryTextColorPicker_ColorPicked" />
+                                    </Popup>
+                                </Grid>
+                            </Grid>
+
+                            <Button Content="Reset to Default Colors"
+                                    Style="{StaticResource SettingsCompactButtonStyle}"
+                                    Command="{Binding ResetCustomColorsCommand}"
+                                    HorizontalAlignment="Left"
+                                    Margin="0,4,0,0" />
                         </StackPanel>
                     </Border>
                 </StackPanel>
@@ -142,10 +386,18 @@
                                Foreground="{DynamicResource PrimaryTextBrush}"
                                Margin="0,0,0,8"
                                TextWrapping="Wrap" />
-                    <TextBlock Text="Customise core application settings"
+                    <TextBlock Text="Configure locations for different features"
                                FontSize="13"
                                Foreground="{DynamicResource SecondaryTextBrush}"
                                Margin="0,0,0,24"
+                               TextWrapping="Wrap" />
+
+                    <!-- Swapper Section Header -->
+                    <TextBlock Text="Swapper"
+                               FontSize="18"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource PrimaryTextBrush}"
+                               Margin="0,0,0,12"
                                TextWrapping="Wrap" />
 
                     <!-- Shortcut Locations -->
@@ -156,7 +408,7 @@
                                        FontWeight="Medium"
                                        Foreground="{DynamicResource PrimaryTextBrush}"
                                        Margin="0,0,0,8" />
-                            <TextBlock Text="Folders to search for shortcuts"
+                            <TextBlock Text="Directories containing application shortcuts (.lnk files) for icon swapping"
                                        FontSize="12"
                                        Foreground="{DynamicResource SecondaryTextBrush}"
                                        Margin="0,0,0,16"
@@ -195,7 +447,7 @@
                                        FontWeight="Medium"
                                        Foreground="{DynamicResource PrimaryTextBrush}"
                                        Margin="0,0,0,8" />
-                            <TextBlock Text="Folders to search for icons"
+                            <TextBlock Text="Directories to scan for icon files (.ico) when swapping shortcut icons"
                                        FontSize="12"
                                        Foreground="{DynamicResource SecondaryTextBrush}"
                                        Margin="0,0,0,16"
@@ -234,7 +486,7 @@
                                        FontWeight="Medium"
                                        Foreground="{DynamicResource PrimaryTextBrush}"
                                        Margin="0,0,0,8" />
-                            <TextBlock Text="Folders to search for folder shortcuts"
+                            <TextBlock Text="Directories containing folder shortcuts for customizing folder icons"
                                        FontSize="12"
                                        Foreground="{DynamicResource SecondaryTextBrush}"
                                        Margin="0,0,0,16"
@@ -265,15 +517,23 @@
                         </StackPanel>
                     </Border>
 
+                    <!-- Converter Section Header -->
+                    <TextBlock Text="Converter"
+                               FontSize="18"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource PrimaryTextBrush}"
+                               Margin="0,16,0,12"
+                               TextWrapping="Wrap" />
+
                     <!-- Converter Icons Locations -->
                     <Border Style="{StaticResource SettingItemStyle}">
                         <StackPanel>
-                            <TextBlock Text="Converter Icons Locations"
+                            <TextBlock Text="Icon Set Locations"
                                        FontSize="14"
                                        FontWeight="Medium"
                                        Foreground="{DynamicResource PrimaryTextBrush}"
                                        Margin="0,0,0,8" />
-                            <TextBlock Text="Folders to search for converter icon sets"
+                            <TextBlock Text="Directories containing icon sets for batch conversion operations"
                                        FontSize="12"
                                        Foreground="{DynamicResource SecondaryTextBrush}"
                                        Margin="0,0,0,16"
@@ -304,6 +564,14 @@
                         </StackPanel>
                     </Border>
 
+                    <!-- Pixel Art Editor Section Header -->
+                    <TextBlock Text="Pixel Art Editor"
+                               FontSize="18"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource PrimaryTextBrush}"
+                               Margin="0,16,0,12"
+                               TextWrapping="Wrap" />
+
                     <!-- Export Location -->
                     <Border Style="{StaticResource SettingItemStyle}">
                         <StackPanel>
@@ -312,7 +580,7 @@
                                        FontWeight="Medium"
                                        Foreground="{DynamicResource PrimaryTextBrush}"
                                        Margin="0,0,0,8" />
-                            <TextBlock Text="Where exported files should be saved"
+                            <TextBlock Text="Default directory for saving icons created in the Pixel Art Editor"
                                        FontSize="12"
                                        Foreground="{DynamicResource SecondaryTextBrush}"
                                        Margin="0,0,0,16"

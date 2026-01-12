@@ -303,4 +303,72 @@ public class IconManagementService(ILoggingService logger) : IIconManagementServ
         var icons = await GetIconsAsync(folderPath, _supportedExtensions).ConfigureAwait(false);
         return new ObservableCollection<Icon>(icons);
     }
+
+    public async Task<bool> DeleteIconAsync(string iconPath)
+    {
+        ArgumentNullException.ThrowIfNull(iconPath);
+
+        try
+        {
+            if (!File.Exists(iconPath))
+            {
+                logger.LogWarning($"Icon file not found: {iconPath}");
+                return false;
+            }
+
+            await Task.Run(() => File.Delete(iconPath)).ConfigureAwait(false);
+            logger.LogInfo($"Successfully deleted icon: {iconPath}");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError($"Failed to delete icon: {iconPath}", ex);
+            return false;
+        }
+    }
+
+    public async Task<bool> RenameIconAsync(string oldPath, string newName)
+    {
+        ArgumentNullException.ThrowIfNull(oldPath);
+        ArgumentNullException.ThrowIfNull(newName);
+
+        try
+        {
+            if (!File.Exists(oldPath))
+            {
+                logger.LogWarning($"Icon file not found: {oldPath}");
+                return false;
+            }
+
+            var directory = Path.GetDirectoryName(oldPath);
+            if (string.IsNullOrWhiteSpace(directory))
+            {
+                logger.LogError($"Could not determine directory for: {oldPath}");
+                return false;
+            }
+
+            var extension = Path.GetExtension(oldPath);
+            if (!newName.EndsWith(extension, StringComparison.OrdinalIgnoreCase))
+            {
+                newName += extension;
+            }
+
+            var newPath = Path.Combine(directory, newName);
+
+            if (File.Exists(newPath))
+            {
+                logger.LogWarning($"A file with the new name already exists: {newPath}");
+                return false;
+            }
+
+            await Task.Run(() => File.Move(oldPath, newPath)).ConfigureAwait(false);
+            logger.LogInfo($"Successfully renamed icon from {oldPath} to {newPath}");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError($"Failed to rename icon from {oldPath} to {newName}", ex);
+            return false;
+        }
+    }
 }

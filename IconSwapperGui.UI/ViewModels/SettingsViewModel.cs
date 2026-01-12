@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
@@ -48,6 +49,17 @@ public partial class SettingsViewModel : ObservableObject
     // Appearance Settings
     [ObservableProperty] private bool _isDarkTheme;
     [ObservableProperty] private bool _isLightTheme;
+    [ObservableProperty] private bool _isCustomTheme;
+    [ObservableProperty] private Color _customAccentColor;
+    [ObservableProperty] private Color _customBackgroundColor;
+    [ObservableProperty] private Color _customSurfaceColor;
+    [ObservableProperty] private Color _customPrimaryTextColor;
+    [ObservableProperty] private Color _customSecondaryTextColor;
+    [ObservableProperty] private bool _isAccentColorPickerOpen;
+    [ObservableProperty] private bool _isBackgroundColorPickerOpen;
+    [ObservableProperty] private bool _isSurfaceColorPickerOpen;
+    [ObservableProperty] private bool _isPrimaryTextColorPickerOpen;
+    [ObservableProperty] private bool _isSecondaryTextColorPickerOpen;
     [ObservableProperty] private string _lastCheckedDate = string.Empty;
 
     // Notification Settings
@@ -93,6 +105,7 @@ public partial class SettingsViewModel : ObservableObject
 
         _isLightTheme = _settingsService.Settings.Appearance.Theme == ThemeMode.Light;
         _isDarkTheme = _settingsService.Settings.Appearance.Theme == ThemeMode.Dark;
+        _isCustomTheme = _settingsService.Settings.Appearance.Theme == ThemeMode.Custom;
         _checkForUpdates = _settingsService.Settings.General.CheckForUpdates;
         _launchAtStartup = _settingsService.Settings.General.LaunchAtStartup;
 
@@ -100,12 +113,63 @@ public partial class SettingsViewModel : ObservableObject
 
         _enableLogging = _settingsService.Settings.Advanced.EnableLogging;
 
+        _customAccentColor = ParseColorFromHex(_settingsService.Settings.Appearance.CustomAccentColor, "#3B82F6");
+        _customBackgroundColor =
+            ParseColorFromHex(_settingsService.Settings.Appearance.CustomBackgroundColor, "#0F172A");
+        _customSurfaceColor = ParseColorFromHex(_settingsService.Settings.Appearance.CustomSurfaceColor, "#1E293B");
+        _customPrimaryTextColor =
+            ParseColorFromHex(_settingsService.Settings.Appearance.CustomPrimaryTextColor, "#F1F5F9");
+        _customSecondaryTextColor =
+            ParseColorFromHex(_settingsService.Settings.Appearance.CustomSecondaryTextColor, "#94A3B8");
+
+        InitializeDefaultCustomColors();
+
         ShortcutLocations.CollectionChanged += (_, __) => _ = SyncApplicationSettingsAsync();
         IconLocations.CollectionChanged += (_, __) => _ = SyncApplicationSettingsAsync();
         FolderShortcutLocations.CollectionChanged += (_, __) => _ = SyncApplicationSettingsAsync();
         ConverterIconsLocations.CollectionChanged += (_, __) => _ = SyncApplicationSettingsAsync();
 
         PropertyChanged += SettingsViewModel_PropertyChanged;
+    }
+
+    private async void InitializeDefaultCustomColors()
+    {
+        var needsSave = false;
+
+        if (string.IsNullOrWhiteSpace(_settingsService.Settings.Appearance.CustomAccentColor))
+        {
+            _settingsService.Settings.Appearance.CustomAccentColor = ColorToHex(_customAccentColor);
+            needsSave = true;
+        }
+
+        if (string.IsNullOrWhiteSpace(_settingsService.Settings.Appearance.CustomBackgroundColor))
+        {
+            _settingsService.Settings.Appearance.CustomBackgroundColor = ColorToHex(_customBackgroundColor);
+            needsSave = true;
+        }
+
+        if (string.IsNullOrWhiteSpace(_settingsService.Settings.Appearance.CustomSurfaceColor))
+        {
+            _settingsService.Settings.Appearance.CustomSurfaceColor = ColorToHex(_customSurfaceColor);
+            needsSave = true;
+        }
+
+        if (string.IsNullOrWhiteSpace(_settingsService.Settings.Appearance.CustomPrimaryTextColor))
+        {
+            _settingsService.Settings.Appearance.CustomPrimaryTextColor = ColorToHex(_customPrimaryTextColor);
+            needsSave = true;
+        }
+
+        if (string.IsNullOrWhiteSpace(_settingsService.Settings.Appearance.CustomSecondaryTextColor))
+        {
+            _settingsService.Settings.Appearance.CustomSecondaryTextColor = ColorToHex(_customSecondaryTextColor);
+            needsSave = true;
+        }
+
+        if (needsSave)
+        {
+            await _settingsService.SaveSettingsAsync();
+        }
     }
 
     private async Task SyncApplicationSettingsAsync()
@@ -353,6 +417,7 @@ public partial class SettingsViewModel : ObservableObject
                 _themeService.ApplyTheme(ThemeMode.Light);
 
                 if (IsDarkTheme) IsDarkTheme = false;
+                if (IsCustomTheme) IsCustomTheme = false;
 
                 await _settingsService.SaveSettingsAsync();
             }
@@ -368,6 +433,23 @@ public partial class SettingsViewModel : ObservableObject
                 _themeService.ApplyTheme(ThemeMode.Dark);
 
                 if (IsLightTheme) IsLightTheme = false;
+                if (IsCustomTheme) IsCustomTheme = false;
+
+                await _settingsService.SaveSettingsAsync();
+            }
+
+            return;
+        }
+
+        if (e.PropertyName == nameof(IsCustomTheme))
+        {
+            if (IsCustomTheme)
+            {
+                _settingsService.Settings.Appearance.Theme = ThemeMode.Custom;
+                _themeService.ApplyTheme(ThemeMode.Custom);
+
+                if (IsLightTheme) IsLightTheme = false;
+                if (IsDarkTheme) IsDarkTheme = false;
 
                 await _settingsService.SaveSettingsAsync();
             }
@@ -426,6 +508,105 @@ public partial class SettingsViewModel : ObservableObject
 
             await _settingsService.SaveSettingsAsync();
         }
+
+        if (e.PropertyName == nameof(CustomAccentColor))
+        {
+            _settingsService.Settings.Appearance.CustomAccentColor = ColorToHex(CustomAccentColor);
+            if (_settingsService.Settings.Appearance.Theme == ThemeMode.Custom)
+            {
+                _themeService.ApplyAccentColor(ColorToHex(CustomAccentColor));
+            }
+
+            await _settingsService.SaveSettingsAsync();
+        }
+
+        if (e.PropertyName == nameof(CustomBackgroundColor))
+        {
+            _settingsService.Settings.Appearance.CustomBackgroundColor = ColorToHex(CustomBackgroundColor);
+            if (_settingsService.Settings.Appearance.Theme == ThemeMode.Custom)
+            {
+                _themeService.ApplyTheme(ThemeMode.Custom);
+            }
+
+            await _settingsService.SaveSettingsAsync();
+        }
+
+        if (e.PropertyName == nameof(CustomSurfaceColor))
+        {
+            _settingsService.Settings.Appearance.CustomSurfaceColor = ColorToHex(CustomSurfaceColor);
+            if (_settingsService.Settings.Appearance.Theme == ThemeMode.Custom)
+            {
+                _themeService.ApplyTheme(ThemeMode.Custom);
+            }
+
+            await _settingsService.SaveSettingsAsync();
+        }
+
+        if (e.PropertyName == nameof(CustomPrimaryTextColor))
+        {
+            _settingsService.Settings.Appearance.CustomPrimaryTextColor = ColorToHex(CustomPrimaryTextColor);
+            if (_settingsService.Settings.Appearance.Theme == ThemeMode.Custom)
+            {
+                _themeService.ApplyTheme(ThemeMode.Custom);
+            }
+
+            await _settingsService.SaveSettingsAsync();
+        }
+
+        if (e.PropertyName == nameof(CustomSecondaryTextColor))
+        {
+            _settingsService.Settings.Appearance.CustomSecondaryTextColor = ColorToHex(CustomSecondaryTextColor);
+            if (_settingsService.Settings.Appearance.Theme == ThemeMode.Custom)
+            {
+                _themeService.ApplyTheme(ThemeMode.Custom);
+            }
+
+            await _settingsService.SaveSettingsAsync();
+        }
+    }
+
+    [RelayCommand]
+    private void ResetCustomColors()
+    {
+        CustomAccentColor = ParseColorFromHex("#3B82F6");
+        CustomBackgroundColor = ParseColorFromHex("#0F172A");
+        CustomSurfaceColor = ParseColorFromHex("#1E293B");
+        CustomPrimaryTextColor = ParseColorFromHex("#F1F5F9");
+        CustomSecondaryTextColor = ParseColorFromHex("#94A3B8");
+    }
+
+    private static Color ParseColorFromHex(string? hex, string defaultHex = "#3B82F6")
+    {
+        if (string.IsNullOrWhiteSpace(hex))
+        {
+            if (!string.IsNullOrWhiteSpace(defaultHex))
+            {
+                try
+                {
+                    return (Color)ColorConverter.ConvertFromString(defaultHex);
+                }
+                catch
+                {
+                    return Color.FromRgb(0x3B, 0x82, 0xF6);
+                }
+            }
+
+            return Color.FromRgb(0x3B, 0x82, 0xF6);
+        }
+
+        try
+        {
+            return (Color)ColorConverter.ConvertFromString(hex);
+        }
+        catch
+        {
+            return Color.FromRgb(0x3B, 0x82, 0xF6);
+        }
+    }
+
+    private static string ColorToHex(Color color)
+    {
+        return $"#{color.A:X2}{color.R:X2}{color.G:X2}{color.B:X2}";
     }
 
     [RelayCommand]

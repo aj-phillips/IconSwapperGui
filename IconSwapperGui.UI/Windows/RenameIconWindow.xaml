@@ -1,0 +1,92 @@
+<Window x:Class="IconSwapperGui.UI.Windows.RenameIconWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Rename Icon"
+        Height="350"
+        Width="520"
+        MinHeight="350"
+        MinWidth="520"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource AppBackgroundBrush}"
+        Foreground="{DynamicResource PrimaryTextBrush}"
+        ResizeMode="NoResize">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Themes/SharedStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,18">
+            <TextBlock Text="Rename Icon" 
+                       Style="{StaticResource PageTitleStyle}"
+                       FontSize="20" />
+            <TextBlock Text="Enter a new name for the icon file"
+                       Style="{StaticResource MutedTextStyle}"
+                       Margin="0,6,0,0" />
+        </StackPanel>
+
+        <!-- Content -->
+        <Border Grid.Row="1"
+                Style="{StaticResource CardStyle}"
+                Padding="18"
+                Margin="0,0,0,18">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0"
+                           Text="New Name"
+                           Style="{StaticResource SectionTitleStyle}"
+                           FontSize="13"
+                           Margin="0,0,0,8" />
+
+                <TextBox x:Name="NameTextBox"
+                         Grid.Row="1"
+                         Style="{StaticResource InputTextBoxStyle}"
+                         Text="{Binding NewName, UpdateSourceTrigger=PropertyChanged}"
+                         Height="60"
+                         FontSize="14"
+                         Loaded="NameTextBox_Loaded" />
+            </Grid>
+        </Border>
+
+        <!-- Actions -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Command="{Binding CancelCommand}"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Content="Cancel"
+                        MinWidth="100"
+                        Height="44"
+                        Margin="0,0,12,0" />
+
+                <Button Command="{Binding SaveCommand}"
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        Content="Save"
+                        MinWidth="100"
+                        Height="44" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

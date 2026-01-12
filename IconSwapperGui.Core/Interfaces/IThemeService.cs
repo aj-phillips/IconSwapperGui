@@ -9,6 +9,7 @@ public interface IThemeService
     bool IsDarkMode { get; }
 
     void ApplyTheme(ThemeMode theme);
+    void ApplyAccentColor(string colorHex);
     void ToggleTheme();
 
     event Action? ThemeChanged;
