@@ -25,6 +25,11 @@ public class ThemeService : IThemeService
         CurrentTheme = theme;
         ThemeChanged?.Invoke();
     }
+    
+    public void ApplyAccentColor(string colorHex)
+    {
+        ThemeChanged?.Invoke();
+    }
 
     public void ToggleTheme()
     {

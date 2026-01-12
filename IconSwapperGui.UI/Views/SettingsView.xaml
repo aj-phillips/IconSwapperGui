@@ -16,6 +16,7 @@
             </ResourceDictionary.MergedDictionaries>
             <converters:SectionVisibilityConverter x:Key="SectionVisibilityConverter" />
             <converters:BooleanNegationConverter x:Key="BooleanNegationConverter" />
+            <converters:BoolToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
             <converters:StringNotEmptyToVisibilityConverter x:Key="StringNotEmptyToVisibilityConverter" />
         </ResourceDictionary>
     </UserControl.Resources>
@@ -127,8 +128,251 @@
                                 <RadioButton Content="Dark"
                                              GroupName="Theme"
                                              IsChecked="{Binding IsDarkTheme}"
+                                             Margin="0,0,16,0"
+                                             Foreground="{DynamicResource PrimaryTextBrush}" />
+                                <RadioButton Content="Custom"
+                                             GroupName="Theme"
+                                             IsChecked="{Binding IsCustomTheme}"
                                              Foreground="{DynamicResource PrimaryTextBrush}" />
                             </StackPanel>
+                        </StackPanel>
+                    </Border>
+                    
+                    <!-- Custom Theme Colors -->
+                    <Border Style="{StaticResource SettingItemStyle}"
+                            Visibility="{Binding IsCustomTheme, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel>
+                            <TextBlock Text="Custom Colors"
+                                       FontSize="14"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource PrimaryTextBrush}"
+                                       Margin="0,0,0,8" />
+                            <TextBlock Text="Customize colors for your custom theme"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource SecondaryTextBrush}"
+                                       Margin="0,0,0,16"
+                                       TextWrapping="Wrap" />
+
+                            <!-- Accent Color -->
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                
+                                <TextBlock Grid.Column="0"
+                                           Text="Accent Color"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource PrimaryTextBrush}"
+                                           VerticalAlignment="Center" />
+                                
+                                <Grid Grid.Column="1">
+                                    <Button x:Name="AccentColorButton"
+                                            Style="{StaticResource ColorSwatchButtonStyle}"
+                                            Click="AccentColorButton_Click"
+                                            Width="40"
+                                            Height="40"
+                                            ToolTip="Click to change accent color">
+                                        <Border CornerRadius="8"
+                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                BorderThickness="1">
+                                            <Border.Background>
+                                                <SolidColorBrush Color="{Binding CustomAccentColor}" />
+                                            </Border.Background>
+                                        </Border>
+                                    </Button>
+
+                                    <Popup x:Name="AccentColorPopup"
+                                           Placement="Bottom"
+                                           PlacementTarget="{Binding ElementName=AccentColorButton}"
+                                           StaysOpen="False"
+                                           IsOpen="{Binding IsAccentColorPickerOpen, Mode=TwoWay}"
+                                           AllowsTransparency="True">
+                                        <components:ColorPickerPopup SelectedColor="{Binding CustomAccentColor, Mode=TwoWay}"
+                                                                     AutoCloseOnPick="True"
+                                                                     ColorPicked="AccentColorPicker_ColorPicked" />
+                                    </Popup>
+                                </Grid>
+                            </Grid>
+
+                            <!-- Background Color -->
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                
+                                <TextBlock Grid.Column="0"
+                                           Text="Background"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource PrimaryTextBrush}"
+                                           VerticalAlignment="Center" />
+                                
+                                <Grid Grid.Column="1">
+                                    <Button x:Name="BackgroundColorButton"
+                                            Style="{StaticResource ColorSwatchButtonStyle}"
+                                            Click="BackgroundColorButton_Click"
+                                            Width="40"
+                                            Height="40"
+                                            ToolTip="Click to change background color">
+                                        <Border CornerRadius="8"
+                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                BorderThickness="1">
+                                            <Border.Background>
+                                                <SolidColorBrush Color="{Binding CustomBackgroundColor}" />
+                                            </Border.Background>
+                                        </Border>
+                                    </Button>
+
+                                    <Popup x:Name="BackgroundColorPopup"
+                                           Placement="Bottom"
+                                           PlacementTarget="{Binding ElementName=BackgroundColorButton}"
+                                           StaysOpen="False"
+                                           IsOpen="{Binding IsBackgroundColorPickerOpen, Mode=TwoWay}"
+                                           AllowsTransparency="True">
+                                        <components:ColorPickerPopup SelectedColor="{Binding CustomBackgroundColor, Mode=TwoWay}"
+                                                                     AutoCloseOnPick="True"
+                                                                     ColorPicked="BackgroundColorPicker_ColorPicked" />
+                                    </Popup>
+                                </Grid>
+                            </Grid>
+
+                            <!-- Surface Color -->
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                
+                                <TextBlock Grid.Column="0"
+                                           Text="Surface"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource PrimaryTextBrush}"
+                                           VerticalAlignment="Center" />
+                                
+                                <Grid Grid.Column="1">
+                                    <Button x:Name="SurfaceColorButton"
+                                            Style="{StaticResource ColorSwatchButtonStyle}"
+                                            Click="SurfaceColorButton_Click"
+                                            Width="40"
+                                            Height="40"
+                                            ToolTip="Click to change surface color">
+                                        <Border CornerRadius="8"
+                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                BorderThickness="1">
+                                            <Border.Background>
+                                                <SolidColorBrush Color="{Binding CustomSurfaceColor}" />
+                                            </Border.Background>
+                                        </Border>
+                                    </Button>
+
+                                    <Popup x:Name="SurfaceColorPopup"
+                                           Placement="Bottom"
+                                           PlacementTarget="{Binding ElementName=SurfaceColorButton}"
+                                           StaysOpen="False"
+                                           IsOpen="{Binding IsSurfaceColorPickerOpen, Mode=TwoWay}"
+                                           AllowsTransparency="True">
+                                        <components:ColorPickerPopup SelectedColor="{Binding CustomSurfaceColor, Mode=TwoWay}"
+                                                                     AutoCloseOnPick="True"
+                                                                     ColorPicked="SurfaceColorPicker_ColorPicked" />
+                                    </Popup>
+                                </Grid>
+                            </Grid>
+
+                            <!-- Primary Text Color -->
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                
+                                <TextBlock Grid.Column="0"
+                                           Text="Primary Text"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource PrimaryTextBrush}"
+                                           VerticalAlignment="Center" />
+                                
+                                <Grid Grid.Column="1">
+                                    <Button x:Name="PrimaryTextColorButton"
+                                            Style="{StaticResource ColorSwatchButtonStyle}"
+                                            Click="PrimaryTextColorButton_Click"
+                                            Width="40"
+                                            Height="40"
+                                            ToolTip="Click to change primary text color">
+                                        <Border CornerRadius="8"
+                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                BorderThickness="1">
+                                            <Border.Background>
+                                                <SolidColorBrush Color="{Binding CustomPrimaryTextColor}" />
+                                            </Border.Background>
+                                        </Border>
+                                    </Button>
+
+                                    <Popup x:Name="PrimaryTextColorPopup"
+                                           Placement="Bottom"
+                                           PlacementTarget="{Binding ElementName=PrimaryTextColorButton}"
+                                           StaysOpen="False"
+                                           IsOpen="{Binding IsPrimaryTextColorPickerOpen, Mode=TwoWay}"
+                                           AllowsTransparency="True">
+                                        <components:ColorPickerPopup SelectedColor="{Binding CustomPrimaryTextColor, Mode=TwoWay}"
+                                                                     AutoCloseOnPick="True"
+                                                                     ColorPicked="PrimaryTextColorPicker_ColorPicked" />
+                                    </Popup>
+                                </Grid>
+                            </Grid>
+
+                            <!-- Secondary Text Color -->
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                
+                                <TextBlock Grid.Column="0"
+                                           Text="Secondary Text"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource PrimaryTextBrush}"
+                                           VerticalAlignment="Center" />
+                                
+                                <Grid Grid.Column="1">
+                                    <Button x:Name="SecondaryTextColorButton"
+                                            Style="{StaticResource ColorSwatchButtonStyle}"
+                                            Click="SecondaryTextColorButton_Click"
+                                            Width="40"
+                                            Height="40"
+                                            ToolTip="Click to change secondary text color">
+                                        <Border CornerRadius="8"
+                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                BorderThickness="1">
+                                            <Border.Background>
+                                                <SolidColorBrush Color="{Binding CustomSecondaryTextColor}" />
+                                            </Border.Background>
+                                        </Border>
+                                    </Button>
+
+                                    <Popup x:Name="SecondaryTextColorPopup"
+                                           Placement="Bottom"
+                                           PlacementTarget="{Binding ElementName=SecondaryTextColorButton}"
+                                           StaysOpen="False"
+                                           IsOpen="{Binding IsSecondaryTextColorPickerOpen, Mode=TwoWay}"
+                                           AllowsTransparency="True">
+                                        <components:ColorPickerPopup SelectedColor="{Binding CustomSecondaryTextColor, Mode=TwoWay}"
+                                                                     AutoCloseOnPick="True"
+                                                                     ColorPicked="SecondaryTextColorPicker_ColorPicked" />
+                                    </Popup>
+                                </Grid>
+                            </Grid>
+
+                            <Button Content="Reset to Default Colors"
+                                    Style="{StaticResource SettingsCompactButtonStyle}"
+                                    Command="{Binding ResetCustomColorsCommand}"
+                                    HorizontalAlignment="Left"
+                                    Margin="0,4,0,0" />
                         </StackPanel>
                     </Border>
                 </StackPanel>
