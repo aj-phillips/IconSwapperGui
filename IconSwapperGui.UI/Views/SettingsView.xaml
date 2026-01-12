@@ -119,21 +119,21 @@
                                        Margin="0,0,0,16"
                                        TextWrapping="Wrap" />
 
-                            <StackPanel Orientation="Horizontal">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
                                 <RadioButton Content="Light"
+                                             Style="{StaticResource ThemeSelectorRadioButtonStyle}"
                                              GroupName="Theme"
                                              IsChecked="{Binding IsLightTheme}"
-                                             Margin="0,0,16,0"
-                                             Foreground="{DynamicResource PrimaryTextBrush}" />
+                                             Margin="0,0,10,0" />
                                 <RadioButton Content="Dark"
+                                             Style="{StaticResource ThemeSelectorRadioButtonStyle}"
                                              GroupName="Theme"
                                              IsChecked="{Binding IsDarkTheme}"
-                                             Margin="0,0,16,0"
-                                             Foreground="{DynamicResource PrimaryTextBrush}" />
+                                             Margin="0,0,10,0" />
                                 <RadioButton Content="Custom"
+                                             Style="{StaticResource ThemeSelectorRadioButtonStyle}"
                                              GroupName="Theme"
-                                             IsChecked="{Binding IsCustomTheme}"
-                                             Foreground="{DynamicResource PrimaryTextBrush}" />
+                                             IsChecked="{Binding IsCustomTheme}" />
                             </StackPanel>
                         </StackPanel>
                     </Border>

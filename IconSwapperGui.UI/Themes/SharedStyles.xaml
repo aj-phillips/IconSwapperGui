@@ -427,6 +427,69 @@
         </Setter>
     </Style>
 
+    <!-- Modern Theme Selector Style (filled pills with icons) -->
+    <Style x:Key="ThemeSelectorRadioButtonStyle" TargetType="RadioButton">
+        <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}" />
+        <Setter Property="Background" Value="{DynamicResource InputBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="20,12" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="MinWidth" Value="110" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Border x:Name="Bd"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="10"
+                            Padding="{TemplateBinding Padding}">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Border x:Name="IconContainer"
+                                    Width="18"
+                                    Height="18"
+                                    Margin="0,0,8,0"
+                                    CornerRadius="9"
+                                    Background="{DynamicResource AccentBrush}"
+                                    Visibility="Collapsed">
+                                <Path x:Name="CheckIcon"
+                                      Data="M3.5,9 L7.5,13 L14.5,4.5"
+                                      StrokeThickness="2"
+                                      Stroke="White"
+                                      StrokeStartLineCap="Round"
+                                      StrokeEndLineCap="Round"
+                                      Stretch="Uniform"
+                                      Width="10"
+                                      Height="10" />
+                            </Border>
+                            <ContentPresenter VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource HoverBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentBrush}" />
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                            <Setter Property="Foreground" Value="White" />
+                            <Setter TargetName="IconContainer" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="IconContainer" Property="Background" Value="White" />
+                            <Setter TargetName="CheckIcon" Property="Stroke" Value="{DynamicResource AccentBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.55" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style x:Key="ListItemContainerStyle" TargetType="ListBoxItem">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="Transparent" />
