@@ -44,13 +44,13 @@ public class IconManagementService(ILoggingService logger) : IIconManagementServ
             foreach (var extension in enumerable)
             {
                 var searchPattern = $"*.{extension.TrimStart('*', '.')}";
-                var files = Directory.GetFiles(folderPath, searchPattern);
-                logger.LogInfo($"Found {files.Length} files with extension {extension}");
+                var files = Directory.GetFiles(folderPath, searchPattern, SearchOption.AllDirectories);
+                logger.LogInfo($"Found {files.Length} files with extension {extension} (including subdirectories)");
 
                 icons.AddRange(files.Select(file => new Icon(Path.GetFileName(file), file)));
             }
 
-            logger.LogInfo($"Successfully loaded {icons.Count} total icons from {folderPath}");
+            logger.LogInfo($"Successfully loaded {icons.Count} total icons from {folderPath} and subdirectories");
             return icons;
         }
         catch (IOException ex)
