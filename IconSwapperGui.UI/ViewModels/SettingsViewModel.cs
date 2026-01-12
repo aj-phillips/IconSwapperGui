@@ -17,6 +17,7 @@ public partial class SettingsViewModel : ObservableObject
     private readonly ISettingsService _settingsService;
     private readonly IThemeService _themeService;
     private readonly IUpdateService _updateService;
+    private readonly IStartupService _startupService;
 
     // Application Settings
     public ObservableCollection<string> ShortcutLocations { get; }
@@ -37,6 +38,7 @@ public partial class SettingsViewModel : ObservableObject
 
     // General Settings
     [ObservableProperty] private bool _checkForUpdates;
+    [ObservableProperty] private bool _launchAtStartup;
 
     // Update check UI
     [ObservableProperty] private bool _isCheckingForUpdates;
@@ -72,12 +74,14 @@ public partial class SettingsViewModel : ObservableObject
         ISettingsService settingsService,
         IThemeService themeService,
         INotificationService notificationService,
-        IUpdateService updateService)
+        IUpdateService updateService,
+        IStartupService startupService)
     {
         _settingsService = settingsService;
         _themeService = themeService;
         _notificationService = notificationService;
         _updateService = updateService;
+        _startupService = startupService;
 
         ShortcutLocations = new ObservableCollection<string>(_settingsService.Settings.Application.ShortcutLocations);
         IconLocations = new ObservableCollection<string>(_settingsService.Settings.Application.IconLocations);
@@ -90,6 +94,7 @@ public partial class SettingsViewModel : ObservableObject
         _isLightTheme = _settingsService.Settings.Appearance.Theme == ThemeMode.Light;
         _isDarkTheme = _settingsService.Settings.Appearance.Theme == ThemeMode.Dark;
         _checkForUpdates = _settingsService.Settings.General.CheckForUpdates;
+        _launchAtStartup = _settingsService.Settings.General.LaunchAtStartup;
 
         _playSound = _settingsService.Settings.Notifications.PlaySound;
 
@@ -373,6 +378,24 @@ public partial class SettingsViewModel : ObservableObject
         if (e.PropertyName == nameof(CheckForUpdates))
         {
             _settingsService.Settings.General.CheckForUpdates = CheckForUpdates;
+
+            await _settingsService.SaveSettingsAsync();
+
+            return;
+        }
+
+        if (e.PropertyName == nameof(LaunchAtStartup))
+        {
+            _settingsService.Settings.General.LaunchAtStartup = LaunchAtStartup;
+
+            if (LaunchAtStartup)
+            {
+                _startupService.EnableStartup();
+            }
+            else
+            {
+                _startupService.DisableStartup();
+            }
 
             await _settingsService.SaveSettingsAsync();
 

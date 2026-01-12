@@ -51,8 +51,9 @@ public class ViewModelToViewConverterTests
         var themeMock = new Mock<IThemeService>();
         var notifMock = new Mock<INotificationService>();
         var updateMock = new Mock<IUpdateService>();
+        var startupMock = new Mock<IStartupService>();
 
-        var vm = new SettingsViewModel(settingsMock.Object, themeMock.Object, notifMock.Object, updateMock.Object);
+        var vm = new SettingsViewModel(settingsMock.Object, themeMock.Object, notifMock.Object, updateMock.Object, startupMock.Object);
 
         var view = conv.Convert(vm, typeof(object), null, CultureInfo.InvariantCulture);
         Assert.That(view, Is.Not.Null);

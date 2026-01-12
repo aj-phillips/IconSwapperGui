@@ -358,6 +358,11 @@
                         TitleText="Check for Updates"
                         DescriptionText="Automatically check for application updates"
                         IsChecked="{Binding CheckForUpdates}" />
+
+                    <templates:SettingToggleItem
+                        TitleText="Launch at Startup"
+                        DescriptionText="Automatically start the application when you log in to Windows"
+                        IsChecked="{Binding LaunchAtStartup}" />
                 </StackPanel>
 
                 <!-- Notifications Section -->

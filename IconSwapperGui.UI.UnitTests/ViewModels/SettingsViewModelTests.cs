@@ -23,8 +23,10 @@ public class SettingsViewModelTests
         var themeMock = new Mock<IThemeService>();
         var notifMock = new Mock<INotificationService>();
         var updateMock = new Mock<IUpdateService>();
+        var startupService = new Mock<IStartupService>();
 
-        var vm = new SettingsViewModel(settingsMock.Object, themeMock.Object, notifMock.Object, updateMock.Object);
+        var vm = new SettingsViewModel(settingsMock.Object, themeMock.Object, notifMock.Object, updateMock.Object,
+            startupService.Object);
 
         Assert.Multiple(() => { Assert.That(vm.CheckForUpdates, Is.True); });
     }
@@ -43,8 +45,10 @@ public class SettingsViewModelTests
         var themeMock = new Mock<IThemeService>();
         var notifMock = new Mock<INotificationService>();
         var updateMock = new Mock<IUpdateService>();
+        var startupService = new Mock<IStartupService>();
 
-        var vm = new SettingsViewModel(settingsMock.Object, themeMock.Object, notifMock.Object, updateMock.Object);
+        var vm = new SettingsViewModel(settingsMock.Object, themeMock.Object, notifMock.Object, updateMock.Object,
+            startupService.Object);
 
         vm.ResetToDefaultsCommand.Execute(null);
 
