@@ -41,29 +41,25 @@ jobs:
 
       - name: Generate Release Notes
         id: release_notes
-        shell: bash
+        shell: pwsh
         run: |
           # Get the latest tag (if exists)
-          latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          $latestTag = git describe --tags --abbrev=0 2>$null
           
-          if [ -z "$latest_tag" ]; then
+          if ([string]::IsNullOrEmpty($latestTag)) {
             # First release - get all commits
-            echo "## 🎉 Initial Release" > release_notes.md
-            echo "" >> release_notes.md
-            echo "### Changes" >> release_notes.md
-            git log --pretty=format:"- %s (%h)" >> release_notes.md
-          else
+            $commits = git log --pretty=format:"- %s (%h)"
+            $notes = "## 🎉 Initial Release`n`n### Changes`n$commits"
+          } else {
             # Subsequent releases - get commits since last tag
-            echo "## What's Changed" > release_notes.md
-            echo "" >> release_notes.md
-            git log ${latest_tag}..HEAD --pretty=format:"- %s (%h)" >> release_notes.md
-          fi
+            $commits = git log "$latestTag..HEAD" --pretty=format:"- %s (%h)"
+            $notes = "## What's Changed`n`n$commits"
+          }
           
-          # Convert to single line for command line usage (escape newlines)
-          notes=$(cat release_notes.md | sed ':a;N;$!ba;s/\n/\\n/g')
-          echo "notes<<EOF" >> $GITHUB_OUTPUT
-          cat release_notes.md >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          # Save to output using proper multiline format
+          "notes<<EOF" >> $env:GITHUB_OUTPUT
+          $notes >> $env:GITHUB_OUTPUT
+          "EOF" >> $env:GITHUB_OUTPUT
 
       - name: Restore dependencies
         run: dotnet restore "./IconSwapperGui.sln"
@@ -73,9 +69,13 @@ jobs:
           dotnet publish "./IconSwapperGui.UI/IconSwapperGui.UI.csproj" -c Release -o publish -r win-x64 --self-contained false
 
       - name: Create Velopack Release
-        shell: bash
+        shell: pwsh
         run: |
           dotnet tool install -g vpk
-          vpk download github --repoUrl https://github.com/aj-phillips/IconSwapperGui --token ${{ secrets.GITHUB_TOKEN }} || echo "No previous releases found (expected for first release)"
+          try {
+            vpk download github --repoUrl https://github.com/aj-phillips/IconSwapperGui --token ${{ secrets.GITHUB_TOKEN }}
+          } catch {
+            Write-Host "No previous releases found (expected for first release)"
+          }
           vpk pack -u IconSwapperGui -v ${{ steps.extract_version.outputs.version }} -p publish -e IconSwapperGui.exe
           vpk upload github --repoUrl https://github.com/aj-phillips/IconSwapperGui --publish --releaseName "IconSwapperGui v${{ steps.extract_version.outputs.version }}" --tag v${{ steps.extract_version.outputs.version }} --releaseNotes "${{ steps.release_notes.outputs.notes }}" --token ${{ secrets.GITHUB_TOKEN }}
