@@ -264,6 +264,12 @@ public class SettingsService : ISettingsService
         }
     }
 
+    public void SaveHideOutOfSupportWarning(bool? hideOutOfSupportWarning)
+    {
+        _logger.Information("Saving hide out of support warning: {HideOutOfSupportWarning}", hideOutOfSupportWarning);
+        UpdateSettingsProperty((settings, value) => settings.HideOutOfSupportWarning = value, hideOutOfSupportWarning);
+    }
+
     public string? GetApplicationsLocation()
     {
         var location = GetSettingsFieldValue<string>("ApplicationsLocation");
@@ -331,6 +337,13 @@ public class SettingsService : ISettingsService
     {
         var value = GetSettingsFieldValue<bool>("EnableSeasonalEffects");
         _logger.Information("Retrieved seasonal effects value: {Value}", value);
+        return value;
+    }
+
+    public bool? GetHideOutOfSupportWarningValue()
+    {
+        var value = GetSettingsFieldValue<bool>("HideOutOfSupportWarning");
+        _logger.Information("Retrieved hide out of support warning value: {Value}", value);
         return value;
     }
 
@@ -423,6 +436,7 @@ public class SettingsService : ISettingsService
             settings.EnableLaunchAtStartup ??= false;
             settings.EnableAutoUpdate ??= true;
             settings.EnableSeasonalEffects ??= true;
+            settings.HideOutOfSupportWarning ??= false;
 
             SaveSettings(settings);
             _logger.Information("Successfully updated settings with defaults");

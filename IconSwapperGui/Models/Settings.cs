@@ -14,4 +14,5 @@ public class Settings
     public bool? EnableLaunchAtStartup { get; set; }
     public bool? EnableAutoUpdate { get; set; }
     public bool? EnableSeasonalEffects { get; set; }
+    public bool? HideOutOfSupportWarning { get; set; }
 }
