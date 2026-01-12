@@ -1,0 +1,452 @@
+﻿<UserControl x:Class="IconSwapperGui.UI.Views.SwapperView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:conv="clr-namespace:IconSwapperGui.UI.Converters"
+             mc:Ignorable="d"
+             d:DesignHeight="450" d:DesignWidth="800">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Themes/SharedStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <conv:BooleanNegationConverter x:Key="InverseBooleanConverter" />
+            <conv:BoolToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <conv:BoolToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
+            <conv:ShortcutPathToImageConverter x:Key="ShortcutPathToImageConverter" />
+            <conv:IconPathToImageConverter x:Key="IconPathToImageConverter" />
+            <conv:TruncateStringConverter x:Key="TruncateStringConverter" />
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid Background="{DynamicResource AppBackgroundBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Margin="24,18,24,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel>
+                <TextBlock Text="Icon Swapper" Style="{StaticResource PageTitleStyle}" />
+                <TextBlock Text="Pick an application/folder, choose an icon, then swap."
+                           Style="{StaticResource MutedTextStyle}"
+                           Margin="0,4,0,0" />
+            </StackPanel>
+
+            <Border Grid.Column="1"
+                    Background="{DynamicResource AccentLightBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Padding="12,8"
+                    VerticalAlignment="Center">
+                <TextBlock Text="Tip: Right-click items for actions" Foreground="{DynamicResource SecondaryTextBrush}"
+                           FontSize="12" />
+            </Border>
+        </Grid>
+
+        <!-- Main Content -->
+        <Grid Grid.Row="1" Margin="24,0,24,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="380" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Left: Sources -->
+            <Border Grid.Column="0" Style="{StaticResource CardStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <DockPanel Grid.Row="0" Margin="0,0,0,12">
+                        <TextBlock Text="Sources" Style="{StaticResource SectionTitleStyle}" DockPanel.Dock="Left"
+                                   Margin="0" />
+                        <TextBlock Text="Applications and folders to update"
+                                   Style="{StaticResource MutedTextStyle}"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Right" />
+                    </DockPanel>
+
+                    <!-- Tab Selector -->
+                    <Border Grid.Row="1"
+                            Background="{DynamicResource AppBackgroundBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="12"
+                            Padding="6"
+                            Margin="0,0,0,12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <RadioButton Grid.Column="0"
+                                         Style="{StaticResource TabPillRadioButtonStyle}"
+                                         Margin="0,0,6,0"
+                                         Content="Shortcuts"
+                                         IsChecked="{Binding IsFolderTabSelected, Converter={StaticResource InverseBooleanConverter}, Mode=TwoWay}" />
+
+                            <RadioButton Grid.Column="1"
+                                         Style="{StaticResource TabPillRadioButtonStyle}"
+                                         Margin="6,0,0,0"
+                                         Content="Folders"
+                                         IsChecked="{Binding IsFolderTabSelected, Mode=TwoWay}" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Content -->
+                    <Grid Grid.Row="2">
+                        <!-- Shortcuts -->
+                        <Grid
+                            Visibility="{Binding IsFolderTabSelected, Converter={StaticResource InverseBooleanToVisibilityConverter}, ConverterParameter=Invert}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <Border Grid.Row="0"
+                                    Background="{DynamicResource SurfaceBackgroundBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="12"
+                                    Margin="0,12,0,0"
+                                    Padding="8">
+                                <ListBox ItemsSource="{Binding Shortcuts}"
+                                         SelectedItem="{Binding SelectedShortcut, Mode=TwoWay}"
+                                         Background="Transparent"
+                                         BorderThickness="0">
+                                    <ListBox.ItemContainerStyle>
+                                        <Style TargetType="ListBoxItem" BasedOn="{StaticResource ListItemContainerStyle}">
+                                            <Setter Property="Tag" Value="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                                            <Setter Property="ContextMenu">
+                                                <Setter.Value>
+                                                    <ContextMenu Style="{StaticResource ModernContextMenuStyle}"
+                                                                 DataContext="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}">
+                                                        <MenuItem Style="{StaticResource ModernMenuItemStyle}"
+                                                                  Header="Manage Icon Versions"
+                                                                  Command="{Binding ManageVersionsContextCommand}"
+                                                                  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
+                                                            <MenuItem.Icon>
+                                                                <Viewbox Width="16" Height="16">
+                                                                    <Path Data="{StaticResource ManageVersionsIconGeometry}"
+                                                                          Stretch="Uniform"
+                                                                          Fill="{DynamicResource SecondaryTextBrush}" />
+                                                                </Viewbox>
+                                                            </MenuItem.Icon>
+                                                        </MenuItem>
+                                                    </ContextMenu>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </ListBox.ItemContainerStyle>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <Border Grid.Column="0"
+                                                        Width="52"
+                                                        Height="52"
+                                                        Background="{DynamicResource AppBackgroundBrush}"
+                                                        BorderBrush="{DynamicResource BorderBrush}"
+                                                        BorderThickness="1"
+                                                        CornerRadius="10"
+                                                        Margin="0,0,12,0">
+                                                    <Viewbox Margin="10">
+                                                        <Image
+                                                            Source="{Binding TargetPath, Converter={StaticResource IconPathToImageConverter}}"
+                                                            Width="52" Height="52" />
+                                                    </Viewbox>
+                                                </Border>
+
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource PrimaryTextBrush}"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock
+                                                        Text="{Binding TargetPath, Converter={StaticResource TruncateStringConverter}, ConverterParameter=25}"
+                                                        Style="{StaticResource MutedTextStyle}"
+                                                        TextTrimming="CharacterEllipsis"
+                                                        ToolTip="{Binding TargetPath}" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Border>
+                        </Grid>
+
+                        <!-- Folders -->
+                        <Grid
+                            Visibility="{Binding IsFolderTabSelected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <Border Grid.Row="0"
+                                    Background="{DynamicResource SurfaceBackgroundBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="12"
+                                    Margin="0,12,0,0"
+                                    Padding="8">
+                                <ListBox ItemsSource="{Binding Folders}"
+                                         SelectedItem="{Binding SelectedFolder, Mode=TwoWay}"
+                                         Background="Transparent"
+                                         BorderThickness="0"
+                                         ItemContainerStyle="{StaticResource ListItemContainerStyle}"
+                                         ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <Border Grid.Column="0"
+                                                        Width="52"
+                                                        Height="52"
+                                                        Background="{DynamicResource AppBackgroundBrush}"
+                                                        BorderBrush="{DynamicResource BorderBrush}"
+                                                        BorderThickness="1"
+                                                        CornerRadius="10"
+                                                        Margin="0,0,12,0">
+                                                    <Viewbox Margin="10">
+                                                        <Path
+                                                            Data="M3 6a1 1 0 011-1h6l2 2h8a1 1 0 011 1v9a1 1 0 01-1 1H4a1 1 0 01-1-1V6z"
+                                                            Width="52"
+                                                            Height="52"
+                                                            Fill="{DynamicResource PrimaryTextBrush}"
+                                                            Stretch="Uniform"/>
+                                                    </Viewbox>
+                                                </Border>
+
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource PrimaryTextBrush}"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Border>
+                        </Grid>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <!-- Right: Icon Library -->
+            <Border Grid.Column="2" Style="{StaticResource CardStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <DockPanel Grid.Row="0" Margin="0,0,0,12">
+                        <TextBlock Text="Icon Library" Style="{StaticResource SectionTitleStyle}" DockPanel.Dock="Left"
+                                   Margin="0,0,10,0" />
+                        <TextBlock Text="Search and pick the replacement icon" Style="{StaticResource MutedTextStyle}"
+                                   Margin="0,2,0,0" />
+                    </DockPanel>
+
+                    <Grid Grid.Row="1" Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Grid Grid.Column="0" Height="60">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Grid Grid.Column="0">
+                                <TextBox x:Name="IconSearchTextBox"
+                                         Style="{StaticResource InputTextBoxStyle}"
+                                         Text="{Binding FilterString, UpdateSourceTrigger=PropertyChanged}"
+                                         Height="60"
+                                         Padding="10,0,16,0"
+                                         ToolTip="Search" />
+
+                                <StackPanel Orientation="Horizontal" Margin="20,0,0,0">
+                                    <Viewbox Width="18" Height="18" VerticalAlignment="Center"
+                                             HorizontalAlignment="Center">
+                                        <Path
+                                            Data="M10.5 3a7.5 7.5 0 105.3 12.7l4 4 1.4-1.4-4-4A7.5 7.5 0 0010.5 3zm0 2a5.5 5.5 0 110 11 5.5 5.5 0 010-11z"
+                                            Fill="{DynamicResource PrimaryTextBrush}"
+                                            Stretch="Uniform"
+                                            Width="18"
+                                            Height="18" />
+                                        <Viewbox.Style>
+                                            <Style TargetType="Viewbox">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition
+                                                                Binding="{Binding Text, ElementName=IconSearchTextBox}"
+                                                                Value="" />
+                                                            <Condition
+                                                                Binding="{Binding IsKeyboardFocusWithin, ElementName=IconSearchTextBox}"
+                                                                Value="False" />
+                                                        </MultiDataTrigger.Conditions>
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </MultiDataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Viewbox.Style>
+                                    </Viewbox>
+
+                                    <TextBlock Text="Search icons"
+                                               Foreground="{DynamicResource SecondaryTextBrush}"
+                                               Margin="10,0,0,0"
+                                               VerticalAlignment="Center"
+                                               IsHitTestVisible="False">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition
+                                                                Binding="{Binding Text, ElementName=IconSearchTextBox}"
+                                                                Value="" />
+                                                            <Condition
+                                                                Binding="{Binding IsKeyboardFocusWithin, ElementName=IconSearchTextBox}"
+                                                                Value="False" />
+                                                        </MultiDataTrigger.Conditions>
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </MultiDataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </StackPanel>
+                            </Grid>
+                        </Grid>
+                    </Grid>
+
+                    <Border Grid.Row="2"
+                            Background="{DynamicResource SurfaceBackgroundBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="12"
+                            Padding="10">
+                        <ListBox ItemsSource="{Binding FilteredIcons}"
+                                 SelectedItem="{Binding SelectedIcon, Mode=TwoWay}"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                 ItemContainerStyle="{StaticResource IconTileContainerStyle}">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel HorizontalAlignment="Center" />
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Width="120" Height="120" Margin="0">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="*" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+                                        <Border Grid.Row="0"
+                                                Background="{DynamicResource AppBackgroundBrush}"
+                                                CornerRadius="10"
+                                                Margin="10"
+                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                BorderThickness="1">
+                                            <Viewbox Margin="14">
+                                                <Image
+                                                    Source="{Binding Path, Converter={StaticResource ShortcutPathToImageConverter}}"
+                                                    Width="56" Height="56"
+                                                    Stretch="Uniform"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center" />
+                                            </Viewbox>
+                                        </Border>
+                                        <TextBlock Grid.Row="1"
+                                                   Text="{Binding Name}"
+                                                   Margin="10,0,10,10"
+                                                   FontSize="11"
+                                                   Foreground="{DynamicResource SecondaryTextBrush}"
+                                                   TextAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Bottom action bar -->
+        <Border Grid.Row="2"
+                Margin="24,0,24,18"
+                Background="{DynamicResource SurfaceBackgroundBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="16"
+                Padding="16"
+                Effect="{StaticResource CardShadow}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center">
+                    <Button Command="{Binding DualSwapCommand}"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            MinWidth="140"
+                            Height="44"
+                            Visibility="{Binding IsFolderTabSelected, Converter={StaticResource InverseBooleanToVisibilityConverter}, ConverterParameter=Invert}">
+                        <TextBlock Text="Swap Icon" FontWeight="SemiBold" />
+                    </Button>
+
+                    <Button Command="{Binding SwapFolderIconCommand}"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            MinWidth="140"
+                            Height="44"
+                            Visibility="{Binding IsFolderTabSelected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <TextBlock Text="Swap Icon" FontWeight="SemiBold" />
+                    </Button>
+
+                    <Border Width="28"
+                            Height="28"
+                            Margin="12,0,0,0"
+                            Background="{DynamicResource SuccessBrush}"
+                            CornerRadius="14"
+                            Visibility="{Binding IsTickVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <TextBlock Text="✓"
+                                   Foreground="White"
+                                   FontSize="16"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" />
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

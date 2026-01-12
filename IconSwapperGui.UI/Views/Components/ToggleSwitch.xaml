@@ -1,0 +1,64 @@
+<UserControl x:Class="IconSwapperGui.UI.Views.Components.ToggleSwitch"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignWidth="44" d:DesignHeight="24">
+
+    <CheckBox IsChecked="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay}"
+              Cursor="Hand">
+        <CheckBox.Template>
+            <ControlTemplate TargetType="CheckBox">
+                <Grid>
+                    <Border x:Name="SwitchBackground"
+                            Width="44"
+                            Height="24"
+                            Background="#D1D5DB"
+                            CornerRadius="12"
+                            HorizontalAlignment="Left">
+                        <Border.RenderTransform>
+                            <TranslateTransform x:Name="SwitchTransform" />
+                        </Border.RenderTransform>
+                    </Border>
+                    <Ellipse x:Name="SwitchThumb"
+                             Width="20"
+                             Height="20"
+                             Fill="White"
+                             HorizontalAlignment="Left"
+                             Margin="2,2,0,0">
+                        <Ellipse.RenderTransform>
+                            <TranslateTransform x:Name="ThumbTransform" />
+                        </Ellipse.RenderTransform>
+                    </Ellipse>
+                </Grid>
+                <ControlTemplate.Triggers>
+                    <Trigger Property="IsChecked" Value="True">
+                        <Setter TargetName="SwitchBackground" Property="Background" Value="{DynamicResource AccentBrush}" />
+                        <Trigger.EnterActions>
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="ThumbTransform"
+                                                     Storyboard.TargetProperty="X"
+                                                     To="20"
+                                                     Duration="0:0:0.2" />
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </Trigger.EnterActions>
+                        <Trigger.ExitActions>
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="ThumbTransform"
+                                                     Storyboard.TargetProperty="X"
+                                                     To="0"
+                                                     Duration="0:0:0.2" />
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </Trigger.ExitActions>
+                    </Trigger>
+                </ControlTemplate.Triggers>
+            </ControlTemplate>
+        </CheckBox.Template>
+    </CheckBox>
+
+</UserControl>

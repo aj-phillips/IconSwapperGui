@@ -1,0 +1,50 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+<ItemGroup>
+<ApplicationDefinition Remove="App.xaml" />
+<Page Include="App.xaml" />
+</ItemGroup>
+
+<ItemGroup>
+		<Reference Include="IWshRuntimeLibrary">
+			<HintPath>IWshRuntimeLibrary.dll</HintPath>
+			<EmbedInteropTypes>true</EmbedInteropTypes>
+		</Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Remove="favicon.ico" />
+		<None Remove="IWshRuntimeLibrary.dll" />
+		<Content Include="favicon.ico" />
+		<Content Include="IWshRuntimeLibrary.dll">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\IconSwapperGui.Core\IconSwapperGui.Core.csproj" />
+		<ProjectReference Include="..\IconSwapperGui.Infrastructure\IconSwapperGui.Infrastructure.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.1" />
+		<PackageReference Include="Velopack" Version="0.0.1298" />
+		<PackageReference Include="WindowsAPICodePack" Version="8.0.14" />
+	</ItemGroup>
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net10.0-windows</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<UseWPF>true</UseWPF>
+		<AssemblyName>IconSwapperGui</AssemblyName>
+		<Version>2.0.0</Version>
+		<ApplicationIcon>favicon.ico</ApplicationIcon>
+		<PackageVersion>$(Version)</PackageVersion>
+		<InformationalVersion>$(Version)</InformationalVersion>
+		<StartupObject>IconSwapperGui.UI.App</StartupObject>
+	</PropertyGroup>
+
+</Project>

@@ -1,0 +1,31 @@
+﻿<UserControl x:Class="IconSwapperGui.UI.Views.Components.Templates.SettingToggleItem"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:components="clr-namespace:IconSwapperGui.UI.Views.Components"
+             x:Name="root">
+    <Border Style="{DynamicResource SettingItemStyle}">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,16,0">
+                <TextBlock Text="{Binding TitleText, ElementName=root}"
+                           FontSize="14"
+                           FontWeight="Medium"
+                           Foreground="{DynamicResource PrimaryTextBrush}"
+                           TextWrapping="Wrap" />
+                <TextBlock Text="{Binding DescriptionText, ElementName=root}"
+                           FontSize="12"
+                           Foreground="{DynamicResource SecondaryTextBrush}"
+                           Margin="0,4,0,0"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+
+            <components:ToggleSwitch Grid.Column="1"
+                                     IsChecked="{Binding IsChecked, ElementName=root, Mode=TwoWay}"
+                                     VerticalAlignment="Center" />
+        </Grid>
+    </Border>
+</UserControl>
