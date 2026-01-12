@@ -33,10 +33,11 @@ jobs:
 
       - name: Extract Version from csproj
         id: extract_version
-        shell: bash
+        shell: pwsh
         run: |
-          version=$(grep -oP '<Version>\K[^<]+' ./IconSwapperGui.UI/IconSwapperGui.UI.csproj)
-          echo "version=$version" >> $GITHUB_OUTPUT
+          [xml]$csproj = Get-Content ./IconSwapperGui.UI/IconSwapperGui.UI.csproj
+          $version = $csproj.Project.PropertyGroup.Version
+          echo "version=$version" >> $env:GITHUB_OUTPUT
 
       - name: Generate Release Notes
         id: release_notes
