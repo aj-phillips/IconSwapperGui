@@ -386,10 +386,18 @@
                                Foreground="{DynamicResource PrimaryTextBrush}"
                                Margin="0,0,0,8"
                                TextWrapping="Wrap" />
-                    <TextBlock Text="Customise core application settings"
+                    <TextBlock Text="Configure locations for different features"
                                FontSize="13"
                                Foreground="{DynamicResource SecondaryTextBrush}"
                                Margin="0,0,0,24"
+                               TextWrapping="Wrap" />
+
+                    <!-- Swapper Section Header -->
+                    <TextBlock Text="Swapper"
+                               FontSize="18"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource PrimaryTextBrush}"
+                               Margin="0,0,0,12"
                                TextWrapping="Wrap" />
 
                     <!-- Shortcut Locations -->
@@ -400,7 +408,7 @@
                                        FontWeight="Medium"
                                        Foreground="{DynamicResource PrimaryTextBrush}"
                                        Margin="0,0,0,8" />
-                            <TextBlock Text="Folders to search for shortcuts"
+                            <TextBlock Text="Directories containing application shortcuts (.lnk files) for icon swapping"
                                        FontSize="12"
                                        Foreground="{DynamicResource SecondaryTextBrush}"
                                        Margin="0,0,0,16"
@@ -439,7 +447,7 @@
                                        FontWeight="Medium"
                                        Foreground="{DynamicResource PrimaryTextBrush}"
                                        Margin="0,0,0,8" />
-                            <TextBlock Text="Folders to search for icons"
+                            <TextBlock Text="Directories to scan for icon files (.ico) when swapping shortcut icons"
                                        FontSize="12"
                                        Foreground="{DynamicResource SecondaryTextBrush}"
                                        Margin="0,0,0,16"
@@ -478,7 +486,7 @@
                                        FontWeight="Medium"
                                        Foreground="{DynamicResource PrimaryTextBrush}"
                                        Margin="0,0,0,8" />
-                            <TextBlock Text="Folders to search for folder shortcuts"
+                            <TextBlock Text="Directories containing folder shortcuts for customizing folder icons"
                                        FontSize="12"
                                        Foreground="{DynamicResource SecondaryTextBrush}"
                                        Margin="0,0,0,16"
@@ -509,15 +517,23 @@
                         </StackPanel>
                     </Border>
 
+                    <!-- Converter Section Header -->
+                    <TextBlock Text="Converter"
+                               FontSize="18"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource PrimaryTextBrush}"
+                               Margin="0,16,0,12"
+                               TextWrapping="Wrap" />
+
                     <!-- Converter Icons Locations -->
                     <Border Style="{StaticResource SettingItemStyle}">
                         <StackPanel>
-                            <TextBlock Text="Converter Icons Locations"
+                            <TextBlock Text="Icon Set Locations"
                                        FontSize="14"
                                        FontWeight="Medium"
                                        Foreground="{DynamicResource PrimaryTextBrush}"
                                        Margin="0,0,0,8" />
-                            <TextBlock Text="Folders to search for converter icon sets"
+                            <TextBlock Text="Directories containing icon sets for batch conversion operations"
                                        FontSize="12"
                                        Foreground="{DynamicResource SecondaryTextBrush}"
                                        Margin="0,0,0,16"
@@ -548,6 +564,14 @@
                         </StackPanel>
                     </Border>
 
+                    <!-- Pixel Art Editor Section Header -->
+                    <TextBlock Text="Pixel Art Editor"
+                               FontSize="18"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource PrimaryTextBrush}"
+                               Margin="0,16,0,12"
+                               TextWrapping="Wrap" />
+
                     <!-- Export Location -->
                     <Border Style="{StaticResource SettingItemStyle}">
                         <StackPanel>
@@ -556,7 +580,7 @@
                                        FontWeight="Medium"
                                        Foreground="{DynamicResource PrimaryTextBrush}"
                                        Margin="0,0,0,8" />
-                            <TextBlock Text="Where exported files should be saved"
+                            <TextBlock Text="Default directory for saving icons created in the Pixel Art Editor"
                                        FontSize="12"
                                        Foreground="{DynamicResource SecondaryTextBrush}"
                                        Margin="0,0,0,16"
