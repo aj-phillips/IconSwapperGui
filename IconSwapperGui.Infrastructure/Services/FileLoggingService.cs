@@ -5,7 +5,7 @@ namespace IconSwapperGui.Infrastructure.Services;
 
 public class FileLoggingService : ILoggingService
 {
-    private readonly Lock _lockObject = new();
+    private readonly object _lockObject = new();
     private readonly string _logFilePath;
 
     public FileLoggingService()
