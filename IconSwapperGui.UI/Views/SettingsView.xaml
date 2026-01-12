@@ -16,6 +16,7 @@
             </ResourceDictionary.MergedDictionaries>
             <converters:SectionVisibilityConverter x:Key="SectionVisibilityConverter" />
             <converters:BooleanNegationConverter x:Key="BooleanNegationConverter" />
+            <converters:StringNotEmptyToVisibilityConverter x:Key="StringNotEmptyToVisibilityConverter" />
         </ResourceDictionary>
     </UserControl.Resources>
 
@@ -446,7 +447,8 @@
                                     BorderBrush="{DynamicResource AccentBrush}"
                                     CornerRadius="6"
                                     Padding="12"
-                                    Margin="0,0,0,16">
+                                    Margin="0,0,0,16"
+                                    Visibility="{Binding LastCheckedDate, Converter={StaticResource StringNotEmptyToVisibilityConverter}}">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" />
