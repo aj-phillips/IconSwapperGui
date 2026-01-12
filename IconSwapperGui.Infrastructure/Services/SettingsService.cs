@@ -143,7 +143,14 @@ public class SettingsService : ISettingsService
 
         try
         {
-            File.Replace(tempPath, _settingsPath, null);
+            if (File.Exists(_settingsPath))
+            {
+                File.Replace(tempPath, _settingsPath, null);
+            }
+            else
+            {
+                File.Move(tempPath, _settingsPath, overwrite: true);
+            }
         }
         catch (PlatformNotSupportedException)
         {
