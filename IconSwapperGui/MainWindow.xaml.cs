@@ -3,6 +3,7 @@ using System.IO;
 using System.Reflection;
 using System.Windows;
 using IconSwapperGui.Services;
+using IconSwapperGui.Windows;
 using Microsoft.Win32;
 using Application = System.Windows.Application;
 
@@ -46,6 +47,7 @@ public partial class MainWindow
     {
         base.OnContentRendered(e);
         _effectsService.ApplySeasonalEffect(this);
+        ShowOutOfSupportWarningIfNeeded();
     }
 
     private void CheckForUpdates()
@@ -87,5 +89,19 @@ public partial class MainWindow
         {
             key.DeleteValue(AppName, false);
         }
+    }
+
+    private void ShowOutOfSupportWarningIfNeeded()
+    {
+        var hideWarning = _settingsService.GetHideOutOfSupportWarningValue();
+        
+        if (hideWarning == true)
+            return;
+
+        var warningWindow = new OutOfSupportWarningWindow
+        {
+            Owner = this
+        };
+        warningWindow.ShowDialog();
     }
 }

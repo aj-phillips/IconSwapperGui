@@ -18,6 +18,7 @@ public interface ISettingsService
     void SaveEnableLaunchAtStartup(bool? enableLaunchAtStartup);
     void SaveEnableAutoUpdate(bool? enableAutoUpdate);
     void SaveEnableSeasonalEffects(bool? enableSeasonalEffects);
+    void SaveHideOutOfSupportWarning(bool? hideOutOfSupportWarning);
     string? GetApplicationsLocation();
     List<string>? GetApplicationsLocations();
     string? GetIconsLocation();
@@ -27,4 +28,5 @@ public interface ISettingsService
     List<string>? GetFoldersLocations();
     bool? GetAutoUpdateValue();
     bool? GetSeasonalEffectsValue();
+    bool? GetHideOutOfSupportWarningValue();
 }
