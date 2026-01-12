@@ -12,4 +12,6 @@ public interface IIconManagementService
     Task<bool> ChangeIconAsync(string filePath, string iconPath);
     Task<IEnumerable<Icon>> GetIconsAsync(string? folderPath, IEnumerable<string> extensions);
     Task<ObservableCollection<Icon>> GetIconsAsync(string? folderPath);
+    Task<bool> DeleteIconAsync(string iconPath);
+    Task<bool> RenameIconAsync(string oldPath, string newName);
 }

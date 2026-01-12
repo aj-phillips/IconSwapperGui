@@ -23,6 +23,14 @@
         M12 2c-1.1 0-2 .9-2 2v1.1c-1 .2-1.9.6-2.7 1.1l-.8-.8c-.8-.8-2-.8-2.8 0l-.7.7c-.8.8-.8 2 0 2.8l.8.8C2.6 10.1 2.2 11 2 12H1c-1.1 0-2 .9-2 2v1c0 1.1.9 2 2 2h1.1c.2 1 .6 1.9 1.1 2.7l-.8.8c-.8.8-.8 2 0 2.8l.7.7c.8.8 2 .8 2.8 0l.8-.8c.8.5 1.7.9 2.7 1.1V28c0 1.1.9 2 2 2h1c1.1 0 2-.9 2-2v-1.1c1-.2 1.9-.6 2.7-1.1l.8.8c.8.8 2 .8 2.8 0l.7-.7c.8-.8.8-2 0-2.8l-.8-.8c.5-.8.9-1.7 1.1-2.7H27c1.1 0 2-.9 2-2v-1c0-1.1-.9-2-2-2h-1.1c-.2-1-.6-1.9-1.1-2.7l.8-.8c.8-.8.8-2 0-2.8l-.7-.7c-.8-.8-2-.8-2.8 0l-.8.8C17.9 4.7 17 4.3 16 4.1V4c0-1.1-.9-2-2-2h-2zm1 8a5 5 0 110 10 5 5 0 010-10z
     </Geometry>
 
+    <Geometry x:Key="DeleteIconGeometry">
+        M6 3h12l1 1v1H3V4l1-1zm-1 3h14v13a2 2 0 01-2 2H7a2 2 0 01-2-2V6zm3 2v9h2V8H8zm4 0v9h2V8h-2z
+    </Geometry>
+
+    <Geometry x:Key="RenameIconGeometry">
+        M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z
+    </Geometry>
+
     <Style x:Key="ModernContextMenuStyle" TargetType="ContextMenu">
         <Setter Property="OverridesDefaultStyle" Value="True" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
