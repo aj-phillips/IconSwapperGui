@@ -16,6 +16,7 @@
             </ResourceDictionary.MergedDictionaries>
             <converters:SectionVisibilityConverter x:Key="SectionVisibilityConverter" />
             <converters:BooleanNegationConverter x:Key="BooleanNegationConverter" />
+            <converters:StringNotEmptyToVisibilityConverter x:Key="StringNotEmptyToVisibilityConverter" />
         </ResourceDictionary>
     </UserControl.Resources>
 
@@ -358,6 +359,11 @@
                         TitleText="Check for Updates"
                         DescriptionText="Automatically check for application updates"
                         IsChecked="{Binding CheckForUpdates}" />
+
+                    <templates:SettingToggleItem
+                        TitleText="Launch at Startup"
+                        DescriptionText="Automatically start the application when you log in to Windows"
+                        IsChecked="{Binding LaunchAtStartup}" />
                 </StackPanel>
 
                 <!-- Notifications Section -->
@@ -441,7 +447,8 @@
                                     BorderBrush="{DynamicResource AccentBrush}"
                                     CornerRadius="6"
                                     Padding="12"
-                                    Margin="0,0,0,16">
+                                    Margin="0,0,0,16"
+                                    Visibility="{Binding LastCheckedDate, Converter={StaticResource StringNotEmptyToVisibilityConverter}}">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" />

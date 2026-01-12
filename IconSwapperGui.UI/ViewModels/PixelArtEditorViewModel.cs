@@ -241,14 +241,28 @@ public partial class PixelArtEditorViewModel : ObservableObject
         }
 
         ResizeBuffer(Rows, Columns);
+        
+        foreach (var layer in Layers)
+        {
+            layer.Resize(Rows, Columns);
+        }
+        
         ClearToBackground();
+        CompositeLayersIntoBuffer();
         LayoutInvalidated?.Invoke();
     }
 
     private bool PerformMaxSizeValidation(int rows, int columns)
     {
-        const int maxRows = 96;
-        const int maxColumns = 96;
+        const int maxRows = 512;
+        const int maxColumns = 512;
+
+        if (rows <= 0 || columns <= 0)
+        {
+            _loggingService.LogWarning($"Grid size must be positive - Rows: {rows}, Columns: {columns}");
+            _notificationService.AddNotification("Pixel Art Editor", "Grid size must be greater than zero.", NotificationType.Warning);
+            return false;
+        }
 
         if (rows <= maxRows && columns <= maxColumns)
         {
@@ -261,7 +275,7 @@ public partial class PixelArtEditorViewModel : ObservableObject
         var message = $"The grid size exceeds the maximum allowed values.\n\n" +
                       $"Maximum Rows: {maxRows}\nMaximum Columns: {maxColumns}";
 
-        _notificationService.AddNotification("Pixel Art Edtior", message, NotificationType.Warning);
+        _notificationService.AddNotification("Pixel Art Editor", message, NotificationType.Warning);
 
         return false;
     }

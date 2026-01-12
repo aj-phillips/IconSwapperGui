@@ -50,6 +50,7 @@ public partial class App : Application
         services.AddSingleton<ILoggingService, FileLoggingService>();
         services.AddSingleton<IUpdateService, VelopackUpdateService>();
         services.AddSingleton<IElevationService, ElevationService>();
+        services.AddSingleton<IStartupService, StartupService>();
         services.AddSingleton<IFileSystemWatcherService, FileSystemWatcherService>();
         services.AddSingleton<IFolderManagementService, FolderManagementService>();
         services.AddSingleton<IIconHistoryService, IconHistoryService>();
@@ -93,6 +94,7 @@ public partial class App : Application
         var updateService = _serviceProvider.GetRequiredService<IUpdateService>();
         var notificationService = _serviceProvider.GetRequiredService<INotificationService>();
         var themeService = _serviceProvider.GetRequiredService<IThemeService>();
+        var startupService = _serviceProvider.GetRequiredService<IStartupService>();
         _serviceProvider.GetRequiredService<ThemeApplier>();
 
         await settingsService.LoadSettingsAsync();
@@ -100,6 +102,19 @@ public partial class App : Application
         loggingService.IsEnabled = settingsService.Settings.Advanced.EnableLogging;
 
         loggingService.LogInfo("Application started.");
+
+        var isStartupEnabled = startupService.IsStartupEnabled();
+        if (settingsService.Settings.General.LaunchAtStartup != isStartupEnabled)
+        {
+            if (settingsService.Settings.General.LaunchAtStartup)
+            {
+                startupService.EnableStartup();
+            }
+            else
+            {
+                startupService.DisableStartup();
+            }
+        }
 
         var main = _serviceProvider.GetRequiredService<MainWindow>();
         main.Show();
