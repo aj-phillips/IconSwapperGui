@@ -65,7 +65,7 @@ A standout feature of IconSwapperGui is **icon version management**, allowing yo
  
 ### 🎨 Pixel Art Icon Editor
 - **Custom Canvas Size**  
-  - Adjustable grid from **16×16** up to **96×96** pixels
+  - Adjustable grid up to **512×512** pixels
   
 - **Background Customization**  
   - Choose any background color
@@ -91,11 +91,19 @@ A standout feature of IconSwapperGui is **icon version management**, allowing yo
 
 #### Appearance
 - **Theme Selection**  
-  - Light and Dark mode themes
+  - Light, Dark and Custom mode themes
+
+- **Custom Colours** (custom mode enabled)
+    - Accent Colour
+    - Background
+    - Surface
+    - Primary Text
+    - Secondary Text
   
 #### Application
 - **Shortcut Locations**  
   - Add/remove multiple shortcut folder paths
+    - The desktop path is a common one
   - Supports both .lnk and .url shortcuts
   
 - **Icon Locations**  
@@ -117,7 +125,7 @@ A standout feature of IconSwapperGui is **icon version management**, allowing yo
   - Manual update check available
   - One-click update installation
   
-- **Startup Configuration**  
+- **Launch At Startup**  
   - Launch IconSwapperGui automatically with Windows
 
 #### Notifications
