@@ -16,6 +16,8 @@ namespace IconSwapperGui.UI.Views
         private PixelArtRenderService? _renderer;
         private PixelArtEditorViewModel? _vm;
         private bool _isPainting;
+        private bool _isErasing;
+        private PixelTool _previousToolBeforeErase;
 
         public PixelArtEditorView()
         {
@@ -59,6 +61,7 @@ namespace IconSwapperGui.UI.Views
             _renderer.Attach(DrawableCanvas);
 
             vm.LayoutInvalidated += OnLayoutInvalidated;
+            vm.BackgroundInvalidated += OnBackgroundInvalidated;
             vm.PixelChanged += OnPixelChanged;
 
             DrawableCanvas.MouseLeftButtonDown += OnCanvasMouseLeftButtonDown;
@@ -79,6 +82,7 @@ namespace IconSwapperGui.UI.Views
             if (_vm is not null)
             {
                 _vm.LayoutInvalidated -= OnLayoutInvalidated;
+                _vm.BackgroundInvalidated -= OnBackgroundInvalidated;
                 _vm.PixelChanged -= OnPixelChanged;
             }
 
@@ -89,13 +93,22 @@ namespace IconSwapperGui.UI.Views
             DrawableCanvas.MouseRightButtonUp -= OnCanvasMouseRightButtonUp;
 
             _isPainting = false;
+            _isErasing = false;
         }
 
         private void OnLayoutInvalidated()
         {
             if (_vm is null || _renderer is null) return;
 
-            _renderer.Initialize(_vm.Rows, _vm.Columns, _vm.BackgroundColor, _vm.IsGridVisible);
+            _renderer.Initialize(_vm.Rows, _vm.Columns, _vm.BackgroundColor, _vm.IsGridVisible, _vm.UseTransparentBackground);
+            _renderer.Redraw(_vm.PixelsArgb);
+        }
+
+        private void OnBackgroundInvalidated()
+        {
+            if (_vm is null || _renderer is null) return;
+
+            _renderer.UpdateBackground(_vm.BackgroundColor, _vm.UseTransparentBackground);
             _renderer.Redraw(_vm.PixelsArgb);
         }
 
@@ -118,11 +131,24 @@ namespace IconSwapperGui.UI.Views
 
         private void OnCanvasMouseMove(object sender, MouseEventArgs e)
         {
-            if (!_isPainting || _vm is null || _renderer is null) return;
-
-            if (_renderer.TryGetCellIndex(e.GetPosition(DrawableCanvas), out var index))
+            if (_vm is null || _renderer is null) return;
+            
+            // Handle left-click painting
+            if (_isPainting && e.LeftButton == MouseButtonState.Pressed)
             {
-                _vm.ContinueStroke(index);
+                if (_renderer.TryGetCellIndex(e.GetPosition(DrawableCanvas), out var index))
+                {
+                    _vm.ContinueStroke(index);
+                }
+            }
+            
+            // Handle right-click erasing
+            if (_isErasing && e.RightButton == MouseButtonState.Pressed)
+            {
+                if (_renderer.TryGetCellIndex(e.GetPosition(DrawableCanvas), out var index))
+                {
+                    _vm.ContinueStroke(index);
+                }
             }
         }
 
@@ -136,18 +162,32 @@ namespace IconSwapperGui.UI.Views
 
         private void OnCanvasMouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
-            if (_vm is null) return;
+            if (_vm is null || _renderer is null) return;
 
-            // Temporary affordance: right-click acts like eraser.
-            var previous = _vm.SelectedTool;
+            // Switch to eraser tool temporarily
+            _previousToolBeforeErase = _vm.SelectedTool;
             _vm.SelectedTool = PixelTool.Eraser;
-            OnCanvasMouseLeftButtonDown(sender, e);
-            _vm.SelectedTool = previous;
+            
+            // Start erasing stroke
+            DrawableCanvas.CaptureMouse();
+            _isErasing = true;
+
+            if (_renderer.TryGetCellIndex(e.GetPosition(DrawableCanvas), out var index))
+            {
+                _vm.BeginStroke(index);
+            }
         }
 
         private void OnCanvasMouseRightButtonUp(object sender, MouseButtonEventArgs e)
         {
-            OnCanvasMouseLeftButtonUp(sender, e);
+            if (_vm is null) return;
+            
+            _isErasing = false;
+            DrawableCanvas.ReleaseMouseCapture();
+            _vm.EndStroke();
+            
+            // Restore previous tool
+            _vm.SelectedTool = _previousToolBeforeErase;
         }
 
         private void SelectedColorPicker_ColorPicked(object sender, System.EventArgs e)

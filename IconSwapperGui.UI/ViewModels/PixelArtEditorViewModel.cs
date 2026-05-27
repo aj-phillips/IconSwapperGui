@@ -41,6 +41,7 @@ public partial class PixelArtEditorViewModel : ObservableObject
     [ObservableProperty] private string _exportFolder = string.Empty;
     [ObservableProperty] private PixelTool _selectedTool = PixelTool.Pencil;
     [ObservableProperty] private bool _isGridVisible = true;
+    [ObservableProperty] private bool _useTransparentBackground = false;
 
     [ObservableProperty] private string _documentName = "Untitled";
     [ObservableProperty] private bool _isRenamingDocumentName;
@@ -85,6 +86,7 @@ public partial class PixelArtEditorViewModel : ObservableObject
     partial void OnBackgroundColorChanged(Color value)
     {
         _loggingService.LogInfo($"Background color changed to: {value}");
+        BackgroundInvalidated?.Invoke();
     }
 
     partial void OnSelectedColorChanged(Color value)
@@ -97,15 +99,26 @@ public partial class PixelArtEditorViewModel : ObservableObject
         _loggingService.LogInfo($"Zoom level changed to: {value}");
     }
 
+    partial void OnUseTransparentBackgroundChanged(bool value)
+    {
+        _loggingService.LogInfo($"Use transparent background changed to: {value}");
+        BackgroundInvalidated?.Invoke();
+    }
+
     partial void OnExportFolderChanged(string value)
     {
         _settingsService.Settings.Application.ExportLocation = value;
         OnPropertyChanged(nameof(ExportFolderDisplay));
         OnPropertyChanged(nameof(ExportFolderStatus));
+        OnPropertyChanged(nameof(ExportFolderActionText));
         OnPropertyChanged(nameof(HasExportFolder));
         OnPropertyChanged(nameof(ExportFolderExists));
         ExportCommand.NotifyCanExecuteChanged();
-        SaveExportFolderCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnDocumentNameChanged(string value)
+    {
+        OnPropertyChanged(nameof(ExportFileSummary));
     }
 
     [RelayCommand]
@@ -130,6 +143,7 @@ public partial class PixelArtEditorViewModel : ObservableObject
     }
 
     public event Action? LayoutInvalidated;
+    public event Action? BackgroundInvalidated;
     public event Action<int, Color>? PixelChanged;
 
     public ObservableCollection<Color> RecentColors { get; } = new();
@@ -254,7 +268,11 @@ public partial class PixelArtEditorViewModel : ObservableObject
 
     public string ExportFolderDisplay => HasExportFolder
         ? ExportFolder
-        : "Choose an export folder before saving your icon.";
+        : "No folder selected";
+
+    public string ExportFolderActionText => HasExportFolder ? "Change Folder" : "Choose Folder";
+
+    public string ExportFileSummary => $"{GetExportBaseName()}.png + {GetExportBaseName()}.ico";
 
     public string ExportFolderStatus
     {
@@ -545,14 +563,7 @@ public partial class PixelArtEditorViewModel : ObservableObject
         if (string.IsNullOrWhiteSpace(selected)) return;
 
         ExportFolder = selected;
-        await SaveExportFolderAsync();
-    }
-
-    [RelayCommand(CanExecute = nameof(CanExport))]
-    private async Task SaveExportFolderAsync()
-    {
         await _settingsService.SaveSettingsAsync();
-        _notificationService.AddNotification("Pixel Art Editor", "Export folder saved.", NotificationType.Success);
     }
 
     [RelayCommand(CanExecute = nameof(CanExport))]
@@ -567,10 +578,8 @@ public partial class PixelArtEditorViewModel : ObservableObject
                 return;
             }
 
-            var name = string.IsNullOrWhiteSpace(DocumentName)
-                ? (string.IsNullOrWhiteSpace(IconName) ? "Pixel_Art" : IconName)
-                : DocumentName;
-            _exportService.ExportPngAndIco(folder, name, Rows, Columns, PixelsArgb, BackgroundColor);
+            var name = GetExportBaseName();
+            _exportService.ExportPngAndIco(folder, name, Rows, Columns, PixelsArgb, BackgroundColor, UseTransparentBackground);
             await _settingsService.SaveSettingsAsync();
             OnPropertyChanged(nameof(ExportFolderStatus));
             OnPropertyChanged(nameof(ExportFolderExists));
@@ -616,8 +625,9 @@ public partial class PixelArtEditorViewModel : ObservableObject
             return;
         }
 
-        var bg = ToArgb(BackgroundColor);
-        Array.Fill(_pixelsArgb, bg);
+        // Fill with background color or transparent based on user setting
+        var fillColor = UseTransparentBackground ? 0u : ToArgb(BackgroundColor);
+        Array.Fill(_pixelsArgb, fillColor);
 
         // 1) Composite unlocked layers in stacking order.
         for (var i = 0; i < Layers.Count; i++)
@@ -755,6 +765,11 @@ public partial class PixelArtEditorViewModel : ObservableObject
     }
 
     private static uint ToArgb(Color c) => (uint)(c.A << 24 | c.R << 16 | c.G << 8 | c.B);
+
+    private string GetExportBaseName()
+        => string.IsNullOrWhiteSpace(DocumentName)
+            ? (string.IsNullOrWhiteSpace(IconName) ? "Pixel_Art" : IconName)
+            : DocumentName;
 
     private void PushUndoSnapshot()
     {

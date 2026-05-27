@@ -15,7 +15,7 @@ public sealed class PixelArtExportService
         _iconCreatorService = iconCreatorService;
     }
 
-    public void ExportPngAndIco(string folderPath, string baseFileName, int rows, int columns, ReadOnlySpan<uint> argbPixels, Color background)
+    public void ExportPngAndIco(string folderPath, string baseFileName, int rows, int columns, ReadOnlySpan<uint> argbPixels, Color background, bool useTransparentBackground)
     {
         if (string.IsNullOrWhiteSpace(folderPath)) throw new InvalidOperationException("Export folder is not configured.");
         if (string.IsNullOrWhiteSpace(baseFileName)) throw new InvalidOperationException("File name is required.");
@@ -29,14 +29,15 @@ public sealed class PixelArtExportService
         var pngPath = Path.Combine(folderPath, $"{safeBase}.png");
         var icoPath = Path.Combine(folderPath, $"{safeBase}.ico");
 
-        SavePng(pngPath, rows, columns, argbPixels, background);
+        SavePng(pngPath, rows, columns, argbPixels, background, useTransparentBackground);
 
         _iconCreatorService.CreateIcoFromPng(pngPath, icoPath);
     }
 
-    private static void SavePng(string pngPath, int rows, int columns, ReadOnlySpan<uint> argbPixels, Color background)
+    private static void SavePng(string pngPath, int rows, int columns, ReadOnlySpan<uint> argbPixels, Color background, bool useTransparentBackground)
     {
         // WPF WriteableBitmap expects BGRA32.
+        // The argbPixels buffer is already composited with either transparent or solid background
         var pixels = new byte[checked(rows * columns * 4)];
 
         for (var i = 0; i < argbPixels.Length; i++)

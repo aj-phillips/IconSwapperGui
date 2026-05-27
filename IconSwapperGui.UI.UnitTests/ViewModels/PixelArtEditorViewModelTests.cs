@@ -186,8 +186,18 @@ public class PixelArtEditorViewModelTests
         Assert.That(vm.ExportFolder, Is.EqualTo(@"C:\Icons\Exports"));
         Assert.That(settings.Application.ExportLocation, Is.EqualTo(@"C:\Icons\Exports"));
         Assert.That(vm.ExportCommand.CanExecute(null), Is.True);
-        Assert.That(vm.SaveExportFolderCommand.CanExecute(null), Is.True);
+        Assert.That(vm.ExportFolderActionText, Is.EqualTo("Change Folder"));
         _settingsServiceMock.Verify(s => s.SaveSettingsAsync(), Times.Once);
+    }
+
+    [Test]
+    public void ExportFileSummary_UsesDocumentName()
+    {
+        var vm = CreateViewModel();
+
+        vm.DocumentName = "My Icon";
+
+        Assert.That(vm.ExportFileSummary, Is.EqualTo("My Icon.png + My Icon.ico"));
     }
 
     [Test]
