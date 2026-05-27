@@ -28,6 +28,7 @@ namespace IconSwapperGui.UI.ViewModels
         private readonly IDialogService _dialogService;
         private readonly IDispatcher _dispatcher;
         private readonly IWindowService _windowService;
+        private readonly IFileDialogService _fileDialogService;
         private readonly Func<string, IconVersionManagerViewModel> _iconVersionManagerViewModelFactory;
 
         // Properties
@@ -71,6 +72,7 @@ namespace IconSwapperGui.UI.ViewModels
             IDialogService dialogService,
             IDispatcher dispatcher,
             IWindowService windowService,
+            IFileDialogService fileDialogService,
             Func<string, IconVersionManagerViewModel> iconVersionManagerViewModelFactory)
         {
             _settingsService = settingsService;
@@ -85,6 +87,7 @@ namespace IconSwapperGui.UI.ViewModels
             _dialogService = dialogService;
             _dispatcher = dispatcher;
             _windowService = windowService;
+            _fileDialogService = fileDialogService;
             _iconVersionManagerViewModelFactory = iconVersionManagerViewModelFactory;
 
             _loggingService.LogInfo("SwapperViewModel initialising");
@@ -501,6 +504,52 @@ namespace IconSwapperGui.UI.ViewModels
             {
                 _loggingService.LogError("Error resetting GUI", ex);
             }
+        }
+
+        [RelayCommand]
+        private async Task AddShortcutLocationAsync()
+        {
+            var selected = _fileDialogService.BrowseForFolder(ShortcutsFolders.FirstOrDefault(), "Select shortcut folder");
+            if (TryAddLocation(_settingsService.Settings.Application.ShortcutLocations, selected))
+            {
+                await _settingsService.SaveSettingsAsync();
+                await RefreshGuiAsync();
+            }
+        }
+
+        [RelayCommand]
+        private async Task AddIconLocationAsync()
+        {
+            var selected = _fileDialogService.BrowseForFolder(IconsFolders.FirstOrDefault(), "Select icon folder");
+            if (TryAddLocation(_settingsService.Settings.Application.IconLocations, selected))
+            {
+                await _settingsService.SaveSettingsAsync();
+                await RefreshGuiAsync();
+            }
+        }
+
+        [RelayCommand]
+        private async Task AddFolderShortcutLocationAsync()
+        {
+            var selected = _fileDialogService.BrowseForFolder(FoldersFolders.FirstOrDefault(), "Select folder shortcut folder");
+            if (TryAddLocation(_settingsService.Settings.Application.FolderShortcutLocations, selected))
+            {
+                await _settingsService.SaveSettingsAsync();
+                await RefreshGuiAsync();
+            }
+        }
+
+        private static bool TryAddLocation(ICollection<string> locations, string? path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+                return false;
+
+            path = path.Trim();
+            if (locations.Any(x => string.Equals(x, path, StringComparison.OrdinalIgnoreCase)))
+                return false;
+
+            locations.Add(path);
+            return true;
         }
 
         [RelayCommand]

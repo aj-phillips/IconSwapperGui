@@ -30,6 +30,7 @@ public class ViewModelToViewConverterTests
         dispatcherMock.Setup(d => d.Invoke(It.IsAny<Action>()))
             .Callback<Action>(action => action());
         var windowServiceMock = new Mock<IWindowService>();
+        var fileDialogServiceMock = new Mock<IFileDialogService>();
         Func<string, IconVersionManagerViewModel> factory = _ =>
             new Mock<IconVersionManagerViewModel>(
                     new Mock<IIconHistoryService>().Object,
@@ -41,7 +42,8 @@ public class ViewModelToViewConverterTests
         var vm = new SwapperViewModel(settingsMock.Object, notifMock.Object, shortcutServiceMock.Object,
             iconManagementServiceMock.Object, iconHistoryServiceMock.Object, folderManagementServiceMock.Object,
             loggingServiceMock.Object, lnkSwapperServiceMock.Object, urlSwapperServiceMock.Object,
-            dialogServiceMock.Object, dispatcherMock.Object, windowServiceMock.Object, factory);
+            dialogServiceMock.Object, dispatcherMock.Object, windowServiceMock.Object, fileDialogServiceMock.Object,
+            factory);
         var view = conv.Convert(vm, typeof(object), null, CultureInfo.InvariantCulture);
         Assert.That(view, Is.Not.Null);
     }

@@ -20,6 +20,7 @@ public partial class ConverterViewModel : ObservableObject
     private readonly ILoggingService _loggingService;
     private readonly IDialogService _dialogService;
     private readonly IDispatcher _dispatcher;
+    private readonly IFileDialogService _fileDialogService;
 
     // Properties
     private CancellationTokenSource? _convertCts;
@@ -41,7 +42,8 @@ public partial class ConverterViewModel : ObservableObject
         IIconManagementService iconManagementService,
         ILoggingService loggingService,
         IDialogService dialogService,
-        IDispatcher dispatcher)
+        IDispatcher dispatcher,
+        IFileDialogService fileDialogService)
     {
         _settingsService = settingsService;
         _notificationService = notificationService;
@@ -50,6 +52,7 @@ public partial class ConverterViewModel : ObservableObject
         _loggingService = loggingService;
         _dialogService = dialogService;
         _dispatcher = dispatcher;
+        _fileDialogService = fileDialogService;
 
         _loggingService.LogInfo("ConverterViewModel initializing.");
 
@@ -337,5 +340,27 @@ public partial class ConverterViewModel : ObservableObject
             _loggingService.LogInfo(
                 $"Convert button enabled state changed to: {CanConvertImages} (Icons count: {Icons.Count})");
         }
+    }
+
+    [RelayCommand]
+    private async Task AddConverterLocationAsync()
+    {
+        var selected = _fileDialogService.BrowseForFolder(IconsFolderPaths.FirstOrDefault(), "Select converter image folder");
+        if (string.IsNullOrWhiteSpace(selected))
+            return;
+
+        if (_settingsService.Settings.Application.ConverterIconsLocations.Any(path =>
+                string.Equals(path, selected, StringComparison.OrdinalIgnoreCase)))
+            return;
+
+        _settingsService.Settings.Application.ConverterIconsLocations.Add(selected);
+        await _settingsService.SaveSettingsAsync();
+
+        IconsFolderPaths = _settingsService.Settings.Application.ConverterIconsLocations;
+        RunOnUiThread(() =>
+        {
+            PopulateIconsList();
+            ValidateAndSetupFileSystemWatcher();
+        });
     }
 }
