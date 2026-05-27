@@ -19,6 +19,7 @@ public partial class ConverterViewModel : ObservableObject
     private readonly IIconManagementService _iconManagementService;
     private List<IFileSystemWatcherService>? _fileSystemWatcherServices;
     private readonly ILoggingService _loggingService;
+    private readonly IDialogService _dialogService;
 
     // Properties
     private CancellationTokenSource? _convertCts;
@@ -38,13 +39,15 @@ public partial class ConverterViewModel : ObservableObject
         INotificationService notificationService,
         IIconCreatorService iconCreatorService,
         IIconManagementService iconManagementService,
-        ILoggingService loggingService)
+        ILoggingService loggingService,
+        IDialogService dialogService)
     {
         _settingsService = settingsService;
         _notificationService = notificationService;
         _iconCreatorService = iconCreatorService;
         _iconManagementService = iconManagementService;
         _loggingService = loggingService;
+        _dialogService = dialogService;
 
         _loggingService.LogInfo("ConverterViewModel initializing.");
 
@@ -177,9 +180,10 @@ public partial class ConverterViewModel : ObservableObject
                     {
                         _loggingService.LogError($"Failed to convert image to icon: {file.Name}", ex);
                         await RunOnUiThreadAsync(() =>
-                            MessageBox.Show("Conversion Error",
-                                $"Failed to convert image '{file.Name}' to icon.\n\nError: {ex.Message}",
-                                MessageBoxButton.OK, MessageBoxImage.Error)).ConfigureAwait(false);
+                            _dialogService.ShowError(
+                                "Conversion Error",
+                                $"Failed to convert image '{file.Name}' to icon.\n\nError: {ex.Message}"))
+                            .ConfigureAwait(false);
                     }
 
                     processed++;

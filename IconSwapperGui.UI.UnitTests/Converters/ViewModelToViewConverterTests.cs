@@ -24,16 +24,19 @@ public class ViewModelToViewConverterTests
         var loggingServiceMock = new Mock<ILoggingService>();
         var lnkSwapperServiceMock = new Mock<ILnkSwapperService>();
         var urlSwapperServiceMock = new Mock<IUrlSwapperService>();
+        var dialogServiceMock = new Mock<IDialogService>();
         Func<string, IconVersionManagerViewModel> factory = _ =>
             new Mock<IconVersionManagerViewModel>(
                     new Mock<IIconHistoryService>().Object,
                     new Mock<ILoggingService>().Object,
                     new Mock<INotificationService>().Object,
+                    new Mock<IDialogService>().Object,
                     _)
                 .Object;
         var vm = new SwapperViewModel(settingsMock.Object, notifMock.Object, shortcutServiceMock.Object,
             iconManagementServiceMock.Object, iconHistoryServiceMock.Object, folderManagementServiceMock.Object,
-            loggingServiceMock.Object, lnkSwapperServiceMock.Object, urlSwapperServiceMock.Object, factory);
+            loggingServiceMock.Object, lnkSwapperServiceMock.Object, urlSwapperServiceMock.Object,
+            dialogServiceMock.Object, factory);
         var view = conv.Convert(vm, typeof(object), null, CultureInfo.InvariantCulture);
         Assert.That(view, Is.Not.Null);
     }

@@ -3,7 +3,6 @@ using CommunityToolkit.Mvvm.Input;
 using IconSwapperGui.Core.Interfaces;
 using IconSwapperGui.Core.Models.Swapper.IconVersionManagement;
 using System.Collections.ObjectModel;
-using System.Windows;
 using IconSwapperGui.Core.Models;
 
 namespace IconSwapperGui.UI.ViewModels;
@@ -13,6 +12,7 @@ public partial class IconVersionManagerViewModel : ObservableObject
     private readonly IIconHistoryService _iconHistoryService;
     private readonly INotificationService _notificationService;
     private readonly ILoggingService _loggingService;
+    private readonly IDialogService _dialogService;
 
     // Properties
     private IconHistory _iconHistory;
@@ -41,11 +41,13 @@ public partial class IconVersionManagerViewModel : ObservableObject
         IIconHistoryService iconHistoryService,
         ILoggingService loggingService,
         INotificationService notificationService,
+        IDialogService dialogService,
         string filePath)
     {
         _iconHistoryService = iconHistoryService;
         _notificationService = notificationService;
         _loggingService = loggingService;
+        _dialogService = dialogService;
 
         Versions = new ObservableCollection<IconVersion>();
 
@@ -78,11 +80,9 @@ public partial class IconVersionManagerViewModel : ObservableObject
 
         try
         {
-            var confirm = MessageBox.Show(
+            var confirm = _dialogService.Confirm(
                 "Revert Icon",
-                $"Are you sure you want to revert to the icon from {SelectedVersion.RelativeTimeDisplay}?",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question) == MessageBoxResult.Yes;
+                $"Are you sure you want to revert to the icon from {SelectedVersion.RelativeTimeDisplay}?");
 
             if (!confirm) return;
 
@@ -125,10 +125,9 @@ public partial class IconVersionManagerViewModel : ObservableObject
 
         try
         {
-            var confirm = MessageBox.Show(
+            var confirm = _dialogService.Confirm(
                 "Delete Version",
-                $"Are you sure you want to delete this version from {SelectedVersion.RelativeTimeDisplay}?\n\nThis cannot be undone.",
-                MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes;
+                $"Are you sure you want to delete this version from {SelectedVersion.RelativeTimeDisplay}?\n\nThis cannot be undone.");
 
             if (!confirm) return;
 
@@ -161,10 +160,9 @@ public partial class IconVersionManagerViewModel : ObservableObject
     {
         try
         {
-            var confirm = MessageBox.Show(
+            var confirm = _dialogService.Confirm(
                 "Clear History",
-                $"Are you sure you want to clear ALL version history for {FileName}?\n\nThis cannot be undone.",
-                MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes;
+                $"Are you sure you want to clear ALL version history for {FileName}?\n\nThis cannot be undone.");
 
             if (!confirm) return;
 

@@ -28,6 +28,7 @@ namespace IconSwapperGui.UI.ViewModels
         private readonly ILoggingService _loggingService;
         private readonly ILnkSwapperService _lnkSwapperService;
         private readonly IUrlSwapperService _urlSwapperService;
+        private readonly IDialogService _dialogService;
         private readonly Func<string, IconVersionManagerViewModel> _iconVersionManagerViewModelFactory;
 
         // Properties
@@ -68,6 +69,7 @@ namespace IconSwapperGui.UI.ViewModels
             ILoggingService loggingService,
             ILnkSwapperService lnkSwapperService,
             IUrlSwapperService urlSwapperService,
+            IDialogService dialogService,
             Func<string, IconVersionManagerViewModel> iconVersionManagerViewModelFactory)
         {
             _settingsService = settingsService;
@@ -79,6 +81,7 @@ namespace IconSwapperGui.UI.ViewModels
             _loggingService = loggingService;
             _lnkSwapperService = lnkSwapperService;
             _urlSwapperService = urlSwapperService;
+            _dialogService = dialogService;
             _iconVersionManagerViewModelFactory = iconVersionManagerViewModelFactory;
 
             _loggingService.LogInfo("SwapperViewModel initialising");
@@ -564,13 +567,11 @@ namespace IconSwapperGui.UI.ViewModels
 
             try
             {
-                var result = MessageBox.Show(
-                    $"Are you sure you want to delete '{icon.Name}'? This action cannot be undone.",
+                var confirmed = _dialogService.Confirm(
                     "Confirm Delete",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning);
+                    $"Are you sure you want to delete '{icon.Name}'? This action cannot be undone.");
 
-                if (result != MessageBoxResult.Yes)
+                if (!confirmed)
                     return;
 
                 var success = await _iconManagementService.DeleteIconAsync(icon.Path);
@@ -664,8 +665,9 @@ namespace IconSwapperGui.UI.ViewModels
             {
                 if (SelectedShortcut == null || SelectedIcon == null)
                 {
-                    MessageBox.Show("Please select an application and an icon to swap.",
-                        "No Application or Icon Selected", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    _dialogService.ShowWarning(
+                        "No Application or Icon Selected",
+                        "Please select an application and an icon to swap.");
 
                     return;
                 }
@@ -775,8 +777,9 @@ namespace IconSwapperGui.UI.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"An error occurred while swapping the icon for {SelectedShortcut?.Name}: {ex.Message}",
-                    "Error Swapping Icon", MessageBoxButton.OK, MessageBoxImage.Error);
+                _dialogService.ShowError(
+                    "Error Swapping Icon",
+                    $"An error occurred while swapping the icon for {SelectedShortcut?.Name}: {ex.Message}");
             }
         }
 
@@ -787,8 +790,9 @@ namespace IconSwapperGui.UI.ViewModels
             {
                 if (SelectedFolder == null || SelectedIcon == null)
                 {
-                    MessageBox.Show("Please select a folder and an icon to swap.", "No Folder or Icon Selected",
-                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                    _dialogService.ShowWarning(
+                        "No Folder or Icon Selected",
+                        "Please select a folder and an icon to swap.");
                     return;
                 }
 
@@ -815,15 +819,13 @@ namespace IconSwapperGui.UI.ViewModels
                 }
                 else
                 {
-                    MessageBox.Show("Failed to change folder icon", "Error", MessageBoxButton.OK,
-                        MessageBoxImage.Error);
+                    _dialogService.ShowError("Error", "Failed to change folder icon");
                 }
             }
             catch (Exception ex)
             {
                 _loggingService.LogError("Error swapping folder icon", ex);
-                MessageBox.Show("Failed to change folder icon", "Error", MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                _dialogService.ShowError("Error", "Failed to change folder icon");
             }
         }
 

@@ -1,11 +1,10 @@
 ﻿using System.IO;
-using System.Windows;
 using IconSwapperGui.Core.Interfaces;
 using IWshRuntimeLibrary;
 
 namespace IconSwapperGui.UI.Services.Swapper;
 
-public class LnkSwapperService(IElevationService elevationService) : ILnkSwapperService
+public class LnkSwapperService(IElevationService elevationService, IDialogService dialogService) : ILnkSwapperService
 {
     public void Swap(string applicationPath, string iconPath, string applicationName)
     {
@@ -14,9 +13,9 @@ public class LnkSwapperService(IElevationService elevationService) : ILnkSwapper
         if (Path.GetDirectoryName(applicationPath)!.Equals(publicDesktopPath) &&
             !elevationService.IsRunningAsAdministrator())
         {
-            MessageBox.Show(
-                $"To change the icon of {applicationName}, the application needs to be restarted with administrator permissions.\n\nYou will need to attempt the swap again afterwards",
-                "Permissions Required To Swap Icon", MessageBoxButton.OK, MessageBoxImage.Information);
+            dialogService.ShowInformation(
+                "Permissions Required To Swap Icon",
+                $"To change the icon of {applicationName}, the application needs to be restarted with administrator permissions.\n\nYou will need to attempt the swap again afterwards");
 
             elevationService.ElevateApplicationViaUac();
         }

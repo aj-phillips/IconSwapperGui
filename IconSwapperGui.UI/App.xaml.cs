@@ -43,6 +43,7 @@ public partial class App : Application
         // Services
         services.AddSingleton<INavigationService, NavigationService>();
         services.AddSingleton<IDispatcher, EventDispatcherService>();
+        services.AddSingleton<IDialogService, DialogService>();
         services.AddSingleton<INotificationService, NotificationService>();
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddSingleton<IThemeService, ThemeService>();
