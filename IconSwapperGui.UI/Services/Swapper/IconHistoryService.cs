@@ -139,15 +139,15 @@ public class IconHistoryService : IIconHistoryService
                 return false;
             }
 
-            var success = await _iconManagementService.ChangeIconAsync(filePath, version.IconPath);
+            var result = await _iconManagementService.ChangeIconAsync(filePath, version.IconPath);
 
-            if (success)
+            if (result.Succeeded)
             {
                 await RecordIconChangeAsync(filePath, version.IconPath);
                 _logger.LogInfo($"Successfully reverted to version {versionId}");
             }
 
-            return success;
+            return result.Succeeded;
         }
         catch (Exception ex)
         {

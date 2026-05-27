@@ -3,6 +3,7 @@ using Moq;
 using IconSwapperGui.Core.Interfaces;
 using IconSwapperGui.Core.Models;
 using IconSwapperGui.UI.Converters;
+using IconSwapperGui.UI.Services;
 using IconSwapperGui.UI.ViewModels;
 
 namespace IconSwapperGui.UI.UnitTests.Converters;
@@ -24,16 +25,25 @@ public class ViewModelToViewConverterTests
         var loggingServiceMock = new Mock<ILoggingService>();
         var lnkSwapperServiceMock = new Mock<ILnkSwapperService>();
         var urlSwapperServiceMock = new Mock<IUrlSwapperService>();
+        var dialogServiceMock = new Mock<IDialogService>();
+        var dispatcherMock = new Mock<IDispatcher>();
+        dispatcherMock.Setup(d => d.Invoke(It.IsAny<Action>()))
+            .Callback<Action>(action => action());
+        var windowServiceMock = new Mock<IWindowService>();
+        var fileDialogServiceMock = new Mock<IFileDialogService>();
         Func<string, IconVersionManagerViewModel> factory = _ =>
             new Mock<IconVersionManagerViewModel>(
                     new Mock<IIconHistoryService>().Object,
                     new Mock<ILoggingService>().Object,
                     new Mock<INotificationService>().Object,
+                    new Mock<IDialogService>().Object,
                     _)
                 .Object;
         var vm = new SwapperViewModel(settingsMock.Object, notifMock.Object, shortcutServiceMock.Object,
             iconManagementServiceMock.Object, iconHistoryServiceMock.Object, folderManagementServiceMock.Object,
-            loggingServiceMock.Object, lnkSwapperServiceMock.Object, urlSwapperServiceMock.Object, factory);
+            loggingServiceMock.Object, lnkSwapperServiceMock.Object, urlSwapperServiceMock.Object,
+            dialogServiceMock.Object, dispatcherMock.Object, windowServiceMock.Object, fileDialogServiceMock.Object,
+            factory);
         var view = conv.Convert(vm, typeof(object), null, CultureInfo.InvariantCulture);
         Assert.That(view, Is.Not.Null);
     }
@@ -52,8 +62,10 @@ public class ViewModelToViewConverterTests
         var notifMock = new Mock<INotificationService>();
         var updateMock = new Mock<IUpdateService>();
         var startupMock = new Mock<IStartupService>();
+        var fileDialogMock = new Mock<IFileDialogService>();
 
-        var vm = new SettingsViewModel(settingsMock.Object, themeMock.Object, notifMock.Object, updateMock.Object, startupMock.Object);
+        var vm = new SettingsViewModel(settingsMock.Object, themeMock.Object, notifMock.Object, updateMock.Object,
+            startupMock.Object, fileDialogMock.Object);
 
         var view = conv.Convert(vm, typeof(object), null, CultureInfo.InvariantCulture);
         Assert.That(view, Is.Not.Null);

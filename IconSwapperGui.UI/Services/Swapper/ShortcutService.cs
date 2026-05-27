@@ -3,12 +3,11 @@ using IconSwapperGui.Core.Models.Swapper;
 using IWshRuntimeLibrary;
 using System.IO;
 using System.Text;
-using System.Windows;
 using File = System.IO.File;
 
 namespace IconSwapperGui.UI.Services.Swapper;
 
-public class ShortcutService(ILoggingService logger) : IShortcutService
+public class ShortcutService(ILoggingService logger, IDialogService dialogService) : IShortcutService
 {
     private const string PublicDesktopPath = @"C:\Users\Public\Desktop";
     private const string LnkExtension = ".lnk";
@@ -45,8 +44,9 @@ public class ShortcutService(ILoggingService logger) : IShortcutService
         catch (IOException ex)
         {
             logger.LogError($"IOException occurred while accessing folder: {folderPath}", ex);
-            MessageBox.Show($"An error occurred while accessing {folderPath}: {ex.Message}",
-                "Error Accessing Folder", MessageBoxButton.OK, MessageBoxImage.Error);
+            dialogService.ShowError(
+                "Error Accessing Folder",
+                $"An error occurred while accessing {folderPath}: {ex.Message}");
         }
 
         return shortcuts.OrderBy(x => x.Name);
@@ -124,8 +124,9 @@ public class ShortcutService(ILoggingService logger) : IShortcutService
         catch (Exception ex)
         {
             logger.LogError($"Failed to create shortcut model from .lnk file: {filePath}", ex);
-            MessageBox.Show($"Failed to create shortcut model from link file: {filePath}\n{ex.Message}",
-                "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            dialogService.ShowError(
+                "Error",
+                $"Failed to create shortcut model from link file: {filePath}\n{ex.Message}");
             return false;
         }
     }
@@ -156,8 +157,9 @@ public class ShortcutService(ILoggingService logger) : IShortcutService
         catch (Exception ex)
         {
             logger.LogError($"Failed to create shortcut model from .url file: {filePath}", ex);
-            MessageBox.Show($"Failed to create shortcut model from URL file: {filePath}\n{ex.Message}",
-                "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            dialogService.ShowError(
+                "Error",
+                $"Failed to create shortcut model from URL file: {filePath}\n{ex.Message}");
             return false;
         }
     }
@@ -245,8 +247,9 @@ public class ShortcutService(ILoggingService logger) : IShortcutService
         catch (Exception ex)
         {
             logger.LogError($"Failed to get original exe path from shortcut: {shortcutPath}", ex);
-            MessageBox.Show($"Failed to get the original executable path from shortcut: {shortcutPath}\n{ex.Message}",
-                "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            dialogService.ShowError(
+                "Error",
+                $"Failed to get the original executable path from shortcut: {shortcutPath}\n{ex.Message}");
             return string.Empty;
         }
     }

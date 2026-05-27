@@ -24,9 +24,10 @@ public class SettingsViewModelTests
         var notifMock = new Mock<INotificationService>();
         var updateMock = new Mock<IUpdateService>();
         var startupService = new Mock<IStartupService>();
+        var fileDialogService = new Mock<IFileDialogService>();
 
         var vm = new SettingsViewModel(settingsMock.Object, themeMock.Object, notifMock.Object, updateMock.Object,
-            startupService.Object);
+            startupService.Object, fileDialogService.Object);
 
         Assert.Multiple(() => { Assert.That(vm.CheckForUpdates, Is.True); });
     }
@@ -46,9 +47,10 @@ public class SettingsViewModelTests
         var notifMock = new Mock<INotificationService>();
         var updateMock = new Mock<IUpdateService>();
         var startupService = new Mock<IStartupService>();
+        var fileDialogService = new Mock<IFileDialogService>();
 
         var vm = new SettingsViewModel(settingsMock.Object, themeMock.Object, notifMock.Object, updateMock.Object,
-            startupService.Object);
+            startupService.Object, fileDialogService.Object);
 
         vm.ResetToDefaultsCommand.Execute(null);
 

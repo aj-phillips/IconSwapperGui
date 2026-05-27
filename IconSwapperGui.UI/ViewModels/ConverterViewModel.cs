@@ -5,7 +5,6 @@ using IconSwapperGui.Core.Models.Swapper;
 using IconSwapperGui.Infrastructure.Services;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Windows;
 using IconSwapperGui.Core.Models;
 
 namespace IconSwapperGui.UI.ViewModels;
@@ -19,6 +18,9 @@ public partial class ConverterViewModel : ObservableObject
     private readonly IIconManagementService _iconManagementService;
     private List<IFileSystemWatcherService>? _fileSystemWatcherServices;
     private readonly ILoggingService _loggingService;
+    private readonly IDialogService _dialogService;
+    private readonly IDispatcher _dispatcher;
+    private readonly IFileDialogService _fileDialogService;
 
     // Properties
     private CancellationTokenSource? _convertCts;
@@ -38,13 +40,19 @@ public partial class ConverterViewModel : ObservableObject
         INotificationService notificationService,
         IIconCreatorService iconCreatorService,
         IIconManagementService iconManagementService,
-        ILoggingService loggingService)
+        ILoggingService loggingService,
+        IDialogService dialogService,
+        IDispatcher dispatcher,
+        IFileDialogService fileDialogService)
     {
         _settingsService = settingsService;
         _notificationService = notificationService;
         _iconCreatorService = iconCreatorService;
         _iconManagementService = iconManagementService;
         _loggingService = loggingService;
+        _dialogService = dialogService;
+        _dispatcher = dispatcher;
+        _fileDialogService = fileDialogService;
 
         _loggingService.LogInfo("ConverterViewModel initializing.");
 
@@ -61,31 +69,15 @@ public partial class ConverterViewModel : ObservableObject
         };
     }
 
-    private static bool IsOnUiThread()
-        => Application.Current?.Dispatcher?.CheckAccess() ?? true;
-
-    private static void RunOnUiThread(Action action)
+    private void RunOnUiThread(Action action)
     {
-        var dispatcher = Application.Current?.Dispatcher;
-        if (dispatcher is null || dispatcher.CheckAccess())
-        {
-            action();
-            return;
-        }
-
-        dispatcher.Invoke(action);
+        _dispatcher.Invoke(action);
     }
 
-    private static Task RunOnUiThreadAsync(Action action)
+    private Task RunOnUiThreadAsync(Action action)
     {
-        var dispatcher = Application.Current?.Dispatcher;
-        if (dispatcher is null || dispatcher.CheckAccess())
-        {
-            action();
-            return Task.CompletedTask;
-        }
-
-        return dispatcher.InvokeAsync(action).Task;
+        _dispatcher.Invoke(action);
+        return Task.CompletedTask;
     }
 
     public void Initialize()
@@ -177,9 +169,10 @@ public partial class ConverterViewModel : ObservableObject
                     {
                         _loggingService.LogError($"Failed to convert image to icon: {file.Name}", ex);
                         await RunOnUiThreadAsync(() =>
-                            MessageBox.Show("Conversion Error",
-                                $"Failed to convert image '{file.Name}' to icon.\n\nError: {ex.Message}",
-                                MessageBoxButton.OK, MessageBoxImage.Error)).ConfigureAwait(false);
+                            _dialogService.ShowError(
+                                "Conversion Error",
+                                $"Failed to convert image '{file.Name}' to icon.\n\nError: {ex.Message}"))
+                            .ConfigureAwait(false);
                     }
 
                     processed++;
@@ -347,5 +340,27 @@ public partial class ConverterViewModel : ObservableObject
             _loggingService.LogInfo(
                 $"Convert button enabled state changed to: {CanConvertImages} (Icons count: {Icons.Count})");
         }
+    }
+
+    [RelayCommand]
+    private async Task AddConverterLocationAsync()
+    {
+        var selected = _fileDialogService.BrowseForFolder(IconsFolderPaths.FirstOrDefault(), "Select converter image folder");
+        if (string.IsNullOrWhiteSpace(selected))
+            return;
+
+        if (_settingsService.Settings.Application.ConverterIconsLocations.Any(path =>
+                string.Equals(path, selected, StringComparison.OrdinalIgnoreCase)))
+            return;
+
+        _settingsService.Settings.Application.ConverterIconsLocations.Add(selected);
+        await _settingsService.SaveSettingsAsync();
+
+        IconsFolderPaths = _settingsService.Settings.Application.ConverterIconsLocations;
+        RunOnUiThread(() =>
+        {
+            PopulateIconsList();
+            ValidateAndSetupFileSystemWatcher();
+        });
     }
 }

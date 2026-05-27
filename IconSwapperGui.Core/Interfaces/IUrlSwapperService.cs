@@ -1,6 +1,8 @@
-﻿namespace IconSwapperGui.Core.Interfaces;
+using IconSwapperGui.Core.Models;
+
+namespace IconSwapperGui.Core.Interfaces;
 
 public interface IUrlSwapperService
 {
-    void Swap(string applicationPath, string iconPath);
+    IconOperationResult Swap(string applicationPath, string iconPath);
 }

@@ -114,7 +114,13 @@
                         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
                                     Visibility="{Binding FilteredIcons.Count, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}">
                             <TextBlock Text="No items yet" Style="{StaticResource EmptyStateTitleStyle}" />
-                            <TextBlock Text="Add images to your configured converter folders, then use the search box to narrow down what you want to convert." Style="{StaticResource EmptyStateBodyStyle}" />
+                            <TextBlock Text="Add PNG or JPG images to a converter folder, then convert them into Windows icon files." Style="{StaticResource EmptyStateBodyStyle}" />
+                            <Button Style="{StaticResource SecondaryButtonStyle}"
+                                    Content="Add Folder"
+                                    Padding="14,10"
+                                    Margin="0,16,0,0"
+                                    HorizontalAlignment="Center"
+                                    Command="{Binding AddConverterLocationCommand}" />
                         </StackPanel>
                     </Border>
                 </Grid>

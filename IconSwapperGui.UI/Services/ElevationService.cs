@@ -5,7 +5,7 @@ using System.Windows;
 
 namespace IconSwapperGui.UI.Services;
 
-public class ElevationService : IElevationService
+public class ElevationService(IDialogService dialogService) : IElevationService
 {
     public void ElevateApplicationViaUac()
     {
@@ -25,9 +25,9 @@ public class ElevationService : IElevationService
         }
         catch (Exception)
         {
-            MessageBox.Show(
-                "This operation requires elevated permissions. Please run the application as an administrator.",
-                "Elevation Required", MessageBoxButton.OK, MessageBoxImage.Error);
+            dialogService.ShowError(
+                "Elevation Required",
+                "This operation requires elevated permissions. Please run the application as an administrator.");
         }
     }
 

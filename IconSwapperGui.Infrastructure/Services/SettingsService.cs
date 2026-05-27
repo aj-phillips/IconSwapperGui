@@ -14,11 +14,18 @@ public class SettingsService : ISettingsService
     private readonly SemaphoreSlim _ioGate = new(1, 1);
 
     public SettingsService()
+        : this(null)
     {
-        _appDataPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            AppInfo.SettingsFolderName
-        );
+    }
+
+    public SettingsService(string? appDataPath)
+    {
+        _appDataPath = string.IsNullOrWhiteSpace(appDataPath)
+            ? Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                AppInfo.SettingsFolderName
+            )
+            : appDataPath;
 
         Directory.CreateDirectory(_appDataPath);
 

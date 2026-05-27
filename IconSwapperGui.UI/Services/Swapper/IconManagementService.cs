@@ -1,4 +1,5 @@
 ﻿using IconSwapperGui.Core.Interfaces;
+using IconSwapperGui.Core.Models;
 using IconSwapperGui.Core.Models.Swapper;
 using IWshRuntimeLibrary;
 using Microsoft.Extensions.Logging;
@@ -193,20 +194,26 @@ public class IconManagementService(ILoggingService logger) : IIconManagementServ
         }
     }
 
-    public async Task<bool> ChangeIconAsync(string filePath, string iconPath)
+    public async Task<IconOperationResult> ChangeIconAsync(string filePath, string iconPath)
     {
         try
         {
             if (!File.Exists(filePath))
             {
                 logger.LogWarning($"File not found: {filePath}");
-                return false;
+                return IconOperationResult.Failure("Shortcut Not Found", "The selected shortcut could not be found.");
             }
 
             if (!File.Exists(iconPath))
             {
                 logger.LogWarning($"Icon file not found: {iconPath}");
-                return false;
+                return IconOperationResult.Failure("Icon Not Found", "The selected replacement icon could not be found.");
+            }
+
+            if (!string.Equals(Path.GetExtension(iconPath), ".ico", StringComparison.OrdinalIgnoreCase))
+            {
+                logger.LogWarning($"Unsupported icon file type: {iconPath}");
+                return IconOperationResult.Failure("Unsupported Icon", "Windows shortcuts require an .ico file.");
             }
 
             var extension = Path.GetExtension(filePath)?.ToLower();
@@ -220,20 +227,20 @@ public class IconManagementService(ILoggingService logger) : IIconManagementServ
                     return await ChangeUrlIconAsync(filePath, iconPath).ConfigureAwait(false);
                 case ".exe":
                     logger.LogWarning($"Cannot change icon for executable files directly: {filePath}");
-                    return false;
+                    return IconOperationResult.Failure("Unsupported Shortcut", "Executable files cannot be updated directly.");
                 default:
                     logger.LogWarning($"Unsupported file type: {filePath}");
-                    return false;
+                    return IconOperationResult.Failure("Unsupported Shortcut", "Only .lnk and .url shortcuts can be updated.");
             }
         }
         catch (Exception ex)
         {
             logger.LogError($"Failed to change icon for {filePath}", ex);
-            return false;
+            return IconOperationResult.Failure("Icon Update Failed", "Failed to update the shortcut icon.", ex.Message);
         }
     }
 
-    private bool ChangeShortcutIcon(string shortcutPath, string iconPath)
+    private IconOperationResult ChangeShortcutIcon(string shortcutPath, string iconPath)
     {
         try
         {
@@ -250,16 +257,16 @@ public class IconManagementService(ILoggingService logger) : IIconManagementServ
             shortcut.Save();
 
             logger.LogInfo($"Successfully changed icon for shortcut: {shortcutPath}");
-            return true;
+            return IconOperationResult.Success("Icon Updated", "The shortcut icon was updated successfully.");
         }
         catch (Exception ex)
         {
             logger.LogError($"Failed to change shortcut icon: {shortcutPath}", ex);
-            return false;
+            return IconOperationResult.Failure("Icon Update Failed", "Failed to update the shortcut icon.", ex.Message);
         }
     }
 
-    private async Task<bool> ChangeUrlIconAsync(string urlPath, string iconPath)
+    private async Task<IconOperationResult> ChangeUrlIconAsync(string urlPath, string iconPath)
     {
         try
         {
@@ -283,12 +290,12 @@ public class IconManagementService(ILoggingService logger) : IIconManagementServ
             await File.WriteAllLinesAsync(urlPath, content).ConfigureAwait(false);
 
             logger.LogInfo($"Successfully changed icon for URL file: {urlPath}");
-            return true;
+            return IconOperationResult.Success("Icon Updated", "The URL shortcut icon was updated successfully.");
         }
         catch (Exception ex)
         {
             logger.LogError($"Failed to change URL file icon: {urlPath}", ex);
-            return false;
+            return IconOperationResult.Failure("Icon Update Failed", "Failed to update the URL shortcut icon.", ex.Message);
         }
     }
 
@@ -304,7 +311,7 @@ public class IconManagementService(ILoggingService logger) : IIconManagementServ
         return new ObservableCollection<Icon>(icons);
     }
 
-    public async Task<bool> DeleteIconAsync(string iconPath)
+    public async Task<IconOperationResult> DeleteIconAsync(string iconPath)
     {
         ArgumentNullException.ThrowIfNull(iconPath);
 
@@ -313,21 +320,21 @@ public class IconManagementService(ILoggingService logger) : IIconManagementServ
             if (!File.Exists(iconPath))
             {
                 logger.LogWarning($"Icon file not found: {iconPath}");
-                return false;
+                return IconOperationResult.Failure("Icon Not Found", "The selected icon could not be found.");
             }
 
             await Task.Run(() => File.Delete(iconPath)).ConfigureAwait(false);
             logger.LogInfo($"Successfully deleted icon: {iconPath}");
-            return true;
+            return IconOperationResult.Success("Icon Deleted", "The icon was deleted successfully.");
         }
         catch (Exception ex)
         {
             logger.LogError($"Failed to delete icon: {iconPath}", ex);
-            return false;
+            return IconOperationResult.Failure("Delete Failed", "Failed to delete the icon.", ex.Message);
         }
     }
 
-    public async Task<bool> RenameIconAsync(string oldPath, string newName)
+    public async Task<IconOperationResult> RenameIconAsync(string oldPath, string newName)
     {
         ArgumentNullException.ThrowIfNull(oldPath);
         ArgumentNullException.ThrowIfNull(newName);
@@ -337,14 +344,20 @@ public class IconManagementService(ILoggingService logger) : IIconManagementServ
             if (!File.Exists(oldPath))
             {
                 logger.LogWarning($"Icon file not found: {oldPath}");
-                return false;
+                return IconOperationResult.Failure("Icon Not Found", "The selected icon could not be found.");
             }
 
             var directory = Path.GetDirectoryName(oldPath);
             if (string.IsNullOrWhiteSpace(directory))
             {
                 logger.LogError($"Could not determine directory for: {oldPath}");
-                return false;
+                return IconOperationResult.Failure("Rename Failed", "Could not determine the icon folder.");
+            }
+
+            if (string.IsNullOrWhiteSpace(newName))
+            {
+                logger.LogWarning("Cannot rename icon to an empty name");
+                return IconOperationResult.Failure("Rename Failed", "Icon name cannot be empty.");
             }
 
             var extension = Path.GetExtension(oldPath);
@@ -358,17 +371,17 @@ public class IconManagementService(ILoggingService logger) : IIconManagementServ
             if (File.Exists(newPath))
             {
                 logger.LogWarning($"A file with the new name already exists: {newPath}");
-                return false;
+                return IconOperationResult.Failure("Rename Failed", "An icon with that name already exists.");
             }
 
             await Task.Run(() => File.Move(oldPath, newPath)).ConfigureAwait(false);
             logger.LogInfo($"Successfully renamed icon from {oldPath} to {newPath}");
-            return true;
+            return IconOperationResult.Success("Icon Renamed", "The icon was renamed successfully.");
         }
         catch (Exception ex)
         {
             logger.LogError($"Failed to rename icon from {oldPath} to {newName}", ex);
-            return false;
+            return IconOperationResult.Failure("Rename Failed", "Failed to rename the icon.", ex.Message);
         }
     }
 }

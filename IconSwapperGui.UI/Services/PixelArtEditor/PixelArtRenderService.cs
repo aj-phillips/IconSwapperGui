@@ -10,9 +10,11 @@ public sealed class PixelArtRenderService
 {
     private Canvas? _canvas;
     private Rectangle[] _cells = Array.Empty<Rectangle>();
+    private Rectangle? _backgroundRect;
     private int _rows;
     private int _columns;
     private double _cellSize;
+    private bool _useTransparentBackground;
 
     public void Attach(Canvas canvas)
     {
@@ -20,7 +22,7 @@ public sealed class PixelArtRenderService
         _canvas = canvas;
     }
 
-    public void Initialize(int rows, int columns, Color background, bool showGrid)
+    public void Initialize(int rows, int columns, Color background, bool showGrid, bool useTransparentBackground)
     {
         if (_canvas is null) throw new InvalidOperationException("Renderer is not attached to a Canvas.");
         if (rows <= 0) throw new ArgumentOutOfRangeException(nameof(rows));
@@ -28,6 +30,7 @@ public sealed class PixelArtRenderService
 
         _rows = rows;
         _columns = columns;
+        _useTransparentBackground = useTransparentBackground;
 
         _canvas.Children.Clear();
 
@@ -42,10 +45,21 @@ public sealed class PixelArtRenderService
         _canvas.Width = _cellSize * columns;
         _canvas.Height = _cellSize * rows;
 
+        // Add background rectangle for checkerboard or solid color
+        _backgroundRect = new Rectangle
+        {
+            Width = _canvas.Width,
+            Height = _canvas.Height,
+            Fill = CreateBackgroundBrush(background, useTransparentBackground)
+        };
+        Canvas.SetLeft(_backgroundRect, 0);
+        Canvas.SetTop(_backgroundRect, 0);
+        _canvas.Children.Add(_backgroundRect);
+
         var stroke = showGrid ? new SolidColorBrush(Color.FromArgb(0x40, 0x00, 0x00, 0x00)) : null;
         var strokeThickness = showGrid ? 0.5 : 0;
 
-        var fillBrush = new SolidColorBrush(background);
+        var fillBrush = new SolidColorBrush(Colors.Transparent);
         fillBrush.Freeze();
 
         _cells = new Rectangle[checked(rows * columns)];
@@ -71,6 +85,46 @@ public sealed class PixelArtRenderService
                 _cells[index++] = rect;
                 _canvas.Children.Add(rect);
             }
+        }
+    }
+
+    public void UpdateBackground(Color background, bool useTransparentBackground)
+    {
+        if (_backgroundRect is null) return;
+        _useTransparentBackground = useTransparentBackground;
+        _backgroundRect.Fill = CreateBackgroundBrush(background, useTransparentBackground);
+    }
+
+    private Brush CreateBackgroundBrush(Color background, bool useTransparentBackground)
+    {
+        if (useTransparentBackground)
+        {
+            // Create checkerboard pattern
+            var checkerSize = Math.Max(4.0, _cellSize / 4.0);
+            var drawingBrush = new DrawingBrush
+            {
+                TileMode = TileMode.Tile,
+                Viewport = new Rect(0, 0, checkerSize * 2, checkerSize * 2),
+                ViewportUnits = BrushMappingMode.Absolute,
+                Drawing = new DrawingGroup
+                {
+                    Children =
+                    {
+                        new GeometryDrawing(new SolidColorBrush(Color.FromRgb(204, 204, 204)), null, new RectangleGeometry(new Rect(0, 0, checkerSize, checkerSize))),
+                        new GeometryDrawing(new SolidColorBrush(Color.FromRgb(204, 204, 204)), null, new RectangleGeometry(new Rect(checkerSize, checkerSize, checkerSize, checkerSize))),
+                        new GeometryDrawing(new SolidColorBrush(Color.FromRgb(255, 255, 255)), null, new RectangleGeometry(new Rect(checkerSize, 0, checkerSize, checkerSize))),
+                        new GeometryDrawing(new SolidColorBrush(Color.FromRgb(255, 255, 255)), null, new RectangleGeometry(new Rect(0, checkerSize, checkerSize, checkerSize)))
+                    }
+                }
+            };
+            drawingBrush.Freeze();
+            return drawingBrush;
+        }
+        else
+        {
+            var brush = new SolidColorBrush(background);
+            brush.Freeze();
+            return brush;
         }
     }
 

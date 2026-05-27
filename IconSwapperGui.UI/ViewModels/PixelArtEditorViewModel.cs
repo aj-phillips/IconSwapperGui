@@ -4,6 +4,9 @@ using IconSwapperGui.Core.Interfaces;
 using IconSwapperGui.Core.Models;
 using IconSwapperGui.Core.PixelArt;
 using System.Collections.ObjectModel;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Media;
 using IconSwapperGui.UI.Services.PixelArtEditor;
 using System;
@@ -13,15 +16,20 @@ namespace IconSwapperGui.UI.ViewModels;
 public partial class PixelArtEditorViewModel : ObservableObject
 {
     private const int MaxRecentColors = 12;
+    private const int MaxHistoryEntries = 50;
 
     private readonly INotificationService _notificationService;
     private readonly ISettingsService _settingsService;
     private readonly ILoggingService _loggingService;
+    private readonly IFileDialogService _fileDialogService;
     private readonly PixelArtExportService _exportService;
 
     private uint[] _pixelsArgb = Array.Empty<uint>();
     private int _activeStrokeIndex = -1;
     private int _layerCounter = 1;
+    private bool _strokeHasHistorySnapshot;
+    private readonly Stack<PixelArtEditorSnapshot> _undoStack = new();
+    private readonly Stack<PixelArtEditorSnapshot> _redoStack = new();
 
     // Observable Properties
     [ObservableProperty] private Color _backgroundColor = Colors.White;
@@ -30,8 +38,10 @@ public partial class PixelArtEditorViewModel : ObservableObject
     [ObservableProperty] private int _rows = 32;
     [ObservableProperty] private double _zoomLevel = 1.0;
     [ObservableProperty] private string _iconName = "Pixel_Art";
+    [ObservableProperty] private string _exportFolder = string.Empty;
     [ObservableProperty] private PixelTool _selectedTool = PixelTool.Pencil;
     [ObservableProperty] private bool _isGridVisible = true;
+    [ObservableProperty] private bool _useTransparentBackground = false;
 
     [ObservableProperty] private string _documentName = "Untitled";
     [ObservableProperty] private bool _isRenamingDocumentName;
@@ -45,14 +55,16 @@ public partial class PixelArtEditorViewModel : ObservableObject
     private bool _isBackgroundColorPickerOpen;
 
     public PixelArtEditorViewModel(INotificationService notificationService, ISettingsService settingsService,
-        ILoggingService loggingService, PixelArtExportService exportService)
+        ILoggingService loggingService, IFileDialogService fileDialogService, PixelArtExportService exportService)
     {
         _notificationService = notificationService;
         _settingsService = settingsService;
         _loggingService = loggingService;
+        _fileDialogService = fileDialogService;
         _exportService = exportService;
 
         _loggingService.LogInfo("PixelArtEditorViewModel initialized.");
+        _exportFolder = _settingsService.Settings.Application.ExportLocation;
 
         ResizeBuffer(Rows, Columns);
 
@@ -74,6 +86,7 @@ public partial class PixelArtEditorViewModel : ObservableObject
     partial void OnBackgroundColorChanged(Color value)
     {
         _loggingService.LogInfo($"Background color changed to: {value}");
+        BackgroundInvalidated?.Invoke();
     }
 
     partial void OnSelectedColorChanged(Color value)
@@ -84,6 +97,28 @@ public partial class PixelArtEditorViewModel : ObservableObject
     partial void OnZoomLevelChanged(double value)
     {
         _loggingService.LogInfo($"Zoom level changed to: {value}");
+    }
+
+    partial void OnUseTransparentBackgroundChanged(bool value)
+    {
+        _loggingService.LogInfo($"Use transparent background changed to: {value}");
+        BackgroundInvalidated?.Invoke();
+    }
+
+    partial void OnExportFolderChanged(string value)
+    {
+        _settingsService.Settings.Application.ExportLocation = value;
+        OnPropertyChanged(nameof(ExportFolderDisplay));
+        OnPropertyChanged(nameof(ExportFolderStatus));
+        OnPropertyChanged(nameof(ExportFolderActionText));
+        OnPropertyChanged(nameof(HasExportFolder));
+        OnPropertyChanged(nameof(ExportFolderExists));
+        ExportCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnDocumentNameChanged(string value)
+    {
+        OnPropertyChanged(nameof(ExportFileSummary));
     }
 
     [RelayCommand]
@@ -108,6 +143,7 @@ public partial class PixelArtEditorViewModel : ObservableObject
     }
 
     public event Action? LayoutInvalidated;
+    public event Action? BackgroundInvalidated;
     public event Action<int, Color>? PixelChanged;
 
     public ObservableCollection<Color> RecentColors { get; } = new();
@@ -144,6 +180,7 @@ public partial class PixelArtEditorViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanAddLayer))]
     private void AddLayer()
     {
+        PushUndoSnapshot();
         var name = $"Layer {++_layerCounter}";
         var layer = new PixelArtLayerViewModel(name, Rows, Columns);
         Layers.Add(layer);
@@ -161,6 +198,7 @@ public partial class PixelArtEditorViewModel : ObservableObject
         if (layer is null) return;
         if (Layers.Count <= 1) return;
 
+        PushUndoSnapshot();
         var index = Layers.IndexOf(layer);
         Layers.Remove(layer);
 
@@ -177,6 +215,7 @@ public partial class PixelArtEditorViewModel : ObservableObject
     private void ToggleLayerLock(PixelArtLayerViewModel? layer)
     {
         if (layer is null) return;
+        PushUndoSnapshot();
         layer.IsLocked = !layer.IsLocked;
     }
 
@@ -223,9 +262,28 @@ public partial class PixelArtEditorViewModel : ObservableObject
         set => SetProperty(ref _isBackgroundColorPickerOpen, value);
     }
 
-    public string ExportFolderDisplay => string.IsNullOrWhiteSpace(_settingsService.Settings.Application.ExportLocation)
-        ? "Not set (Settings → Application → Export Location)"
-        : _settingsService.Settings.Application.ExportLocation;
+    public bool HasExportFolder => !string.IsNullOrWhiteSpace(ExportFolder);
+
+    public bool ExportFolderExists => HasExportFolder && Directory.Exists(ExportFolder);
+
+    public string ExportFolderDisplay => HasExportFolder
+        ? ExportFolder
+        : "No folder selected";
+
+    public string ExportFolderActionText => HasExportFolder ? "Change Folder" : "Choose Folder";
+
+    public string ExportFileSummary => $"{GetExportBaseName()}.png + {GetExportBaseName()}.ico";
+
+    public string ExportFolderStatus
+    {
+        get
+        {
+            if (!HasExportFolder) return "No export folder selected";
+            return ExportFolderExists
+                ? "Ready to export PNG and ICO files"
+                : "Folder will be created on export";
+        }
+    }
 
     public ReadOnlySpan<uint> PixelsArgb => _pixelsArgb;
 
@@ -238,6 +296,13 @@ public partial class PixelArtEditorViewModel : ObservableObject
         {
             _loggingService.LogWarning($"Layout validation failed for grid size: {Rows}x{Columns}");
             return;
+        }
+
+        var expectedLength = checked(Rows * Columns);
+        var layoutChanged = _pixelsArgb.Length != expectedLength || Layers.Any(layer => layer.PixelsArgb.Length != expectedLength);
+        if (layoutChanged)
+        {
+            PushUndoSnapshot();
         }
 
         ResizeBuffer(Rows, Columns);
@@ -283,13 +348,40 @@ public partial class PixelArtEditorViewModel : ObservableObject
     [RelayCommand]
     private void New()
     {
-        ClearToBackground();
+        PushUndoSnapshot();
+        ClearLayers();
+        CompositeLayersIntoBuffer();
         LayoutInvalidated?.Invoke();
+    }
+
+    private bool CanUndo() => _undoStack.Count > 0;
+
+    [RelayCommand(CanExecute = nameof(CanUndo))]
+    private void Undo()
+    {
+        if (_undoStack.Count == 0) return;
+
+        _redoStack.Push(CreateSnapshot());
+        RestoreSnapshot(_undoStack.Pop());
+        NotifyHistoryCommandsChanged();
+    }
+
+    private bool CanRedo() => _redoStack.Count > 0;
+
+    [RelayCommand(CanExecute = nameof(CanRedo))]
+    private void Redo()
+    {
+        if (_redoStack.Count == 0) return;
+
+        _undoStack.Push(CreateSnapshot());
+        RestoreSnapshot(_redoStack.Pop());
+        NotifyHistoryCommandsChanged();
     }
 
     public void BeginStroke(int cellIndex)
     {
         _activeStrokeIndex = -1;
+        _strokeHasHistorySnapshot = false;
         ApplyToolAt(cellIndex);
     }
 
@@ -302,15 +394,23 @@ public partial class PixelArtEditorViewModel : ObservableObject
     public void EndStroke()
     {
         _activeStrokeIndex = -1;
+        _strokeHasHistorySnapshot = false;
     }
 
     public void ApplyToolAt(int cellIndex)
     {
         if ((uint)cellIndex >= (uint)_pixelsArgb.Length) return;
+        if (!CanSelectedLayerChangeAt(cellIndex)) return;
+
+        if (!_strokeHasHistorySnapshot)
+        {
+            PushUndoSnapshot();
+            _strokeHasHistorySnapshot = true;
+        }
 
         _activeStrokeIndex = cellIndex;
 
-        switch (_selectedTool)
+        switch (SelectedTool)
         {
             case PixelTool.Pencil:
                 StampAt(cellIndex, SelectedColor, Math.Max(1, PencilSize));
@@ -319,7 +419,7 @@ public partial class PixelArtEditorViewModel : ObservableObject
                 StampSoftAt(cellIndex, SelectedColor, Math.Max(1, BrushSize), Math.Clamp(BrushHardness, 0.05, 1.0));
                 break;
             case PixelTool.Eraser:
-                StampAt(cellIndex, BackgroundColor, Math.Max(1, EraserSize));
+                StampTransparentAt(cellIndex, Math.Max(1, EraserSize));
                 break;
             case PixelTool.Fill:
                 FloodFill(cellIndex, SelectedColor);
@@ -328,6 +428,14 @@ public partial class PixelArtEditorViewModel : ObservableObject
                 StampAt(cellIndex, SelectedColor, 1);
                 break;
         }
+    }
+
+    private bool CanSelectedLayerChangeAt(int cellIndex)
+    {
+        if (SelectedLayer is null) return false;
+        if (SelectedLayer.IsLocked) return false;
+        if ((uint)cellIndex >= (uint)SelectedLayer.PixelsArgb.Length) return false;
+        return !IsProtectedByLockedLayer(cellIndex);
     }
 
     private void StampAt(int centerIndex, Color color, int size)
@@ -415,25 +523,66 @@ public partial class PixelArtEditorViewModel : ObservableObject
         }
     }
 
+    private void StampTransparentAt(int centerIndex, int size)
+    {
+        if (SelectedLayer is null) return;
+        if (SelectedLayer.IsLocked) return;
+
+        var radius = Math.Max(0, (size - 1) / 2);
+        if (radius == 0)
+        {
+            SetCellTransparent(centerIndex);
+            return;
+        }
+
+        var centerRow = centerIndex / Columns;
+        var centerCol = centerIndex % Columns;
+
+        for (var dy = -radius; dy <= radius; dy++)
+        {
+            for (var dx = -radius; dx <= radius; dx++)
+            {
+                if ((dx * dx + dy * dy) > (radius * radius)) continue;
+
+                var r = centerRow + dy;
+                var c = centerCol + dx;
+                if ((uint)r >= (uint)Rows || (uint)c >= (uint)Columns) continue;
+
+                SetCellTransparent(r * Columns + c);
+            }
+        }
+    }
+
     private bool CanExport()
-        => !string.IsNullOrWhiteSpace(_settingsService.Settings.Application.ExportLocation);
+        => HasExportFolder;
+
+    [RelayCommand]
+    private async Task BrowseExportFolderAsync()
+    {
+        var selected = _fileDialogService.BrowseForFolder(ExportFolder, "Select pixel art export folder");
+        if (string.IsNullOrWhiteSpace(selected)) return;
+
+        ExportFolder = selected;
+        await _settingsService.SaveSettingsAsync();
+    }
 
     [RelayCommand(CanExecute = nameof(CanExport))]
-    private void Export()
+    private async Task ExportAsync()
     {
         try
         {
-            var folder = _settingsService.Settings.Application.ExportLocation;
+            var folder = ExportFolder;
             if (string.IsNullOrWhiteSpace(folder))
             {
-                _notificationService.AddNotification("Pixel Art Editor", "No export folder configured in Settings.", NotificationType.Warning);
+                _notificationService.AddNotification("Pixel Art Editor", "Choose an export folder before exporting.", NotificationType.Warning);
                 return;
             }
 
-            var name = string.IsNullOrWhiteSpace(DocumentName)
-                ? (string.IsNullOrWhiteSpace(IconName) ? "Pixel_Art" : IconName)
-                : DocumentName;
-            _exportService.ExportPngAndIco(folder, name, Rows, Columns, PixelsArgb, BackgroundColor);
+            var name = GetExportBaseName();
+            _exportService.ExportPngAndIco(folder, name, Rows, Columns, PixelsArgb, BackgroundColor, UseTransparentBackground);
+            await _settingsService.SaveSettingsAsync();
+            OnPropertyChanged(nameof(ExportFolderStatus));
+            OnPropertyChanged(nameof(ExportFolderExists));
             _notificationService.AddNotification("Pixel Art Editor", $"Exported {name}.png and {name}.ico", NotificationType.Success);
         }
         catch (InvalidOperationException ex)
@@ -461,6 +610,14 @@ public partial class PixelArtEditorViewModel : ObservableObject
         Array.Fill(_pixelsArgb, bg);
     }
 
+    private void ClearLayers()
+    {
+        foreach (var layer in Layers)
+        {
+            Array.Clear(layer.PixelsArgb);
+        }
+    }
+
     private void CompositeLayersIntoBuffer()
     {
         if (_pixelsArgb.Length == 0)
@@ -468,8 +625,9 @@ public partial class PixelArtEditorViewModel : ObservableObject
             return;
         }
 
-        var bg = ToArgb(BackgroundColor);
-        Array.Fill(_pixelsArgb, bg);
+        // Fill with background color or transparent based on user setting
+        var fillColor = UseTransparentBackground ? 0u : ToArgb(BackgroundColor);
+        Array.Fill(_pixelsArgb, fillColor);
 
         // 1) Composite unlocked layers in stacking order.
         for (var i = 0; i < Layers.Count; i++)
@@ -536,6 +694,21 @@ public partial class PixelArtEditorViewModel : ObservableObject
         PixelChanged?.Invoke(index, FromArgb(_pixelsArgb[index]));
     }
 
+    private void SetCellTransparent(int index)
+    {
+        if (SelectedLayer is null) return;
+        if (SelectedLayer.IsLocked) return;
+        if (IsProtectedByLockedLayer(index)) return;
+
+        var layerPixels = SelectedLayer.PixelsArgb;
+        if ((uint)index >= (uint)layerPixels.Length) return;
+        if (layerPixels[index] == 0) return;
+
+        layerPixels[index] = 0;
+        CompositeLayersIntoBuffer();
+        PixelChanged?.Invoke(index, FromArgb(_pixelsArgb[index]));
+    }
+
     private void FloodFill(int startIndex, Color color)
     {
         if (_pixelsArgb.Length == 0) return;
@@ -593,6 +766,81 @@ public partial class PixelArtEditorViewModel : ObservableObject
 
     private static uint ToArgb(Color c) => (uint)(c.A << 24 | c.R << 16 | c.G << 8 | c.B);
 
+    private string GetExportBaseName()
+        => string.IsNullOrWhiteSpace(DocumentName)
+            ? (string.IsNullOrWhiteSpace(IconName) ? "Pixel_Art" : IconName)
+            : DocumentName;
+
+    private void PushUndoSnapshot()
+    {
+        _undoStack.Push(CreateSnapshot());
+        TrimHistory(_undoStack);
+        _redoStack.Clear();
+        NotifyHistoryCommandsChanged();
+    }
+
+    private PixelArtEditorSnapshot CreateSnapshot()
+    {
+        var selectedLayerIndex = SelectedLayer is null ? -1 : Layers.IndexOf(SelectedLayer);
+        var layerSnapshots = Layers
+            .Select(layer => new PixelArtLayerSnapshot(layer.Name, layer.IsLocked, layer.PixelsArgb.ToArray()))
+            .ToArray();
+
+        return new PixelArtEditorSnapshot(Rows, Columns, BackgroundColor, selectedLayerIndex, _layerCounter, layerSnapshots);
+    }
+
+    private void RestoreSnapshot(PixelArtEditorSnapshot snapshot)
+    {
+        Rows = snapshot.Rows;
+        Columns = snapshot.Columns;
+        BackgroundColor = snapshot.BackgroundColor;
+        _layerCounter = snapshot.LayerCounter;
+
+        ResizeBuffer(Rows, Columns);
+        Layers.Clear();
+
+        foreach (var layerSnapshot in snapshot.Layers)
+        {
+            var layer = new PixelArtLayerViewModel(layerSnapshot.Name, Rows, Columns)
+            {
+                IsLocked = layerSnapshot.IsLocked
+            };
+
+            Array.Copy(layerSnapshot.PixelsArgb, layer.PixelsArgb, Math.Min(layerSnapshot.PixelsArgb.Length, layer.PixelsArgb.Length));
+            Layers.Add(layer);
+        }
+
+        if (Layers.Count == 0)
+        {
+            Layers.Add(new PixelArtLayerViewModel("Layer 1", Rows, Columns));
+            _layerCounter = 1;
+        }
+
+        var selectedIndex = Math.Clamp(snapshot.SelectedLayerIndex, 0, Layers.Count - 1);
+        SelectedLayer = Layers[selectedIndex];
+        CompositeLayersIntoBuffer();
+        LayoutInvalidated?.Invoke();
+    }
+
+    private void NotifyHistoryCommandsChanged()
+    {
+        UndoCommand.NotifyCanExecuteChanged();
+        RedoCommand.NotifyCanExecuteChanged();
+    }
+
+    private static void TrimHistory(Stack<PixelArtEditorSnapshot> stack)
+    {
+        if (stack.Count <= MaxHistoryEntries) return;
+
+        var entries = stack.Reverse().Skip(stack.Count - MaxHistoryEntries).ToArray();
+        stack.Clear();
+
+        foreach (var entry in entries)
+        {
+            stack.Push(entry);
+        }
+    }
+
     private static Color FromArgb(uint argb)
     {
         var a = (byte)((argb >> 24) & 0xFF);
@@ -601,4 +849,14 @@ public partial class PixelArtEditorViewModel : ObservableObject
         var b = (byte)(argb & 0xFF);
         return Color.FromArgb(a, r, g, b);
     }
+
+    private sealed record PixelArtEditorSnapshot(
+        int Rows,
+        int Columns,
+        Color BackgroundColor,
+        int SelectedLayerIndex,
+        int LayerCounter,
+        PixelArtLayerSnapshot[] Layers);
+
+    private sealed record PixelArtLayerSnapshot(string Name, bool IsLocked, uint[] PixelsArgb);
 }

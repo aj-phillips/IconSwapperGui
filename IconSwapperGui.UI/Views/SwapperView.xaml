@@ -123,6 +123,7 @@
                                     CornerRadius="12"
                                     Margin="0,12,0,0"
                                     Padding="8">
+                                <Grid>
                                 <ListBox ItemsSource="{Binding Shortcuts}"
                                          SelectedItem="{Binding SelectedShortcut, Mode=TwoWay}"
                                          Background="Transparent"
@@ -188,6 +189,19 @@
                                         </DataTemplate>
                                     </ListBox.ItemTemplate>
                                 </ListBox>
+                                    <StackPanel HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                Visibility="{Binding Shortcuts.Count, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}">
+                                        <TextBlock Text="No shortcuts found" Style="{StaticResource EmptyStateTitleStyle}" />
+                                        <TextBlock Text="Add a folder that contains .lnk or Steam .url shortcuts." Style="{StaticResource EmptyStateBodyStyle}" />
+                                        <Button Style="{StaticResource SecondaryButtonStyle}"
+                                                Content="Add Shortcut Folder"
+                                                Margin="0,14,0,0"
+                                                Padding="14,10"
+                                                HorizontalAlignment="Center"
+                                                Command="{Binding AddShortcutLocationCommand}" />
+                                    </StackPanel>
+                                </Grid>
                             </Border>
                         </Grid>
 
@@ -205,6 +219,7 @@
                                     CornerRadius="12"
                                     Margin="0,12,0,0"
                                     Padding="8">
+                                <Grid>
                                 <ListBox ItemsSource="{Binding Folders}"
                                          SelectedItem="{Binding SelectedFolder, Mode=TwoWay}"
                                          Background="Transparent"
@@ -246,6 +261,19 @@
                                         </DataTemplate>
                                     </ListBox.ItemTemplate>
                                 </ListBox>
+                                    <StackPanel HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                Visibility="{Binding Folders.Count, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}">
+                                        <TextBlock Text="No folders found" Style="{StaticResource EmptyStateTitleStyle}" />
+                                        <TextBlock Text="Add a location that contains folders you want to customize." Style="{StaticResource EmptyStateBodyStyle}" />
+                                        <Button Style="{StaticResource SecondaryButtonStyle}"
+                                                Content="Add Folder Location"
+                                                Margin="0,14,0,0"
+                                                Padding="14,10"
+                                                HorizontalAlignment="Center"
+                                                Command="{Binding AddFolderShortcutLocationCommand}" />
+                                    </StackPanel>
+                                </Grid>
                             </Border>
                         </Grid>
                     </Grid>
@@ -350,6 +378,7 @@
                             BorderThickness="1"
                             CornerRadius="12"
                             Padding="10">
+                        <Grid>
                         <ListBox ItemsSource="{Binding FilteredIcons}"
                                  SelectedItem="{Binding SelectedIcon, Mode=TwoWay}"
                                  Background="Transparent"
@@ -430,6 +459,19 @@
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
+                            <StackPanel HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Visibility="{Binding Icons.Count, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}">
+                                <TextBlock Text="No icons found" Style="{StaticResource EmptyStateTitleStyle}" />
+                                <TextBlock Text="Add a folder containing .ico files to build your icon library." Style="{StaticResource EmptyStateBodyStyle}" />
+                                <Button Style="{StaticResource SecondaryButtonStyle}"
+                                        Content="Add Icon Folder"
+                                        Margin="0,14,0,0"
+                                        Padding="14,10"
+                                        HorizontalAlignment="Center"
+                                        Command="{Binding AddIconLocationCommand}" />
+                            </StackPanel>
+                        </Grid>
                     </Border>
                 </Grid>
             </Border>

@@ -32,42 +32,57 @@
         <!-- Left: Tools -->
         <Border Grid.Column="0" Style="{StaticResource EditorPanelStyle}" Margin="0,0,12,0">
             <DockPanel LastChildFill="True">
-                <StackPanel DockPanel.Dock="Top" Margin="0,0,0,10">
-                    <TextBlock Text="Tools" Style="{StaticResource SectionTitleStyle}" />
-
-                    <WrapPanel Margin="0,6,0,0">
-                        <Border Style="{StaticResource ToolBadgeStyle}" Margin="0,0,6,6">
-                            <TextBlock Text="P" Style="{StaticResource ToolBadgeTextStyle}" />
-                        </Border>
-                        <Border Style="{StaticResource ToolBadgeStyle}" Margin="0,0,6,6">
-                            <TextBlock Text="B" Style="{StaticResource ToolBadgeTextStyle}" />
-                        </Border>
-                        <Border Style="{StaticResource ToolBadgeStyle}" Margin="0,0,6,6">
-                            <TextBlock Text="E" Style="{StaticResource ToolBadgeTextStyle}" />
-                        </Border>
-                        <Border Style="{StaticResource ToolBadgeStyle}" Margin="0,0,6,6">
-                            <TextBlock Text="F" Style="{StaticResource ToolBadgeTextStyle}" />
-                        </Border>
-                    </WrapPanel>
-                </StackPanel>
-
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel>
+                        <!-- History Section -->
+                        <TextBlock Text="History" Style="{StaticResource SectionTitleStyle}" Margin="0,0,0,6" />
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0"
+                                    Content="↶"
+                                    Style="{StaticResource EditorToolbarButtonStyle}"
+                                    FontSize="28"
+                                    Height="50"
+                                    Padding="0"
+                                    Margin="0,0,4,0"
+                                    ToolTip="Undo (Ctrl+Z)"
+                                    Command="{Binding UndoCommand}" />
+                            <Button Grid.Column="1"
+                                    Content="↷"
+                                    Style="{StaticResource EditorToolbarButtonStyle}"
+                                    FontSize="28"
+                                    Height="50"
+                                    Padding="0"
+                                    Margin="4,0,0,0"
+                                    ToolTip="Redo (Ctrl+Y)"
+                                    Command="{Binding RedoCommand}" />
+                        </Grid>
+
+                        <Border Style="{StaticResource EditorDividerStyle}" />
+
+                        <TextBlock Text="Tools" Style="{StaticResource SectionTitleStyle}" Margin="0,0,0,6" />
                         <ToggleButton Content="Pencil"
                                       Style="{StaticResource ToolToggleButtonStyle}"
                                       Margin="0,0,0,8"
+                                      ToolTip="Pencil tool - Draw single pixels or small strokes"
                                       IsChecked="{Binding SelectedTool, Mode=TwoWay, Converter={StaticResource PixelToolToBoolConverter}, ConverterParameter=Pencil}" />
                         <ToggleButton Content="Brush"
                                       Style="{StaticResource ToolToggleButtonStyle}"
                                       Margin="0,0,0,8"
+                                      ToolTip="Brush tool - Paint with soft or hard circular brush"
                                       IsChecked="{Binding SelectedTool, Mode=TwoWay, Converter={StaticResource PixelToolToBoolConverter}, ConverterParameter=Brush}" />
                         <ToggleButton Content="Eraser"
                                       Style="{StaticResource ToolToggleButtonStyle}"
                                       Margin="0,0,0,8"
+                                      ToolTip="Eraser tool - Erase pixels to transparent (or right-click to erase)"
                                       IsChecked="{Binding SelectedTool, Mode=TwoWay, Converter={StaticResource PixelToolToBoolConverter}, ConverterParameter=Eraser}" />
                         <ToggleButton Content="Fill"
                                       Style="{StaticResource ToolToggleButtonStyle}"
                                       Margin="0,0,0,8"
+                                      ToolTip="Fill tool - Fill connected areas with selected color"
                                       IsChecked="{Binding SelectedTool, Mode=TwoWay, Converter={StaticResource PixelToolToBoolConverter}, ConverterParameter=Fill}" />
 
                         <Border Style="{StaticResource EditorDividerStyle}" />
@@ -166,7 +181,8 @@
                                Text="Pixel Art Editor"
                                Style="{StaticResource PageTitleStyle}"
                                FontSize="18"
-                               VerticalAlignment="Center" />
+                               VerticalAlignment="Center"
+                               ToolTip="Create and edit pixel art icons" />
 
                     <Grid Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="420">
                         <TextBlock x:Name="DocumentNameText"
@@ -176,6 +192,8 @@
                                    FontWeight="SemiBold"
                                    TextTrimming="CharacterEllipsis"
                                    VerticalAlignment="Center"
+                                   Cursor="Hand"
+                                   ToolTip="Click to rename your pixel art file"
                                    Visibility="{Binding IsRenamingDocumentName, Converter={StaticResource InverseBooleanToVisibilityConverter}, ConverterParameter=Invert}">
                             <TextBlock.InputBindings>
                                 <MouseBinding Gesture="LeftClick"
@@ -190,6 +208,7 @@
                                  FontSize="13"
                                  Height="45"
                                  MinWidth="180"
+                                 ToolTip="Enter a name for your pixel art file (used when exporting)"
                                  Visibility="{Binding IsRenamingDocumentName, Converter={StaticResource BooleanToVisibilityConverter}}"
                                  Loaded="DocumentNameTextBox_Loaded"
                                  IsVisibleChanged="RenameTextBox_IsVisibleChanged"
@@ -198,15 +217,11 @@
                                  KeyDown="DocumentNameTextBox_KeyDown" />
                     </Grid>
 
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <StackPanel Grid.Column="2" Orientation="Horizontal">
                         <Button Content="New"
                                 Style="{StaticResource EditorToolbarButtonStyle}"
-                                Margin="0,0,8,0"
+                                ToolTip="Create a new blank canvas"
                                 Command="{Binding NewCommand}" />
-                        <Button Content="Export"
-                                Style="{StaticResource PrimaryButtonStyle}"
-                                Padding="14,8"
-                                Command="{Binding ExportCommand}" />
                     </StackPanel>
                 </Grid>
             </Border>
@@ -280,6 +295,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
@@ -293,11 +309,17 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
-                        <Grid Grid.Column="0">
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Selected Color"
+                                       FontSize="11"
+                                       Foreground="{DynamicResource TextBrush}"
+                                       Margin="0,0,0,4"
+                                       Opacity="0.7" />
                             <Button x:Name="SelectedColorButton"
                                     Style="{StaticResource ColorSwatchButtonStyle}"
                                     Height="54"
-                                    Command="{Binding OpenSelectedColorPickerCommand}">
+                                    Command="{Binding OpenSelectedColorPickerCommand}"
+                                    ToolTip="Left-click to draw with this color">
                                 <Border CornerRadius="10"
                                         BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="1"
@@ -316,14 +338,20 @@
                                                              ColorCommitted="SelectedColorPicker_ColorCommitted"
                                                              ColorPicked="SelectedColorPicker_ColorPicked" />
                             </Popup>
-                        </Grid>
+                        </StackPanel>
 
-                        <Grid Grid.Column="1" Margin="10,0,0,0">
+                        <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                            <TextBlock Text="Background"
+                                       FontSize="11"
+                                       Foreground="{DynamicResource TextBrush}"
+                                       Margin="0,0,0,4"
+                                       Opacity="0.7" />
                             <Button x:Name="BackgroundColorButton"
                                     Style="{StaticResource ColorSwatchButtonStyle}"
                                     Width="54"
                                     Height="54"
-                                    Command="{Binding OpenBackgroundColorPickerCommand}">
+                                    Command="{Binding OpenBackgroundColorPickerCommand}"
+                                    ToolTip="Used when transparent background is disabled">
                                 <Border CornerRadius="10"
                                         BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="1"
@@ -342,10 +370,10 @@
                                                              ColorCommitted="BackgroundColorPicker_ColorCommitted"
                                                              ColorPicked="BackgroundColorPicker_ColorPicked" />
                             </Popup>
-                        </Grid>
+                        </StackPanel>
                     </Grid>
 
-                    <TextBlock Text="Left uses selected color. Right is background." Style="{StaticResource MutedTextStyle}" Margin="0,10,0,0" TextWrapping="Wrap" />
+                    <TextBlock Text="Left-click paints selected color. Right-click erases." Style="{StaticResource MutedTextStyle}" Margin="0,10,0,0" TextWrapping="Wrap" />
                 </StackPanel>
             </Border>
 
@@ -363,32 +391,77 @@
                         <StackPanel Grid.Column="0">
                             <TextBlock Text="Rows" Style="{StaticResource MutedTextStyle}" Margin="0,0,0,4" />
                             <TextBox Text="{Binding Rows, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                     Style="{StaticResource InputTextBoxStyle}" />
+                                     Style="{StaticResource InputTextBoxStyle}"
+                                     ToolTip="Number of rows in the canvas grid" />
                         </StackPanel>
 
                         <StackPanel Grid.Column="2">
                             <TextBlock Text="Columns" Style="{StaticResource MutedTextStyle}" Margin="0,0,0,4" />
                             <TextBox Text="{Binding Columns, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                     Style="{StaticResource InputTextBoxStyle}" />
+                                     Style="{StaticResource InputTextBoxStyle}"
+                                     ToolTip="Number of columns in the canvas grid" />
                         </StackPanel>
                     </Grid>
+
+                    <CheckBox Content="Transparent Background"
+                              Style="{StaticResource ModernCheckBoxStyle}"
+                              IsChecked="{Binding UseTransparentBackground, Mode=TwoWay}"
+                              Margin="0,12,0,0"
+                              ToolTip="Enable transparent background with checkerboard pattern. Exports PNG with transparency instead of solid background color." />
 
                     <Button Content="Apply Layout"
                             Style="{StaticResource PrimaryButtonStyle}"
                             Margin="0,12,0,0"
-                            Command="{Binding ApplyLayoutCommand}" />
-
-                    <Border Style="{StaticResource EditorDividerStyle}" />
-
-                    <TextBlock Text="Export Folder" Style="{StaticResource MutedTextStyle}" />
-                    <TextBlock Text="{Binding ExportFolderDisplay}"
-                               Style="{StaticResource MutedTextStyle}"
-                               TextWrapping="Wrap"
-                               Margin="0,4,0,0" />
+                            Command="{Binding ApplyLayoutCommand}"
+                            ToolTip="Apply the canvas size changes" />
                 </StackPanel>
             </Border>
 
-            <Border Grid.Row="2" Style="{StaticResource EditorPanelStyle}">
+            <Border Grid.Row="2" Style="{StaticResource EditorPanelStyle}" Margin="0,0,0,12">
+                <StackPanel>
+                    <TextBlock Text="Export" Style="{StaticResource SectionTitleStyle}" />
+
+                    <TextBlock Text="{Binding ExportFileSummary}"
+                               Foreground="{DynamicResource PrimaryTextBrush}"
+                               FontSize="13"
+                               FontWeight="SemiBold"
+                               TextTrimming="CharacterEllipsis"
+                               Margin="0,8,0,0" />
+
+                    <Grid Margin="0,10,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0"
+                                   Text="{Binding ExportFolderDisplay}"
+                                   Style="{StaticResource MutedTextStyle}"
+                                   TextTrimming="CharacterEllipsis"
+                                   VerticalAlignment="Center"
+                                   ToolTip="{Binding ExportFolderDisplay}" />
+
+                        <Button Grid.Column="1"
+                                Content="{Binding ExportFolderActionText}"
+                                Style="{StaticResource EditorToolbarButtonStyle}"
+                                MinWidth="112"
+                                Margin="10,0,0,0"
+                                Command="{Binding BrowseExportFolderCommand}" />
+                    </Grid>
+
+                    <TextBlock Text="{Binding ExportFolderStatus}"
+                               Style="{StaticResource MutedTextStyle}"
+                               TextWrapping="Wrap"
+                               Margin="0,10,0,0" />
+
+                    <Button Content="Export PNG + ICO"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Margin="0,12,0,0"
+                            Command="{Binding ExportCommand}" />
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Row="3" Style="{StaticResource EditorPanelStyle}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />

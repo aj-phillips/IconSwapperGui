@@ -81,6 +81,15 @@
 
                     <Border Margin="0,6,0,8" Style="{StaticResource EditorDividerStyle}" />
 
+                    <!-- Transparency Button -->
+                    <Button Content="🗙 Transparent"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Margin="0,0,0,8"
+                            FontSize="12"
+                            Height="40"
+                            Click="OnTransparentClick"
+                            ToolTip="Set color to transparent (Alpha = 0)" />
+
                     <TextBlock Text="Palette" Style="{StaticResource MutedTextStyle}" Margin="0,0,0,6" />
                     <UniformGrid Columns="8" Rows="3">
                         <!-- Row 1 -->

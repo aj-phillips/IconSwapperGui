@@ -216,6 +216,13 @@ public partial class ColorPickerPopup : UserControl
         RaiseColorPickedIfEnabled();
     }
 
+    private void OnTransparentClick(object sender, RoutedEventArgs e)
+    {
+        SelectedColor = Color.FromArgb(0, 0, 0, 0);
+        RaiseColorCommitted();
+        RaiseColorPickedIfEnabled();
+    }
+
     private static void OnHsvChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         if (d is not ColorPickerPopup picker) return;
