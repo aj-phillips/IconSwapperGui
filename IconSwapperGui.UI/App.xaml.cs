@@ -44,6 +44,8 @@ public partial class App : Application
         services.AddSingleton<INavigationService, NavigationService>();
         services.AddSingleton<IDispatcher, EventDispatcherService>();
         services.AddSingleton<IDialogService, DialogService>();
+        services.AddSingleton<IFileDialogService, FileDialogService>();
+        services.AddSingleton<IWindowService, WindowService>();
         services.AddSingleton<INotificationService, NotificationService>();
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddSingleton<IThemeService, ThemeService>();

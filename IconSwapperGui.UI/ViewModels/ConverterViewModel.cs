@@ -5,7 +5,6 @@ using IconSwapperGui.Core.Models.Swapper;
 using IconSwapperGui.Infrastructure.Services;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Windows;
 using IconSwapperGui.Core.Models;
 
 namespace IconSwapperGui.UI.ViewModels;
@@ -20,6 +19,7 @@ public partial class ConverterViewModel : ObservableObject
     private List<IFileSystemWatcherService>? _fileSystemWatcherServices;
     private readonly ILoggingService _loggingService;
     private readonly IDialogService _dialogService;
+    private readonly IDispatcher _dispatcher;
 
     // Properties
     private CancellationTokenSource? _convertCts;
@@ -40,7 +40,8 @@ public partial class ConverterViewModel : ObservableObject
         IIconCreatorService iconCreatorService,
         IIconManagementService iconManagementService,
         ILoggingService loggingService,
-        IDialogService dialogService)
+        IDialogService dialogService,
+        IDispatcher dispatcher)
     {
         _settingsService = settingsService;
         _notificationService = notificationService;
@@ -48,6 +49,7 @@ public partial class ConverterViewModel : ObservableObject
         _iconManagementService = iconManagementService;
         _loggingService = loggingService;
         _dialogService = dialogService;
+        _dispatcher = dispatcher;
 
         _loggingService.LogInfo("ConverterViewModel initializing.");
 
@@ -64,31 +66,15 @@ public partial class ConverterViewModel : ObservableObject
         };
     }
 
-    private static bool IsOnUiThread()
-        => Application.Current?.Dispatcher?.CheckAccess() ?? true;
-
-    private static void RunOnUiThread(Action action)
+    private void RunOnUiThread(Action action)
     {
-        var dispatcher = Application.Current?.Dispatcher;
-        if (dispatcher is null || dispatcher.CheckAccess())
-        {
-            action();
-            return;
-        }
-
-        dispatcher.Invoke(action);
+        _dispatcher.Invoke(action);
     }
 
-    private static Task RunOnUiThreadAsync(Action action)
+    private Task RunOnUiThreadAsync(Action action)
     {
-        var dispatcher = Application.Current?.Dispatcher;
-        if (dispatcher is null || dispatcher.CheckAccess())
-        {
-            action();
-            return Task.CompletedTask;
-        }
-
-        return dispatcher.InvokeAsync(action).Task;
+        _dispatcher.Invoke(action);
+        return Task.CompletedTask;
     }
 
     public void Initialize()

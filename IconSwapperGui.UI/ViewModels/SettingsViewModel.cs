@@ -5,7 +5,6 @@ using System.Linq;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Win32;
 using IconSwapperGui.Core.Interfaces;
 using IconSwapperGui.Core.Models;
 using IconSwapperGui.Core.Models.Settings;
@@ -19,6 +18,7 @@ public partial class SettingsViewModel : ObservableObject
     private readonly IThemeService _themeService;
     private readonly IUpdateService _updateService;
     private readonly IStartupService _startupService;
+    private readonly IFileDialogService _fileDialogService;
 
     // Application Settings
     public ObservableCollection<string> ShortcutLocations { get; }
@@ -87,13 +87,15 @@ public partial class SettingsViewModel : ObservableObject
         IThemeService themeService,
         INotificationService notificationService,
         IUpdateService updateService,
-        IStartupService startupService)
+        IStartupService startupService,
+        IFileDialogService fileDialogService)
     {
         _settingsService = settingsService;
         _themeService = themeService;
         _notificationService = notificationService;
         _updateService = updateService;
         _startupService = startupService;
+        _fileDialogService = fileDialogService;
 
         ShortcutLocations = new ObservableCollection<string>(_settingsService.Settings.Application.ShortcutLocations);
         IconLocations = new ObservableCollection<string>(_settingsService.Settings.Application.IconLocations);
@@ -183,24 +185,6 @@ public partial class SettingsViewModel : ObservableObject
         await _settingsService.SaveSettingsAsync();
     }
 
-    private static string? BrowseForFolder(string? initialPath)
-    {
-        var dialog = new OpenFolderDialog()
-        {
-            Title = "Select a folder",
-            Multiselect = false
-        };
-
-        if (!string.IsNullOrWhiteSpace(initialPath) && Directory.Exists(initialPath))
-        {
-            dialog.InitialDirectory = initialPath;
-        }
-
-        return dialog.ShowDialog() == true
-            ? dialog.FolderName
-            : null;
-    }
-
     private static bool TryAddDistinctPath(ObservableCollection<string> target, string path)
     {
         if (string.IsNullOrWhiteSpace(path))
@@ -218,7 +202,7 @@ public partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     private void AddShortcutLocation()
     {
-        var selected = BrowseForFolder(ShortcutLocations.FirstOrDefault());
+        var selected = _fileDialogService.BrowseForFolder(ShortcutLocations.FirstOrDefault(), "Select a folder");
         if (selected is null)
             return;
 
@@ -240,7 +224,7 @@ public partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     private void AddIconLocation()
     {
-        var selected = BrowseForFolder(IconLocations.FirstOrDefault());
+        var selected = _fileDialogService.BrowseForFolder(IconLocations.FirstOrDefault(), "Select a folder");
         if (selected is null)
             return;
 
@@ -262,7 +246,7 @@ public partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     private void AddFolderShortcutLocation()
     {
-        var selected = BrowseForFolder(FolderShortcutLocations.FirstOrDefault());
+        var selected = _fileDialogService.BrowseForFolder(FolderShortcutLocations.FirstOrDefault(), "Select a folder");
         if (selected is null)
             return;
 
@@ -284,7 +268,7 @@ public partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     private void AddConverterIconsLocation()
     {
-        var selected = BrowseForFolder(ConverterIconsLocations.FirstOrDefault());
+        var selected = _fileDialogService.BrowseForFolder(ConverterIconsLocations.FirstOrDefault(), "Select a folder");
         if (selected is null)
             return;
 
@@ -306,7 +290,7 @@ public partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     private void BrowseExportLocation()
     {
-        var selected = BrowseForFolder(ExportLocation);
+        var selected = _fileDialogService.BrowseForFolder(ExportLocation, "Select a folder");
         if (selected is null)
             return;
 
@@ -637,23 +621,21 @@ public partial class SettingsViewModel : ObservableObject
     {
         try
         {
-            var dialog = new SaveFileDialog
-            {
-                Filter = "JSON Files (*.json)|*.json|All Files (*.*)|*.*",
-                FileName = $"settings_export_{DateTime.Now:yyyyMMdd_HHmmss}.json",
-                DefaultExt = ".json",
-                Title = "Export Settings"
-            };
+            var exportPath = _fileDialogService.SaveFile(
+                "Export Settings",
+                $"settings_export_{DateTime.Now:yyyyMMdd_HHmmss}.json",
+                "JSON Files (*.json)|*.json|All Files (*.*)|*.*",
+                ".json");
 
-            if (dialog.ShowDialog() == true)
+            if (!string.IsNullOrWhiteSpace(exportPath))
             {
                 var settingsPath = _settingsService.GetSettingsFilePath();
 
-                File.Copy(settingsPath, dialog.FileName, true);
+                File.Copy(settingsPath, exportPath, true);
 
                 _notificationService.AddNotification(
                     "Settings Exported",
-                    $"Settings exported to {Path.GetFileName(dialog.FileName)}",
+                    $"Settings exported to {Path.GetFileName(exportPath)}",
                     NotificationType.Success
                 );
             }

@@ -6,12 +6,9 @@ using IconSwapperGui.Infrastructure.Services;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
-using System.Windows;
 using System.Windows.Input;
-using System.Windows.Threading;
 using IconSwapperGui.Core.Models;
-using IconSwapperGui.UI.Windows;
-using Microsoft.Extensions.DependencyInjection;
+using IconSwapperGui.UI.Services;
 using System.Collections.Generic;
 
 namespace IconSwapperGui.UI.ViewModels
@@ -29,6 +26,8 @@ namespace IconSwapperGui.UI.ViewModels
         private readonly ILnkSwapperService _lnkSwapperService;
         private readonly IUrlSwapperService _urlSwapperService;
         private readonly IDialogService _dialogService;
+        private readonly IDispatcher _dispatcher;
+        private readonly IWindowService _windowService;
         private readonly Func<string, IconVersionManagerViewModel> _iconVersionManagerViewModelFactory;
 
         // Properties
@@ -70,6 +69,8 @@ namespace IconSwapperGui.UI.ViewModels
             ILnkSwapperService lnkSwapperService,
             IUrlSwapperService urlSwapperService,
             IDialogService dialogService,
+            IDispatcher dispatcher,
+            IWindowService windowService,
             Func<string, IconVersionManagerViewModel> iconVersionManagerViewModelFactory)
         {
             _settingsService = settingsService;
@@ -82,6 +83,8 @@ namespace IconSwapperGui.UI.ViewModels
             _lnkSwapperService = lnkSwapperService;
             _urlSwapperService = urlSwapperService;
             _dialogService = dialogService;
+            _dispatcher = dispatcher;
+            _windowService = windowService;
             _iconVersionManagerViewModelFactory = iconVersionManagerViewModelFactory;
 
             _loggingService.LogInfo("SwapperViewModel initialising");
@@ -106,7 +109,7 @@ namespace IconSwapperGui.UI.ViewModels
                 LoadPreviousShortcuts();
                 LoadPreviousIcons();
                 LoadPreviousFolders();
-                Application.Current.Dispatcher.Invoke(UpdateSwapButtonEnabledState);
+                _dispatcher.Invoke(UpdateSwapButtonEnabledState);
             }
             catch (Exception ex)
             {
@@ -228,22 +231,7 @@ namespace IconSwapperGui.UI.ViewModels
         {
             try
             {
-                var app = System.Windows.Application.Current;
-
-                if (app == null || app.Dispatcher == null)
-                {
-                    action();
-                    return;
-                }
-
-                if (app.Dispatcher.CheckAccess())
-                {
-                    action();
-                }
-                else
-                {
-                    app.Dispatcher.Invoke(action);
-                }
+                _dispatcher.Invoke(action);
             }
             catch (Exception ex)
             {
@@ -532,19 +520,13 @@ namespace IconSwapperGui.UI.ViewModels
             {
                 var viewModel = _iconVersionManagerViewModelFactory(shortcut.Path);
 
-                viewModel.VersionReverted += _ => Application.Current.Dispatcher.Invoke(() =>
+                viewModel.VersionReverted += _ => _dispatcher.Invoke(() =>
                 {
                     LoadPreviousShortcuts();
                     ResetGui();
                 });
 
-                var window = new IconVersionManagerWindow
-                    { Owner = Application.Current.MainWindow };
-
-                viewModel.RequestClose += () => window.Close();
-                window.DataContext = viewModel;
-
-                var result = window.ShowDialog();
+                var result = _windowService.ShowIconVersionManager(viewModel);
 
                 if (result == true)
                     LoadPreviousShortcuts();
@@ -605,21 +587,8 @@ namespace IconSwapperGui.UI.ViewModels
 
             try
             {
-                var window = new RenameIconWindow
-                {
-                    Owner = Application.Current.MainWindow
-                };
-
                 var viewModel = new RenameIconViewModel(icon.Name, _iconManagementService, _loggingService);
-                viewModel.RequestClose += result =>
-                {
-                    window.DialogResult = result;
-                    window.Close();
-                };
-
-                window.DataContext = viewModel;
-
-                var dialogResult = window.ShowDialog();
+                var dialogResult = _windowService.ShowRenameIcon(viewModel);
 
                 if (dialogResult == true && !string.IsNullOrWhiteSpace(viewModel.NewName))
                 {
@@ -1088,7 +1057,7 @@ namespace IconSwapperGui.UI.ViewModels
 
             if (appsList.Any())
             {
-                Application.Current.Dispatcher.Invoke(() =>
+                _dispatcher.Invoke(() =>
                 {
                     ShortcutsFolders = new ObservableCollection<string>(appsList);
                     PopulateShortcutsFromLocations(ShortcutsFolders);
@@ -1105,7 +1074,7 @@ namespace IconSwapperGui.UI.ViewModels
 
             if (iconsList.Any())
             {
-                Application.Current.Dispatcher.Invoke(() =>
+                _dispatcher.Invoke(() =>
                 {
                     IconsFolders = new ObservableCollection<string>(iconsList);
                     PopulateIconsFromLocations(IconsFolders);
@@ -1122,7 +1091,7 @@ namespace IconSwapperGui.UI.ViewModels
 
             if (foldersList.Any())
             {
-                Application.Current.Dispatcher.Invoke(() =>
+                _dispatcher.Invoke(() =>
                 {
                     FoldersFolders = new ObservableCollection<string>(foldersList);
                     PopulateFoldersFromLocations(FoldersFolders);
