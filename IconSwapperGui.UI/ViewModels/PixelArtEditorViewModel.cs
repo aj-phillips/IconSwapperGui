@@ -4,6 +4,8 @@ using IconSwapperGui.Core.Interfaces;
 using IconSwapperGui.Core.Models;
 using IconSwapperGui.Core.PixelArt;
 using System.Collections.ObjectModel;
+using System.IO;
+using System.Threading.Tasks;
 using System.Windows.Media;
 using IconSwapperGui.UI.Services.PixelArtEditor;
 using System;
@@ -17,6 +19,7 @@ public partial class PixelArtEditorViewModel : ObservableObject
     private readonly INotificationService _notificationService;
     private readonly ISettingsService _settingsService;
     private readonly ILoggingService _loggingService;
+    private readonly IFileDialogService _fileDialogService;
     private readonly PixelArtExportService _exportService;
 
     private uint[] _pixelsArgb = Array.Empty<uint>();
@@ -30,6 +33,7 @@ public partial class PixelArtEditorViewModel : ObservableObject
     [ObservableProperty] private int _rows = 32;
     [ObservableProperty] private double _zoomLevel = 1.0;
     [ObservableProperty] private string _iconName = "Pixel_Art";
+    [ObservableProperty] private string _exportFolder = string.Empty;
     [ObservableProperty] private PixelTool _selectedTool = PixelTool.Pencil;
     [ObservableProperty] private bool _isGridVisible = true;
 
@@ -45,14 +49,16 @@ public partial class PixelArtEditorViewModel : ObservableObject
     private bool _isBackgroundColorPickerOpen;
 
     public PixelArtEditorViewModel(INotificationService notificationService, ISettingsService settingsService,
-        ILoggingService loggingService, PixelArtExportService exportService)
+        ILoggingService loggingService, IFileDialogService fileDialogService, PixelArtExportService exportService)
     {
         _notificationService = notificationService;
         _settingsService = settingsService;
         _loggingService = loggingService;
+        _fileDialogService = fileDialogService;
         _exportService = exportService;
 
         _loggingService.LogInfo("PixelArtEditorViewModel initialized.");
+        _exportFolder = _settingsService.Settings.Application.ExportLocation;
 
         ResizeBuffer(Rows, Columns);
 
@@ -84,6 +90,17 @@ public partial class PixelArtEditorViewModel : ObservableObject
     partial void OnZoomLevelChanged(double value)
     {
         _loggingService.LogInfo($"Zoom level changed to: {value}");
+    }
+
+    partial void OnExportFolderChanged(string value)
+    {
+        _settingsService.Settings.Application.ExportLocation = value;
+        OnPropertyChanged(nameof(ExportFolderDisplay));
+        OnPropertyChanged(nameof(ExportFolderStatus));
+        OnPropertyChanged(nameof(HasExportFolder));
+        OnPropertyChanged(nameof(ExportFolderExists));
+        ExportCommand.NotifyCanExecuteChanged();
+        SaveExportFolderCommand.NotifyCanExecuteChanged();
     }
 
     [RelayCommand]
@@ -223,9 +240,24 @@ public partial class PixelArtEditorViewModel : ObservableObject
         set => SetProperty(ref _isBackgroundColorPickerOpen, value);
     }
 
-    public string ExportFolderDisplay => string.IsNullOrWhiteSpace(_settingsService.Settings.Application.ExportLocation)
-        ? "Not set (Settings → Application → Export Location)"
-        : _settingsService.Settings.Application.ExportLocation;
+    public bool HasExportFolder => !string.IsNullOrWhiteSpace(ExportFolder);
+
+    public bool ExportFolderExists => HasExportFolder && Directory.Exists(ExportFolder);
+
+    public string ExportFolderDisplay => HasExportFolder
+        ? ExportFolder
+        : "Choose an export folder before saving your icon.";
+
+    public string ExportFolderStatus
+    {
+        get
+        {
+            if (!HasExportFolder) return "No export folder selected";
+            return ExportFolderExists
+                ? "Ready to export PNG and ICO files"
+                : "Folder will be created on export";
+        }
+    }
 
     public ReadOnlySpan<uint> PixelsArgb => _pixelsArgb;
 
@@ -310,7 +342,7 @@ public partial class PixelArtEditorViewModel : ObservableObject
 
         _activeStrokeIndex = cellIndex;
 
-        switch (_selectedTool)
+        switch (SelectedTool)
         {
             case PixelTool.Pencil:
                 StampAt(cellIndex, SelectedColor, Math.Max(1, PencilSize));
@@ -416,17 +448,34 @@ public partial class PixelArtEditorViewModel : ObservableObject
     }
 
     private bool CanExport()
-        => !string.IsNullOrWhiteSpace(_settingsService.Settings.Application.ExportLocation);
+        => HasExportFolder;
+
+    [RelayCommand]
+    private async Task BrowseExportFolderAsync()
+    {
+        var selected = _fileDialogService.BrowseForFolder(ExportFolder, "Select pixel art export folder");
+        if (string.IsNullOrWhiteSpace(selected)) return;
+
+        ExportFolder = selected;
+        await SaveExportFolderAsync();
+    }
 
     [RelayCommand(CanExecute = nameof(CanExport))]
-    private void Export()
+    private async Task SaveExportFolderAsync()
+    {
+        await _settingsService.SaveSettingsAsync();
+        _notificationService.AddNotification("Pixel Art Editor", "Export folder saved.", NotificationType.Success);
+    }
+
+    [RelayCommand(CanExecute = nameof(CanExport))]
+    private async Task ExportAsync()
     {
         try
         {
-            var folder = _settingsService.Settings.Application.ExportLocation;
+            var folder = ExportFolder;
             if (string.IsNullOrWhiteSpace(folder))
             {
-                _notificationService.AddNotification("Pixel Art Editor", "No export folder configured in Settings.", NotificationType.Warning);
+                _notificationService.AddNotification("Pixel Art Editor", "Choose an export folder before exporting.", NotificationType.Warning);
                 return;
             }
 
@@ -434,6 +483,9 @@ public partial class PixelArtEditorViewModel : ObservableObject
                 ? (string.IsNullOrWhiteSpace(IconName) ? "Pixel_Art" : IconName)
                 : DocumentName;
             _exportService.ExportPngAndIco(folder, name, Rows, Columns, PixelsArgb, BackgroundColor);
+            await _settingsService.SaveSettingsAsync();
+            OnPropertyChanged(nameof(ExportFolderStatus));
+            OnPropertyChanged(nameof(ExportFolderExists));
             _notificationService.AddNotification("Pixel Art Editor", $"Exported {name}.png and {name}.ico", NotificationType.Success);
         }
         catch (InvalidOperationException ex)

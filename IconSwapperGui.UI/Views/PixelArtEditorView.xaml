@@ -156,58 +156,107 @@
 
             <Border Grid.Row="0" Style="{StaticResource EditorToolbarStyle}" Margin="0,0,0,12">
                 <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Column="0"
-                               Text="Pixel Art Editor"
-                               Style="{StaticResource PageTitleStyle}"
-                               FontSize="18"
-                               VerticalAlignment="Center" />
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
 
-                    <Grid Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="420">
-                        <TextBlock x:Name="DocumentNameText"
-                                   Text="{Binding DocumentName}"
-                                   Foreground="{DynamicResource PrimaryTextBrush}"
-                                   FontSize="14"
-                                   FontWeight="SemiBold"
-                                   TextTrimming="CharacterEllipsis"
-                                   VerticalAlignment="Center"
-                                   Visibility="{Binding IsRenamingDocumentName, Converter={StaticResource InverseBooleanToVisibilityConverter}, ConverterParameter=Invert}">
-                            <TextBlock.InputBindings>
-                                <MouseBinding Gesture="LeftClick"
-                                             Command="{Binding BeginRenameDocumentNameCommand}" />
-                            </TextBlock.InputBindings>
-                        </TextBlock>
+                        <TextBlock Grid.Column="0"
+                                   Text="Pixel Art Editor"
+                                   Style="{StaticResource PageTitleStyle}"
+                                   FontSize="18"
+                                   VerticalAlignment="Center" />
 
-                        <TextBox x:Name="DocumentNameEditor"
-                                 Text="{Binding DocumentName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                 Style="{StaticResource InputTextBoxStyle}"
-                                 Padding="10,6"
-                                 FontSize="13"
-                                 Height="45"
-                                 MinWidth="180"
-                                 Visibility="{Binding IsRenamingDocumentName, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                 Loaded="DocumentNameTextBox_Loaded"
-                                 IsVisibleChanged="RenameTextBox_IsVisibleChanged"
-                                 GotKeyboardFocus="RenameTextBox_GotKeyboardFocus"
-                                 LostKeyboardFocus="DocumentNameTextBox_LostKeyboardFocus"
-                                 KeyDown="DocumentNameTextBox_KeyDown" />
+                        <Grid Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="420">
+                            <TextBlock x:Name="DocumentNameText"
+                                       Text="{Binding DocumentName}"
+                                       Foreground="{DynamicResource PrimaryTextBrush}"
+                                       FontSize="14"
+                                       FontWeight="SemiBold"
+                                       TextTrimming="CharacterEllipsis"
+                                       VerticalAlignment="Center"
+                                       Visibility="{Binding IsRenamingDocumentName, Converter={StaticResource InverseBooleanToVisibilityConverter}, ConverterParameter=Invert}">
+                                <TextBlock.InputBindings>
+                                    <MouseBinding Gesture="LeftClick"
+                                                 Command="{Binding BeginRenameDocumentNameCommand}" />
+                                </TextBlock.InputBindings>
+                            </TextBlock>
+
+                            <TextBox x:Name="DocumentNameEditor"
+                                     Text="{Binding DocumentName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource InputTextBoxStyle}"
+                                     Padding="10,6"
+                                     FontSize="13"
+                                     Height="45"
+                                     MinWidth="180"
+                                     Visibility="{Binding IsRenamingDocumentName, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                     Loaded="DocumentNameTextBox_Loaded"
+                                     IsVisibleChanged="RenameTextBox_IsVisibleChanged"
+                                     GotKeyboardFocus="RenameTextBox_GotKeyboardFocus"
+                                     LostKeyboardFocus="DocumentNameTextBox_LostKeyboardFocus"
+                                     KeyDown="DocumentNameTextBox_KeyDown" />
+                        </Grid>
+
+                        <Button Grid.Column="2"
+                                Content="New"
+                                Style="{StaticResource EditorToolbarButtonStyle}"
+                                Command="{Binding NewCommand}" />
                     </Grid>
 
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="New"
+                    <Grid Grid.Row="1" Margin="0,14,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Grid Grid.Column="0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Text="Export Folder"
+                                       Style="{StaticResource MutedTextStyle}"
+                                       Margin="0,0,0,4" />
+
+                            <TextBox Grid.Row="1"
+                                     Text="{Binding ExportFolder, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource InputTextBoxStyle}"
+                                     MinWidth="280"
+                                     ToolTip="{Binding ExportFolderDisplay}" />
+                        </Grid>
+
+                        <Button Grid.Column="1"
+                                Content="Browse"
                                 Style="{StaticResource EditorToolbarButtonStyle}"
-                                Margin="0,0,8,0"
-                                Command="{Binding NewCommand}" />
-                        <Button Content="Export"
+                                Margin="10,20,8,0"
+                                VerticalAlignment="Top"
+                                Command="{Binding BrowseExportFolderCommand}" />
+
+                        <Button Grid.Column="2"
+                                Content="Save Path"
+                                Style="{StaticResource EditorToolbarButtonStyle}"
+                                Margin="0,20,8,0"
+                                VerticalAlignment="Top"
+                                Command="{Binding SaveExportFolderCommand}" />
+
+                        <Button Grid.Column="3"
+                                Content="Export"
                                 Style="{StaticResource PrimaryButtonStyle}"
-                                Padding="14,8"
+                                Padding="18,8"
+                                Margin="0,20,0,0"
+                                VerticalAlignment="Top"
                                 Command="{Binding ExportCommand}" />
-                    </StackPanel>
+                    </Grid>
                 </Grid>
             </Border>
 
@@ -380,11 +429,17 @@
 
                     <Border Style="{StaticResource EditorDividerStyle}" />
 
-                    <TextBlock Text="Export Folder" Style="{StaticResource MutedTextStyle}" />
+                    <TextBlock Text="Export Status" Style="{StaticResource MutedTextStyle}" />
                     <TextBlock Text="{Binding ExportFolderDisplay}"
                                Style="{StaticResource MutedTextStyle}"
                                TextWrapping="Wrap"
                                Margin="0,4,0,0" />
+                    <TextBlock Text="{Binding ExportFolderStatus}"
+                               Foreground="{DynamicResource AccentBrush}"
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               TextWrapping="Wrap"
+                               Margin="0,6,0,0" />
                 </StackPanel>
             </Border>
 

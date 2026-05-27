@@ -1,5 +1,6 @@
 using Moq;
 using IconSwapperGui.Core.Interfaces;
+using IconSwapperGui.Core.Models;
 using IconSwapperGui.UI.ViewModels;
 using IconSwapperGui.UI.Services.PixelArtEditor;
 using System.Windows.Media;
@@ -12,6 +13,7 @@ public class PixelArtEditorViewModelTests
     private Mock<INotificationService> _notificationServiceMock;
     private Mock<ISettingsService> _settingsServiceMock;
     private Mock<ILoggingService> _loggingServiceMock;
+    private Mock<IFileDialogService> _fileDialogServiceMock;
     private PixelArtExportService _exportService;
 
     [SetUp]
@@ -20,6 +22,9 @@ public class PixelArtEditorViewModelTests
         _notificationServiceMock = new Mock<INotificationService>();
         _settingsServiceMock = new Mock<ISettingsService>();
         _loggingServiceMock = new Mock<ILoggingService>();
+        _fileDialogServiceMock = new Mock<IFileDialogService>();
+        _settingsServiceMock.SetupGet(s => s.Settings).Returns(new AppSettings());
+        _settingsServiceMock.Setup(s => s.SaveSettingsAsync()).Returns(Task.CompletedTask);
         
         var iconCreatorServiceMock = new Mock<IIconCreatorService>();
         _exportService = new PixelArtExportService(iconCreatorServiceMock.Object);
@@ -145,12 +150,42 @@ public class PixelArtEditorViewModelTests
         Assert.That(vm.Layers[2].PixelsArgb.Length, Is.EqualTo(100));
     }
 
+    [Test]
+    public void ExportCommand_WithoutExportFolder_IsDisabled()
+    {
+        var vm = CreateViewModel();
+
+        Assert.That(vm.ExportCommand.CanExecute(null), Is.False);
+        Assert.That(vm.ExportFolderStatus, Is.EqualTo("No export folder selected"));
+    }
+
+    [Test]
+    public async Task BrowseExportFolder_WithSelection_UpdatesSettingsAndEnablesExport()
+    {
+        var settings = new AppSettings();
+        _settingsServiceMock.SetupGet(s => s.Settings).Returns(settings);
+        _fileDialogServiceMock
+            .Setup(s => s.BrowseForFolder(It.IsAny<string?>(), "Select pixel art export folder"))
+            .Returns(@"C:\Icons\Exports");
+
+        var vm = CreateViewModel();
+
+        await vm.BrowseExportFolderCommand.ExecuteAsync(null);
+
+        Assert.That(vm.ExportFolder, Is.EqualTo(@"C:\Icons\Exports"));
+        Assert.That(settings.Application.ExportLocation, Is.EqualTo(@"C:\Icons\Exports"));
+        Assert.That(vm.ExportCommand.CanExecute(null), Is.True);
+        Assert.That(vm.SaveExportFolderCommand.CanExecute(null), Is.True);
+        _settingsServiceMock.Verify(s => s.SaveSettingsAsync(), Times.Once);
+    }
+
     private PixelArtEditorViewModel CreateViewModel()
     {
         return new PixelArtEditorViewModel(
             _notificationServiceMock.Object,
             _settingsServiceMock.Object,
             _loggingServiceMock.Object,
+            _fileDialogServiceMock.Object,
             _exportService
         );
     }
