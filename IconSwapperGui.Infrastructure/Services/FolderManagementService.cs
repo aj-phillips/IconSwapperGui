@@ -1,6 +1,7 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Runtime.InteropServices;
 using IconSwapperGui.Core.Interfaces;
+using IconSwapperGui.Core.Models;
 using IconSwapperGui.Core.Models.Swapper;
 
 namespace IconSwapperGui.Infrastructure.Services;
@@ -42,20 +43,26 @@ public class FolderManagementService(ILoggingService logger) : IFolderManagement
         return folders;
     }
 
-    public async Task<bool> ChangeFolderIconAsync(string folderPath, string iconPath)
+    public async Task<IconOperationResult> ChangeFolderIconAsync(string folderPath, string iconPath)
     {
         try
         {
             if (!Directory.Exists(folderPath))
             {
                 logger.LogWarning($"Folder does not exist: {folderPath}");
-                return false;
+                return IconOperationResult.Failure("Folder Not Found", "The selected folder could not be found.");
             }
 
             if (!File.Exists(iconPath))
             {
                 logger.LogWarning($"Icon file does not exist: {iconPath}");
-                return false;
+                return IconOperationResult.Failure("Icon Not Found", "The selected replacement icon could not be found.");
+            }
+
+            if (!string.Equals(Path.GetExtension(iconPath), ".ico", StringComparison.OrdinalIgnoreCase))
+            {
+                logger.LogWarning($"Unsupported icon file type: {iconPath}");
+                return IconOperationResult.Failure("Unsupported Icon", "Folder icons require an .ico file.");
             }
 
             var iniPath = Path.Combine(folderPath, "desktop.ini");
@@ -67,30 +74,7 @@ public class FolderManagementService(ILoggingService logger) : IFolderManagement
 
             try
             {
-                try
-                {
-                    var dirInfoForWrite = new DirectoryInfo(folderPath);
-                    dirInfoForWrite.Attributes &= ~FileAttributes.ReadOnly;
-                    dirInfoForWrite.Attributes &= ~FileAttributes.System;
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError($"Failed to clear attributes on folder before writing desktop.ini: {folderPath}",
-                        ex);
-                }
-
-                if (File.Exists(iniPath))
-                {
-                    try
-                    {
-                        File.SetAttributes(iniPath, FileAttributes.Normal);
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.LogError($"Failed to set desktop.ini attributes to Normal before writing: {iniPath}",
-                            ex);
-                    }
-                }
+                TryPrepareFolderForDesktopIni(folderPath, iniPath);
 
                 var wrote = false;
                 var attempts = 0;
@@ -104,23 +88,7 @@ public class FolderManagementService(ILoggingService logger) : IFolderManagement
                     }
                     catch (UnauthorizedAccessException)
                     {
-                        try
-                        {
-                            await using var fs = new FileStream(iniPath, FileMode.Create, FileAccess.Write,
-                                FileShare.ReadWrite);
-                            await using var sw = new StreamWriter(fs);
-                            foreach (var line in lines)
-                            {
-                                await sw.WriteLineAsync(line).ConfigureAwait(false);
-                            }
-
-                            wrote = true;
-                        }
-                        catch (Exception)
-                        {
-                            logger.LogWarning($"Attempt {attempts} failed writing desktop.ini, will retry: {iniPath}");
-                            await Task.Delay(150).ConfigureAwait(false);
-                        }
+                        wrote = await TryWriteDesktopIniWithSharedAccessAsync(iniPath, lines, attempts).ConfigureAwait(false);
                     }
                     catch (Exception)
                     {
@@ -132,13 +100,13 @@ public class FolderManagementService(ILoggingService logger) : IFolderManagement
                 if (!wrote)
                 {
                     logger.LogError($"Failed to write desktop.ini after multiple attempts: {iniPath}");
-                    return false;
+                    return IconOperationResult.Failure("Folder Icon Update Failed", "Failed to write folder icon metadata.");
                 }
             }
             catch (Exception ex)
             {
                 logger.LogError($"Unexpected error while preparing/writing desktop.ini: {iniPath}", ex);
-                return false;
+                return IconOperationResult.Failure("Folder Icon Update Failed", "Failed to write folder icon metadata.", ex.Message);
             }
 
             var dirInfo = new DirectoryInfo(folderPath);
@@ -156,11 +124,57 @@ public class FolderManagementService(ILoggingService logger) : IFolderManagement
             }
 
             logger.LogInfo($"Folder icon changed for {folderPath} to {iconPath}");
-            return true;
+            return IconOperationResult.Success("Folder Icon Updated", "The folder icon was updated successfully.");
         }
         catch (Exception ex)
         {
             logger.LogError($"Failed to change folder icon for {folderPath}", ex);
+            return IconOperationResult.Failure("Folder Icon Update Failed", "Failed to update the folder icon.", ex.Message);
+        }
+    }
+
+    private void TryPrepareFolderForDesktopIni(string folderPath, string iniPath)
+    {
+        try
+        {
+            var dirInfoForWrite = new DirectoryInfo(folderPath);
+            dirInfoForWrite.Attributes &= ~FileAttributes.ReadOnly;
+            dirInfoForWrite.Attributes &= ~FileAttributes.System;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError($"Failed to clear attributes on folder before writing desktop.ini: {folderPath}", ex);
+        }
+
+        if (!File.Exists(iniPath)) return;
+
+        try
+        {
+            File.SetAttributes(iniPath, FileAttributes.Normal);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError($"Failed to set desktop.ini attributes to Normal before writing: {iniPath}", ex);
+        }
+    }
+
+    private async Task<bool> TryWriteDesktopIniWithSharedAccessAsync(string iniPath, IEnumerable<string> lines, int attempts)
+    {
+        try
+        {
+            await using var fs = new FileStream(iniPath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
+            await using var sw = new StreamWriter(fs);
+            foreach (var line in lines)
+            {
+                await sw.WriteLineAsync(line).ConfigureAwait(false);
+            }
+
+            return true;
+        }
+        catch (Exception)
+        {
+            logger.LogWarning($"Attempt {attempts} failed writing desktop.ini, will retry: {iniPath}");
+            await Task.Delay(150).ConfigureAwait(false);
             return false;
         }
     }

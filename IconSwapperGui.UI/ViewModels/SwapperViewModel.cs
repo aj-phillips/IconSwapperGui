@@ -556,18 +556,18 @@ namespace IconSwapperGui.UI.ViewModels
                 if (!confirmed)
                     return;
 
-                var success = await _iconManagementService.DeleteIconAsync(icon.Path);
+                var result = await _iconManagementService.DeleteIconAsync(icon.Path);
 
-                if (success)
+                if (result.Succeeded)
                 {
-                    _notificationService.AddNotification("Icon Deleted", $"Successfully deleted '{icon.Name}'",
+                    _notificationService.AddNotification(result.Title, $"Successfully deleted '{icon.Name}'",
                         NotificationType.Success);
 
                     await RefreshGuiAsync();
                 }
                 else
                 {
-                    _notificationService.AddNotification("Delete Failed", $"Failed to delete '{icon.Name}'",
+                    _notificationService.AddNotification(result.Title, result.Message,
                         NotificationType.Error);
                 }
             }
@@ -592,11 +592,11 @@ namespace IconSwapperGui.UI.ViewModels
 
                 if (dialogResult == true && !string.IsNullOrWhiteSpace(viewModel.NewName))
                 {
-                    var success = await _iconManagementService.RenameIconAsync(icon.Path, viewModel.NewName);
+                    var result = await _iconManagementService.RenameIconAsync(icon.Path, viewModel.NewName);
 
-                    if (success)
+                    if (result.Succeeded)
                     {
-                        _notificationService.AddNotification("Icon Renamed", 
+                        _notificationService.AddNotification(result.Title, 
                             $"Successfully renamed '{icon.Name}' to '{viewModel.NewName}'",
                             NotificationType.Success);
 
@@ -604,8 +604,7 @@ namespace IconSwapperGui.UI.ViewModels
                     }
                     else
                     {
-                        _notificationService.AddNotification("Rename Failed", 
-                            $"Failed to rename '{icon.Name}'. The file may already exist or be in use.",
+                        _notificationService.AddNotification(result.Title, result.Message,
                             NotificationType.Error);
                     }
                 }
@@ -715,15 +714,17 @@ namespace IconSwapperGui.UI.ViewModels
 
                 var extension = Path.GetExtension(SelectedShortcut.Path)?.ToLowerInvariant();
 
-                switch (extension)
+                IconOperationResult result = extension switch
                 {
-                    case ".lnk":
-                        _lnkSwapperService.Swap(SelectedShortcut.Path,
-                            SelectedIcon.Path, SelectedShortcut.Name);
-                        break;
-                    case ".url":
-                        _urlSwapperService.Swap(SelectedShortcut.Path, SelectedIcon.Path);
-                        break;
+                    ".lnk" => _lnkSwapperService.Swap(SelectedShortcut.Path, SelectedIcon.Path, SelectedShortcut.Name),
+                    ".url" => _urlSwapperService.Swap(SelectedShortcut.Path, SelectedIcon.Path),
+                    _ => IconOperationResult.Failure("Unsupported Shortcut", "Only .lnk and .url shortcuts can be updated.")
+                };
+
+                if (!result.Succeeded)
+                {
+                    _notificationService.AddNotification(result.Title, result.Message, NotificationType.Error);
+                    return;
                 }
 
                 var capturedApplicationPath = SelectedShortcut?.Path;
@@ -742,6 +743,7 @@ namespace IconSwapperGui.UI.ViewModels
                 }
 
                 await ShowSuccessTick();
+                _notificationService.AddNotification(result.Title, result.Message, NotificationType.Success);
                 ResetGui();
             }
             catch (Exception ex)
@@ -765,10 +767,10 @@ namespace IconSwapperGui.UI.ViewModels
                     return;
                 }
 
-                var success =
+                var result =
                     await _folderManagementService.ChangeFolderIconAsync(SelectedFolder.Path, SelectedIcon.Path);
 
-                if (success)
+                if (result.Succeeded)
                 {
                     try
                     {
@@ -783,12 +785,13 @@ namespace IconSwapperGui.UI.ViewModels
                     }
 
                     await ShowSuccessTick();
+                    _notificationService.AddNotification(result.Title, result.Message, NotificationType.Success);
 
                     await RefreshGuiAsync();
                 }
                 else
                 {
-                    _dialogService.ShowError("Error", "Failed to change folder icon");
+                    _notificationService.AddNotification(result.Title, result.Message, NotificationType.Error);
                 }
             }
             catch (Exception ex)
