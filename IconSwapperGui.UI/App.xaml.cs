@@ -80,12 +80,14 @@ public partial class App : Application
         services.AddTransient<PixelArtEditorViewModel>();
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<IconVersionManagerViewModel>();
+        services.AddTransient<ImageCropEditorViewModel>();
         services.AddTransient<Func<string, IconVersionManagerViewModel>>(sp =>
             filePath => ActivatorUtilities.CreateInstance<IconVersionManagerViewModel>(sp, filePath));
 
         // Windows
         services.AddSingleton<MainWindow>();
         services.AddSingleton<IconVersionManagerWindow>();
+        services.AddTransient<ImageCropEditorWindow>();
     }
 
     protected override async void OnStartup(StartupEventArgs e)

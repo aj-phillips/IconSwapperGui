@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using IconSwapperGui.UI.Services.PixelArtEditor;
 using System;
 
@@ -15,6 +16,7 @@ namespace IconSwapperGui.UI.ViewModels;
 
 public partial class PixelArtEditorViewModel : ObservableObject
 {
+    private const int MaxImportDimension = 128;
     private const int MaxRecentColors = 12;
     private const int MaxHistoryEntries = 50;
 
@@ -352,6 +354,83 @@ public partial class PixelArtEditorViewModel : ObservableObject
         ClearLayers();
         CompositeLayersIntoBuffer();
         LayoutInvalidated?.Invoke();
+    }
+
+    [RelayCommand]
+    private void ImportImage()
+    {
+        var selected = _fileDialogService.OpenFiles(
+            "Import image into pixel editor",
+            "Images and icons (*.png;*.jpg;*.jpeg;*.ico)|*.png;*.jpg;*.jpeg;*.ico",
+            false);
+
+        var path = selected.FirstOrDefault();
+        if (string.IsNullOrWhiteSpace(path))
+            return;
+
+        ImportImageFromPath(path);
+    }
+
+    public void ImportImageFromPath(string path)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+            {
+                _notificationService.AddNotification("Pixel Art Editor", "The selected image could not be found.", NotificationType.Warning);
+                return;
+            }
+
+            var decoder = BitmapDecoder.Create(new Uri(path), BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
+            var frame = decoder.Frames.OrderByDescending(f => f.PixelWidth * f.PixelHeight).First();
+            var importScale = Math.Min(1.0, MaxImportDimension / (double)Math.Max(frame.PixelWidth, frame.PixelHeight));
+            var width = Math.Max(1, (int)Math.Round(frame.PixelWidth * importScale));
+            var height = Math.Max(1, (int)Math.Round(frame.PixelHeight * importScale));
+            BitmapSource source = frame;
+
+            if (frame.PixelWidth != width || frame.PixelHeight != height)
+            {
+                source = new TransformedBitmap(frame, new ScaleTransform(
+                    (double)width / Math.Max(1, frame.PixelWidth),
+                    (double)height / Math.Max(1, frame.PixelHeight)));
+            }
+
+            var converted = new FormatConvertedBitmap(source, PixelFormats.Bgra32, null, 0);
+            var stride = width * 4;
+            var pixels = new byte[stride * height];
+            converted.CopyPixels(pixels, stride, 0);
+
+            PushUndoSnapshot();
+            Rows = height;
+            Columns = width;
+            DocumentName = Path.GetFileNameWithoutExtension(path);
+            ResizeBuffer(Rows, Columns);
+            Layers.Clear();
+
+            var layer = new PixelArtLayerViewModel("Imported Image", Rows, Columns);
+            for (var i = 0; i < Rows * Columns; i++)
+            {
+                var offset = i * 4;
+                var b = pixels[offset + 0];
+                var g = pixels[offset + 1];
+                var r = pixels[offset + 2];
+                var a = pixels[offset + 3];
+                layer.PixelsArgb[i] = (uint)(a << 24 | r << 16 | g << 8 | b);
+            }
+
+            Layers.Add(layer);
+            SelectedLayer = layer;
+            _layerCounter = 1;
+            CompositeLayersIntoBuffer();
+            LayoutInvalidated?.Invoke();
+            var resizedMessage = importScale < 1.0 ? $" and resized to {width}x{height}" : string.Empty;
+            _notificationService.AddNotification("Pixel Art Editor", $"Imported {Path.GetFileName(path)}{resizedMessage}.", NotificationType.Success);
+        }
+        catch (Exception ex)
+        {
+            _loggingService.LogError("Image import failed", ex);
+            _notificationService.AddNotification("Pixel Art Editor", "Failed to import the selected image.", NotificationType.Error);
+        }
     }
 
     private bool CanUndo() => _undoStack.Count > 0;

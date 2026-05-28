@@ -11,7 +11,7 @@
 
 **IconSwapperGui** is a powerful **Windows desktop application** for changing **shortcut and folder icons** without navigating Windows' properties menus. It supports **.lnk shortcuts**, **Steam .url files**, and **folder icons**, making it ideal for customizing your Windows desktop experience.
 
-A standout feature of IconSwapperGui is **icon version management**, allowing you to track, preview, and restore **previously used icons** for any shortcut — making experimentation safe and fully reversible.
+A standout feature of IconSwapperGui is **icon version management**, allowing you to track, preview, and restore **previously used icons** for shortcuts and folders — making experimentation safe and fully reversible.
 
 ---
 
@@ -21,13 +21,14 @@ A standout feature of IconSwapperGui is **icon version management**, allowing yo
 - **Multi-Location Support**  
   - Configure multiple shortcut and icon folder locations
   - Automatically loads all shortcuts and icons from configured directories
+  - Drag folders or shortcut/icon files directly onto the relevant list to add locations without opening Settings
   
 - **Dual-Mode Icon Swapping**  
   - **Shortcuts Tab**: Change icons for **.lnk** and **Steam .url** shortcut files
   - **Folders Tab**: Change icons for Windows folders directly
   
 - **Icon Version History & Restore** ⭐  
-  - Right-click any shortcut to view **current and previous icon versions**
+  - Right-click any shortcut or folder to view **current and previous icon versions**
   - Preview all historical icons with timestamps
   - Instantly restore a previously used icon with one click
   - Safely experiment with icon styles without losing past versions
@@ -45,15 +46,25 @@ A standout feature of IconSwapperGui is **icon version management**, allowing yo
 ### 🔁 Icon Converter (PNG / JPG → ICO)
 - **Batch Image Conversion**  
   - Convert entire folders of images into Windows-compatible **.ico** files
+  - Drag individual PNG/JPG files directly into the conversion queue
   
 - **Multi-Format Support**  
   - Supports **.png**, **.jpg**, and **.jpeg** image formats
+
+- **Crop and Fit Controls**
+  - Choose center crop, fit with transparent padding, or fill-and-crop before creating icons
+  - Open the crop editor for a queued image to adjust zoom and horizontal/vertical focus
+  - Creates multi-size ICO files for crisp Windows scaling
   
 - **Searchable Image List**  
   - Quickly locate specific images before conversion with built-in search
+  - Remove individual images from the queue before converting
   
 - **Multiple Icon Directories**  
   - Configure multiple source folders for image conversion
+
+- **Flexible Output**
+  - Save converted ICO files beside the source images or choose a dedicated output folder
   
 - **Optional Image Cleanup**  
   - Automatically delete original images after successful conversion
@@ -76,6 +87,11 @@ A standout feature of IconSwapperGui is **icon version management**, allowing yo
   - Left-click to draw pixels
   - Right-click to erase pixels
   - Undo/Redo support
+
+- **Image Import**
+  - Import **PNG**, **JPG**, or **ICO** files into the canvas
+  - Imported images become editable pixel layers and can be exported back to PNG + ICO
+  - Large imports are scaled to an editor-friendly size so the canvas stays responsive
   
 - **Dynamic Zoom Control**  
   - Zoom in and out for precise pixel-level editing
@@ -115,6 +131,7 @@ A standout feature of IconSwapperGui is **icon version management**, allowing yo
   
 - **Converter Icons Locations**  
   - Configure image source folders for conversion
+  - Optionally set a dedicated converter output folder
   
 - **Export Location**  
   - Set default save location for pixel art creations
@@ -178,11 +195,11 @@ A standout feature of IconSwapperGui is **icon version management**, allowing yo
 ### First-Time Setup
 
 1. **Configure Shortcut Locations**  
-   - Open **Settings** > **Application**
-   - Add folders containing your shortcuts (e.g., Desktop, Start Menu)
+   - Open **Settings** > **Application** and add folders containing your shortcuts, or drag folders/files onto the **Sources** list
+   - The desktop path is a common starting point
    
 2. **Configure Icon Locations**  
-   - Add folders containing your custom .ico files
+   - Add folders containing your custom .ico files, or drag an icon folder/file onto the **Icon Library**
    - IconSwapperGui will automatically scan these directories
 
 3. **Start Swapping Icons**  
@@ -194,8 +211,8 @@ A standout feature of IconSwapperGui is **icon version management**, allowing yo
 ### Additional Features
 
 - **Manage Icon History**: Right-click any shortcut to view and restore previous icons
-- **Convert Images**: Use the **Converter** tab to turn PNG/JPG images into .ico files
-- **Create Custom Icons**: Use the **Pixel Art Editor** tab to design icons from scratch
+- **Convert Images**: Use the **Converter** tab to drag in PNG/JPG images, choose crop behavior, and create .ico files
+- **Create or Import Custom Icons**: Use the **Pixel Art Editor** tab to design icons from scratch or import an existing PNG/JPG/ICO for editing
 
 ---
 

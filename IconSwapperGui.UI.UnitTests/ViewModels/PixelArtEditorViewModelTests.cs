@@ -5,6 +5,7 @@ using IconSwapperGui.Core.PixelArt;
 using IconSwapperGui.UI.ViewModels;
 using IconSwapperGui.UI.Services.PixelArtEditor;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace IconSwapperGui.UI.UnitTests.ViewModels;
 
@@ -263,6 +264,37 @@ public class PixelArtEditorViewModelTests
         Assert.That(vm.Layers[0].PixelsArgb[0], Is.EqualTo(ToArgb(Colors.Red)));
     }
 
+    [Test]
+    public void ImportImageFromPath_LoadsImagePixelsAndRenamesDocument()
+    {
+        var path = Path.Combine(TestContext.CurrentContext.WorkDirectory, "import-test.png");
+        SaveTestPng(path, 2, 2);
+        var vm = CreateViewModel();
+
+        vm.ImportImageFromPath(path);
+
+        Assert.That(vm.Rows, Is.EqualTo(2));
+        Assert.That(vm.Columns, Is.EqualTo(2));
+        Assert.That(vm.DocumentName, Is.EqualTo("import-test"));
+        Assert.That(vm.Layers.Count, Is.EqualTo(1));
+        Assert.That(vm.Layers[0].Name, Is.EqualTo("Imported Image"));
+        Assert.That(vm.Layers[0].PixelsArgb[0], Is.EqualTo(ToArgb(Colors.Red)));
+    }
+
+    [Test]
+    public void ImportImageFromPath_WithLargeImage_ScalesToResponsiveCanvas()
+    {
+        var path = Path.Combine(TestContext.CurrentContext.WorkDirectory, "large-import-test.png");
+        SaveTestPng(path, 256, 256);
+        var vm = CreateViewModel();
+
+        vm.ImportImageFromPath(path);
+
+        Assert.That(vm.Rows, Is.EqualTo(128));
+        Assert.That(vm.Columns, Is.EqualTo(128));
+        Assert.That(vm.Layers[0].PixelsArgb.Length, Is.EqualTo(128 * 128));
+    }
+
     private PixelArtEditorViewModel CreateViewModel()
     {
         return new PixelArtEditorViewModel(
@@ -275,4 +307,25 @@ public class PixelArtEditorViewModelTests
     }
 
     private static uint ToArgb(Color c) => (uint)(c.A << 24 | c.R << 16 | c.G << 8 | c.B);
+
+    private static void SaveTestPng(string path, int width, int height)
+    {
+        var pixels = new byte[width * height * 4];
+        for (var i = 0; i < width * height; i++)
+        {
+            var offset = i * 4;
+            pixels[offset + 0] = 0;
+            pixels[offset + 1] = 0;
+            pixels[offset + 2] = 255;
+            pixels[offset + 3] = 255;
+        }
+
+        var bitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgra32, null);
+        bitmap.WritePixels(new System.Windows.Int32Rect(0, 0, width, height), pixels, width * 4, 0);
+
+        using var stream = File.Create(path);
+        var encoder = new PngBitmapEncoder();
+        encoder.Frames.Add(BitmapFrame.Create(bitmap));
+        encoder.Save(stream);
+    }
 }

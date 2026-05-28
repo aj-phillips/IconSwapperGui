@@ -218,6 +218,11 @@
                     </Grid>
 
                     <StackPanel Grid.Column="2" Orientation="Horizontal">
+                        <Button Content="Import"
+                                Style="{StaticResource EditorToolbarButtonStyle}"
+                                ToolTip="Import a PNG, JPG, or ICO into the canvas"
+                                Command="{Binding ImportImageCommand}"
+                                Margin="0,0,8,0" />
                         <Button Content="New"
                                 Style="{StaticResource EditorToolbarButtonStyle}"
                                 ToolTip="Create a new blank canvas"

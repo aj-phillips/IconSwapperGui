@@ -552,22 +552,64 @@ namespace IconSwapperGui.UI.ViewModels
             return true;
         }
 
+        public Task AddDroppedShortcutPathsAsync(IEnumerable<string> paths)
+            => AddDroppedLocationPathsAsync(paths, _settingsService.Settings.Application.ShortcutLocations,
+                path => Directory.Exists(path) ? path : Path.GetDirectoryName(path), "Shortcut Sources");
+
+        public Task AddDroppedIconPathsAsync(IEnumerable<string> paths)
+            => AddDroppedLocationPathsAsync(paths, _settingsService.Settings.Application.IconLocations,
+                path => Directory.Exists(path) ? path : Path.GetDirectoryName(path), "Icon Library");
+
+        public Task AddDroppedFolderPathsAsync(IEnumerable<string> paths)
+            => AddDroppedLocationPathsAsync(paths, _settingsService.Settings.Application.FolderShortcutLocations,
+                path => Directory.Exists(path) ? Path.GetDirectoryName(path) : null, "Folder Sources");
+
+        private async Task AddDroppedLocationPathsAsync(
+            IEnumerable<string> paths,
+            ICollection<string> locations,
+            Func<string, string?> resolveLocation,
+            string title)
+        {
+            var added = 0;
+
+            foreach (var path in paths.Where(p => !string.IsNullOrWhiteSpace(p)).Select(p => p.Trim()))
+            {
+                if (!Directory.Exists(path) && !File.Exists(path))
+                    continue;
+
+                var location = resolveLocation(path);
+                if (TryAddLocation(locations, location))
+                    added++;
+            }
+
+            if (added == 0)
+                return;
+
+            await _settingsService.SaveSettingsAsync();
+            await RefreshGuiAsync();
+
+            _notificationService.AddNotification(title, $"Added {added} dropped location{(added == 1 ? string.Empty : "s")}.",
+                NotificationType.Success);
+        }
+
         [RelayCommand]
         private Task ManageVersionsContext(object parameter)
         {
-            if (parameter is not Shortcut shortcut)
-                return Task.CompletedTask;
-
-            return OpenVersionManagerAsync(shortcut);
+            return parameter switch
+            {
+                Shortcut shortcut => OpenVersionManagerAsync(shortcut.Path),
+                FolderShortcut folder => OpenVersionManagerAsync(folder.Path),
+                _ => Task.CompletedTask
+            };
         }
 
-        private Task OpenVersionManagerAsync(Shortcut shortcut)
+        private Task OpenVersionManagerAsync(string filePath)
         {
-            if (shortcut == null) return Task.CompletedTask;
+            if (string.IsNullOrWhiteSpace(filePath)) return Task.CompletedTask;
 
             try
             {
-                var viewModel = _iconVersionManagerViewModelFactory(shortcut.Path);
+                var viewModel = _iconVersionManagerViewModelFactory(filePath);
 
                 viewModel.VersionReverted += _ => _dispatcher.Invoke(() =>
                 {
@@ -781,7 +823,9 @@ namespace IconSwapperGui.UI.ViewModels
 
                 try
                 {
-                    if (_iconHistoryService != null && !string.IsNullOrWhiteSpace(capturedApplicationPath))
+                    if (_iconHistoryService != null
+                        && !string.IsNullOrWhiteSpace(capturedApplicationPath)
+                        && !string.IsNullOrWhiteSpace(capturedIconPath))
                     {
                         await _iconHistoryService.RecordIconChangeAsync(capturedApplicationPath, capturedIconPath);
                     }
