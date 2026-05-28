@@ -10,4 +10,6 @@ public class ApplicationSettings
     public List<string> ConverterIconsLocations { get; set; } = [];
 
     public string ExportLocation { get; set; } = string.Empty;
+
+    public string ConverterOutputLocation { get; set; } = string.Empty;
 }

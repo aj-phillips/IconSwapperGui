@@ -109,6 +109,32 @@
                             </StackPanel>
                         </RadioButton>
 
+                        <RadioButton Style="{StaticResource NavButtonStyle}"
+                                     GroupName="Navigation"
+                                     Command="{Binding NavigateToIconNormalizerCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Style="{StaticResource NavIconStyle}"
+                                      Data="M5 4h14v4H5V4zm0 6h14v4H5v-4zm0 6h14v4H5v-4z" />
+                                <TextBlock Text="Icon Normalizer"
+                                           FontSize="14"
+                                           FontWeight="Medium"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                        </RadioButton>
+
+                        <RadioButton Style="{StaticResource NavButtonStyle}"
+                                     GroupName="Navigation"
+                                     Command="{Binding NavigateToFolderThemeDesignerCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Style="{StaticResource NavIconStyle}"
+                                      Data="M3 6a1 1 0 011-1h6l2 2h8a1 1 0 011 1v9a1 1 0 01-1 1H4a1 1 0 01-1-1V6z" />
+                                <TextBlock Text="Folder Designer"
+                                           FontSize="14"
+                                           FontWeight="Medium"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                        </RadioButton>
+
                         <!-- Settings -->
                         <RadioButton Style="{StaticResource NavButtonStyle}"
                                      GroupName="Navigation"

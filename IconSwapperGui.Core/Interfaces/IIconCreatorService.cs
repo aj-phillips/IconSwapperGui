@@ -1,7 +1,9 @@
-﻿namespace IconSwapperGui.Core.Interfaces;
+using IconSwapperGui.Core.Models.Images;
+
+namespace IconSwapperGui.Core.Interfaces;
 
 public interface IIconCreatorService
 {
     void CreateIcoFromPng(string pngPath, string icoPath, int targetSize = 128);
-    void CreateMultiSizeIcoFromImage(string sourceImagePath, string icoPath, int[] sizes);
+    void CreateMultiSizeIcoFromImage(string sourceImagePath, string icoPath, int[] sizes, ImageTransformOptions? options = null);
 }

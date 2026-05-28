@@ -110,6 +110,7 @@ public class SettingsService : ISettingsService
         settings.Application.FolderShortcutLocations ??= [];
         settings.Application.ConverterIconsLocations ??= [];
         settings.Application.ExportLocation ??= string.Empty;
+        settings.Application.ConverterOutputLocation ??= string.Empty;
     }
 
     public async Task SaveSettingsAsync()

@@ -46,6 +46,18 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void NavigateToIconNormalizer()
+    {
+        NavigateTo<IconNormalizerViewModel>("Icon Normalizer");
+    }
+
+    [RelayCommand]
+    private void NavigateToFolderThemeDesigner()
+    {
+        NavigateTo<FolderThemeDesignerViewModel>("Folder Theme Designer");
+    }
+
+    [RelayCommand]
     private void NavigateToSettings()
     {
         NavigateTo<SettingsViewModel>("Settings");

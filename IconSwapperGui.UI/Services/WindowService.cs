@@ -8,6 +8,7 @@ public interface IWindowService
 {
     bool? ShowIconVersionManager(IconVersionManagerViewModel viewModel);
     bool? ShowRenameIcon(RenameIconViewModel viewModel);
+    bool? ShowImageCropEditor(ImageCropEditorViewModel viewModel);
 }
 
 public sealed class WindowService : IWindowService
@@ -28,6 +29,23 @@ public sealed class WindowService : IWindowService
     public bool? ShowRenameIcon(RenameIconViewModel viewModel)
     {
         var window = new RenameIconWindow
+        {
+            Owner = Application.Current?.MainWindow,
+            DataContext = viewModel
+        };
+
+        viewModel.RequestClose += result =>
+        {
+            window.DialogResult = result;
+            window.Close();
+        };
+
+        return window.ShowDialog();
+    }
+
+    public bool? ShowImageCropEditor(ImageCropEditorViewModel viewModel)
+    {
+        var window = new ImageCropEditorWindow
         {
             Owner = Application.Current?.MainWindow,
             DataContext = viewModel
