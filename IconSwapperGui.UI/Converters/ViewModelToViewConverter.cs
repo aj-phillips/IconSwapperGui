@@ -16,6 +16,8 @@ public class ViewModelToViewConverter : IValueConverter
             SwapperViewModel vm => new SwapperView { DataContext = vm },
             ConverterViewModel vm => new ConverterView { DataContext = vm },
             PixelArtEditorViewModel vm => new PixelArtEditorView { DataContext = vm },
+            IconNormalizerViewModel vm => new IconNormalizerView { DataContext = vm },
+            FolderThemeDesignerViewModel vm => new FolderThemeDesignerView { DataContext = vm },
             SettingsViewModel vm => new SettingsView { DataContext = vm },
             _ => null
         };

@@ -4,6 +4,7 @@ using IconSwapperGui.Core.Interfaces;
 using IconSwapperGui.Infrastructure.Services;
 using IconSwapperGui.UI.Services;
 using IconSwapperGui.UI.Services.Converter;
+using IconSwapperGui.UI.Services.IconTools;
 using IconSwapperGui.UI.Services.Swapper;
 using IconSwapperGui.UI.ViewModels;
 using IconSwapperGui.UI.Views;
@@ -62,6 +63,7 @@ public partial class App : Application
         services.AddSingleton<ILnkSwapperService, LnkSwapperService>();
         services.AddSingleton<IUrlSwapperService, UrlSwapperService>();
         services.AddSingleton<IIconCreatorService, IconCreatorService>();
+        services.AddSingleton<IconToolExportService>();
 
         services.AddSingleton<UI.Services.PixelArtEditor.PixelArtRenderService>();
         services.AddSingleton<UI.Services.PixelArtEditor.PixelArtExportService>();
@@ -70,6 +72,8 @@ public partial class App : Application
         services.AddTransient<SwapperView>();
         services.AddTransient<ConverterView>();
         services.AddTransient<PixelArtEditorView>();
+        services.AddTransient<IconNormalizerView>();
+        services.AddTransient<FolderThemeDesignerView>();
         services.AddTransient<SettingsView>();
 
         // ViewModels
@@ -78,6 +82,8 @@ public partial class App : Application
         services.AddTransient<SwapperViewModel>();
         services.AddTransient<ConverterViewModel>();
         services.AddTransient<PixelArtEditorViewModel>();
+        services.AddTransient<IconNormalizerViewModel>();
+        services.AddTransient<FolderThemeDesignerViewModel>();
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<IconVersionManagerViewModel>();
         services.AddTransient<ImageCropEditorViewModel>();

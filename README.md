@@ -102,6 +102,33 @@ A standout feature of IconSwapperGui is **icon version management**, allowing yo
   - Ready to use immediately as Windows icons
 
 ---
+
+### 🧹 Icon Normalizer
+- **Batch Cleanup Tool**
+  - Drop mixed PNG, JPG, JPEG, and ICO files into a queue
+  - Normalize icon sets to consistent square sizing and output formats
+
+- **Output Controls**
+  - Choose 64, 128, 256, or 512 px output
+  - Export PNG, ICO, or both
+  - Choose fit, center crop, or fill-and-crop behavior
+
+- **Consistent Icon Libraries**
+  - Add transparent padding for clean alignment
+  - Send normalized ICO files straight into your icon library workflow
+
+---
+
+### 📁 Folder Theme Designer
+- **Custom Folder Icons**
+  - Design themed folder icons with folder color, badge color, badge text, and label text
+  - Live preview updates as you edit
+
+- **Reusable Exports**
+  - Export Windows-ready multi-size ICO files
+  - Also saves the PNG source used for the icon
+
+---
  
 ### ⚙️ Application Settings
 
@@ -213,6 +240,8 @@ A standout feature of IconSwapperGui is **icon version management**, allowing yo
 - **Manage Icon History**: Right-click any shortcut to view and restore previous icons
 - **Convert Images**: Use the **Converter** tab to drag in PNG/JPG images, choose crop behavior, and create .ico files
 - **Create or Import Custom Icons**: Use the **Pixel Art Editor** tab to design icons from scratch or import an existing PNG/JPG/ICO for editing
+- **Normalize Icon Sets**: Use **Icon Normalizer** to clean up mixed icon folders into consistent PNG/ICO output
+- **Design Folder Themes**: Use **Folder Theme Designer** to create matching folder icon variants
 
 ---
 
