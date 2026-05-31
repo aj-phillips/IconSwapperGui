@@ -31,18 +31,21 @@ public class ViewModelToViewConverterTests
             .Callback<Action>(action => action());
         var windowServiceMock = new Mock<IWindowService>();
         var fileDialogServiceMock = new Mock<IFileDialogService>();
+        var shellIconRefreshServiceMock = new Mock<IShellIconRefreshService>();
         Func<string, IconVersionManagerViewModel> factory = _ =>
             new Mock<IconVersionManagerViewModel>(
                     new Mock<IIconHistoryService>().Object,
                     new Mock<ILoggingService>().Object,
                     new Mock<INotificationService>().Object,
                     new Mock<IDialogService>().Object,
+                    new Mock<IShellIconRefreshService>().Object,
                     _)
                 .Object;
         var vm = new SwapperViewModel(settingsMock.Object, notifMock.Object, shortcutServiceMock.Object,
             iconManagementServiceMock.Object, iconHistoryServiceMock.Object, folderManagementServiceMock.Object,
             loggingServiceMock.Object, lnkSwapperServiceMock.Object, urlSwapperServiceMock.Object,
             dialogServiceMock.Object, dispatcherMock.Object, windowServiceMock.Object, fileDialogServiceMock.Object,
+            shellIconRefreshServiceMock.Object,
             factory);
         var view = conv.Convert(vm, typeof(object), null, CultureInfo.InvariantCulture);
         Assert.That(view, Is.Not.Null);

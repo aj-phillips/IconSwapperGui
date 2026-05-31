@@ -34,20 +34,97 @@
             </Grid.ColumnDefinitions>
 
             <Border Grid.Column="0" Style="{StaticResource CardStyle}" Padding="18">
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
                 <StackPanel>
                     <TextBlock Text="Design" Style="{StaticResource SectionTitleStyle}" />
 
+                    <TextBlock Text="Folder style" Style="{StaticResource MutedTextStyle}" Margin="0,14,0,6" />
+                    <ComboBox ItemsSource="{Binding FolderStyles}"
+                              SelectedItem="{Binding FolderStyleName}"
+                              Style="{StaticResource ModernComboBoxStyle}"
+                              AutomationProperties.Name="Folder visual style" />
+
+                    <TextBlock Text="Tab style" Style="{StaticResource MutedTextStyle}" Margin="0,14,0,6" />
+                    <ComboBox ItemsSource="{Binding TabStyles}"
+                              SelectedItem="{Binding TabStyleName}"
+                              Style="{StaticResource ModernComboBoxStyle}"
+                              AutomationProperties.Name="Folder tab style" />
+
                     <TextBlock Text="Folder color" Style="{StaticResource MutedTextStyle}" Margin="0,14,0,6" />
-                    <ComboBox ItemsSource="{Binding FolderColors}" SelectedItem="{Binding FolderColorName}" Style="{StaticResource ModernComboBoxStyle}" />
+                    <ComboBox ItemsSource="{Binding FolderColors}"
+                              SelectedItem="{Binding FolderColorName}"
+                              Style="{StaticResource ModernComboBoxStyle}"
+                              AutomationProperties.Name="Folder color" />
 
                     <TextBlock Text="Badge color" Style="{StaticResource MutedTextStyle}" Margin="0,14,0,6" />
-                    <ComboBox ItemsSource="{Binding AccentColors}" SelectedItem="{Binding AccentColorName}" Style="{StaticResource ModernComboBoxStyle}" />
+                    <ComboBox ItemsSource="{Binding AccentColors}"
+                              SelectedItem="{Binding AccentColorName}"
+                              Style="{StaticResource ModernComboBoxStyle}"
+                              AutomationProperties.Name="Accent color" />
 
-                    <TextBlock Text="Badge" Style="{StaticResource MutedTextStyle}" Margin="0,14,0,6" />
+                    <CheckBox Content="Show document insert"
+                              IsChecked="{Binding ShowDocument}"
+                              Style="{StaticResource ModernCheckBoxStyle}"
+                              Margin="0,14,0,6"
+                              AutomationProperties.Name="Show document insert" />
+
+                    <CheckBox Content="Show badge"
+                              IsChecked="{Binding IsBadgeEnabled}"
+                              Style="{StaticResource ModernCheckBoxStyle}"
+                              Margin="0,14,0,6"
+                              AutomationProperties.Name="Show badge on folder icon" />
+
+                    <TextBlock Text="Badge" Style="{StaticResource MutedTextStyle}" Margin="0,8,0,6" />
                     <TextBox Text="{Binding Badge, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" MaxLength="2" />
 
                     <TextBlock Text="Label" Style="{StaticResource MutedTextStyle}" Margin="0,14,0,6" />
                     <TextBox Text="{Binding Label, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" MaxLength="10" />
+
+                    <TextBlock Text="Label placement" Style="{StaticResource MutedTextStyle}" Margin="0,14,0,6" />
+                    <ComboBox ItemsSource="{Binding LabelPlacements}"
+                              SelectedItem="{Binding LabelPlacementName}"
+                              Style="{StaticResource ModernComboBoxStyle}"
+                              AutomationProperties.Name="Folder label placement" />
+
+                    <DockPanel Margin="0,14,0,6">
+                        <TextBlock Text="Label size" Style="{StaticResource MutedTextStyle}" DockPanel.Dock="Left" />
+                        <TextBlock Text="{Binding LabelFontSize, StringFormat={}{0:0}px}"
+                                   Style="{StaticResource MutedTextStyle}"
+                                   HorizontalAlignment="Right" />
+                    </DockPanel>
+                    <Slider Minimum="12"
+                            Maximum="48"
+                            TickFrequency="2"
+                            Value="{Binding LabelFontSize, Mode=TwoWay}"
+                            Style="{StaticResource ModernSliderStyle}"
+                            AutomationProperties.Name="Folder label font size" />
+
+                    <DockPanel Margin="0,14,0,6">
+                        <TextBlock Text="Depth" Style="{StaticResource MutedTextStyle}" DockPanel.Dock="Left" />
+                        <TextBlock Text="{Binding FolderDepth, StringFormat={}{0:P0}}"
+                                   Style="{StaticResource MutedTextStyle}"
+                                   HorizontalAlignment="Right" />
+                    </DockPanel>
+                    <Slider Minimum="0"
+                            Maximum="1"
+                            TickFrequency="0.05"
+                            Value="{Binding FolderDepth, Mode=TwoWay}"
+                            Style="{StaticResource ModernSliderStyle}"
+                            AutomationProperties.Name="Folder depth" />
+
+                    <DockPanel Margin="0,14,0,6">
+                        <TextBlock Text="Corner softness" Style="{StaticResource MutedTextStyle}" DockPanel.Dock="Left" />
+                        <TextBlock Text="{Binding CornerSoftness, StringFormat={}{0:0}px}"
+                                   Style="{StaticResource MutedTextStyle}"
+                                   HorizontalAlignment="Right" />
+                    </DockPanel>
+                    <Slider Minimum="4"
+                            Maximum="22"
+                            TickFrequency="1"
+                            Value="{Binding CornerSoftness, Mode=TwoWay}"
+                            Style="{StaticResource ModernSliderStyle}"
+                            AutomationProperties.Name="Folder corner softness" />
 
                     <TextBlock Text="File name" Style="{StaticResource MutedTextStyle}" Margin="0,14,0,6" />
                     <TextBox Text="{Binding FileName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" />
@@ -58,6 +135,7 @@
                     <TextBlock Text="{Binding OutputPath}" Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Margin="0,8,0,12" />
                     <Button Content="Choose Folder" Style="{StaticResource SecondaryButtonStyle}" Padding="14,8" Command="{Binding ChooseOutputFolderCommand}" />
                 </StackPanel>
+                </ScrollViewer>
             </Border>
 
             <Border Grid.Column="2" Style="{StaticResource CardStyle}" Padding="28">

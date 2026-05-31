@@ -6,6 +6,7 @@ using IconSwapperGui.Core.Models.Images;
 using IconSwapperGui.Core.Models.Swapper;
 using IconSwapperGui.Infrastructure.Services;
 using IconSwapperGui.UI.Services;
+using System.Collections.Specialized;
 using System.Collections.ObjectModel;
 using System.IO;
 
@@ -25,6 +26,7 @@ public partial class ConverterViewModel : ObservableObject
     private readonly IDispatcher _dispatcher;
     private readonly IFileDialogService _fileDialogService;
     private readonly IWindowService _windowService;
+    private ObservableCollection<Icon>? _observedIcons;
 
     private CancellationTokenSource? _convertCts;
 
@@ -108,10 +110,28 @@ public partial class ConverterViewModel : ObservableObject
         }
     }
 
-    private bool CanExecuteConvertIcon() => !IsConverting && Icons.Any();
+    private bool CanExecuteConvertIcon() => !IsConverting && GetConvertibleImages(Icons).Any();
+
+    private bool CanConvertSelectedImage() => !IsConverting && SelectedImage is not null && IsConvertibleImage(SelectedImage);
+
+    private bool CanRemoveAllConverterImages() => !IsConverting && Icons.Any();
 
     [RelayCommand(CanExecute = nameof(CanExecuteConvertIcon))]
     private async Task ConvertIconAsync()
+    {
+        await ConvertImagesAsync(Icons, "queue");
+    }
+
+    [RelayCommand(CanExecute = nameof(CanConvertSelectedImage))]
+    private async Task ConvertSelectedImageAsync()
+    {
+        if (SelectedImage is null)
+            return;
+
+        await ConvertImagesAsync([SelectedImage], SelectedImage.Name);
+    }
+
+    private async Task ConvertImagesAsync(IEnumerable<Icon> imagesToConvert, string conversionScope)
     {
         var iconSizes = new[] { 16, 32, 48, 64, 128, 256 };
 
@@ -126,8 +146,8 @@ public partial class ConverterViewModel : ObservableObject
             IsConverting = true;
             ConversionProgress = 0;
 
-            var files = Icons
-                .Where(icon => IsSupportedImagePath(icon.Path) && File.Exists(icon.Path))
+            var queuedImages = GetConvertibleImages(imagesToConvert).ToList();
+            var files = queuedImages
                 .Select(icon => new FileInfo(icon.Path))
                 .DistinctBy(file => file.FullName, StringComparer.OrdinalIgnoreCase)
                 .ToList();
@@ -140,7 +160,7 @@ public partial class ConverterViewModel : ObservableObject
 
                 try
                 {
-                    var queuedImage = Icons.FirstOrDefault(icon =>
+                    var queuedImage = queuedImages.FirstOrDefault(icon =>
                         string.Equals(icon.Path, file.FullName, StringComparison.OrdinalIgnoreCase));
                     var options = queuedImage is ConverterImage converterImage
                         ? converterImage.TransformOptions
@@ -200,7 +220,7 @@ public partial class ConverterViewModel : ObservableObject
             if (!ct.IsCancellationRequested)
             {
                 await RunOnUiThreadAsync(() => _notificationService.AddNotification("Converter",
-                    $"Converted {processed} image{(processed == 1 ? string.Empty : "s")} to ICO.",
+                    $"Converted {processed} image{(processed == 1 ? string.Empty : "s")} from {conversionScope} to ICO.",
                     NotificationType.Success));
                 RunOnUiThread(RefreshGui);
             }
@@ -220,9 +240,14 @@ public partial class ConverterViewModel : ObservableObject
         {
             IEnumerable<Icon> newIcons = Icons.Where(icon => icon is ConverterImage { IsManual: true }).ToList();
 
+            var excludedPaths = _settingsService.Settings.Application.ConverterExcludedImagePaths
+                .Where(path => !string.IsNullOrWhiteSpace(path))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
             foreach (var folder in IconsFolderPaths.Where(Directory.Exists))
             {
                 newIcons = newIcons.Concat(_iconManagementService.GetIcons(folder, SupportedImageExtensions.ToList())
+                    .Where(icon => !excludedPaths.Contains(icon.Path))
                     .Select(icon => new ConverterImage(icon.Name, icon.Path)));
             }
 
@@ -277,13 +302,30 @@ public partial class ConverterViewModel : ObservableObject
 
     partial void OnIconsChanged(ObservableCollection<Icon> value)
     {
+        if (_observedIcons is not null)
+            _observedIcons.CollectionChanged -= OnIconsCollectionChanged;
+
+        _observedIcons = value;
+
+        if (_observedIcons is not null)
+            _observedIcons.CollectionChanged += OnIconsCollectionChanged;
+
         FilterIcons();
-        ConvertIconCommand?.NotifyCanExecuteChanged();
+        UpdateQueueCommandStates();
+    }
+
+    private void OnIconsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        FilterIcons();
+        UpdateConvertButtonEnabledState();
+        UpdateQueueCommandStates();
     }
 
     partial void OnIsConvertingChanged(bool value)
     {
         ConvertIconCommand?.NotifyCanExecuteChanged();
+        ConvertSelectedImageCommand?.NotifyCanExecuteChanged();
+        RemoveAllConverterImagesCommand?.NotifyCanExecuteChanged();
     }
 
     partial void OnConversionOutputFolderChanged(string value)
@@ -296,6 +338,7 @@ public partial class ConverterViewModel : ObservableObject
     {
         EditImageCropCommand?.NotifyCanExecuteChanged();
         RemoveConverterImageCommand?.NotifyCanExecuteChanged();
+        ConvertSelectedImageCommand?.NotifyCanExecuteChanged();
     }
 
     private void OnIconsDirectoryChanged(object sender, FileSystemEventArgs e)
@@ -334,8 +377,14 @@ public partial class ConverterViewModel : ObservableObject
 
     private void UpdateConvertButtonEnabledState()
     {
-        CanConvertImages = Icons.Count > 0;
+        CanConvertImages = GetConvertibleImages(Icons).Any();
+    }
+
+    private void UpdateQueueCommandStates()
+    {
         ConvertIconCommand?.NotifyCanExecuteChanged();
+        ConvertSelectedImageCommand?.NotifyCanExecuteChanged();
+        RemoveAllConverterImagesCommand?.NotifyCanExecuteChanged();
     }
 
     [RelayCommand]
@@ -344,6 +393,7 @@ public partial class ConverterViewModel : ObservableObject
         var selected = _fileDialogService.BrowseForFolder(IconsFolderPaths.FirstOrDefault(), "Select converter image folder");
         if (TryAddLocation(_settingsService.Settings.Application.ConverterIconsLocations, selected))
         {
+            RemoveExcludedConverterImagePathsUnderFolder(selected);
             await _settingsService.SaveSettingsAsync();
             IconsFolderPaths = _settingsService.Settings.Application.ConverterIconsLocations;
             RunOnUiThread(() =>
@@ -387,15 +437,39 @@ public partial class ConverterViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void RemoveConverterImage(object parameter)
+    private async Task RemoveConverterImageAsync(object parameter)
     {
         if (parameter is not Icon icon)
             return;
 
         Icons.Remove(icon);
+        ExcludeConverterImagePath(icon.Path);
+
         if (SelectedImage == icon)
             SelectedImage = null;
 
+        await _settingsService.SaveSettingsAsync();
+        FilterIcons();
+        UpdateConvertButtonEnabledState();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanRemoveAllConverterImages))]
+    private async Task RemoveAllConverterImagesAsync()
+    {
+        foreach (var icon in Icons.ToList())
+            ExcludeConverterImagePath(icon.Path);
+
+        _settingsService.Settings.Application.ConverterIconsLocations.Clear();
+        IconsFolderPaths = _settingsService.Settings.Application.ConverterIconsLocations;
+        Icons.Clear();
+        SelectedImage = null;
+
+        foreach (var svc in _fileSystemWatcherServices ?? [])
+            svc.Dispose();
+
+        _fileSystemWatcherServices = null;
+
+        await _settingsService.SaveSettingsAsync();
         FilterIcons();
         UpdateConvertButtonEnabledState();
     }
@@ -427,7 +501,10 @@ public partial class ConverterViewModel : ObservableObject
         {
             if (Directory.Exists(path))
             {
-                changedLocations |= TryAddLocation(_settingsService.Settings.Application.ConverterIconsLocations, path);
+                var addedLocation = TryAddLocation(_settingsService.Settings.Application.ConverterIconsLocations, path);
+                changedLocations |= addedLocation;
+                if (addedLocation)
+                    RemoveExcludedConverterImagePathsUnderFolder(path);
             }
             else if (File.Exists(path) && IsSupportedImagePath(path))
             {
@@ -460,6 +537,7 @@ public partial class ConverterViewModel : ObservableObject
             if (Icons.Any(icon => string.Equals(icon.Path, path, StringComparison.OrdinalIgnoreCase)))
                 continue;
 
+            RemoveExcludedConverterImagePath(path);
             Icons.Add(new ConverterImage(Path.GetFileNameWithoutExtension(path), path, true));
         }
 
@@ -485,6 +563,53 @@ public partial class ConverterViewModel : ObservableObject
     {
         var extension = Path.GetExtension(path);
         return SupportedImageExtensions.Any(ext => string.Equals(ext, extension, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static IEnumerable<Icon> GetConvertibleImages(IEnumerable<Icon> icons)
+        => icons.Where(IsConvertibleImage);
+
+    private static bool IsConvertibleImage(Icon icon)
+        => IsSupportedImagePath(icon.Path) && File.Exists(icon.Path);
+
+    private void ExcludeConverterImagePath(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return;
+
+        var excluded = _settingsService.Settings.Application.ConverterExcludedImagePaths;
+        if (excluded.Any(existing => string.Equals(existing, path, StringComparison.OrdinalIgnoreCase)))
+            return;
+
+        excluded.Add(path);
+    }
+
+    private void RemoveExcludedConverterImagePath(string path)
+    {
+        var excluded = _settingsService.Settings.Application.ConverterExcludedImagePaths;
+        excluded.RemoveAll(existing => string.Equals(existing, path, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private void RemoveExcludedConverterImagePathsUnderFolder(string? folderPath)
+    {
+        if (string.IsNullOrWhiteSpace(folderPath))
+            return;
+
+        var root = Path.GetFullPath(folderPath.Trim());
+        var excluded = _settingsService.Settings.Application.ConverterExcludedImagePaths;
+        excluded.RemoveAll(path =>
+        {
+            try
+            {
+                var fullPath = Path.GetFullPath(path);
+                var relativePath = Path.GetRelativePath(root, fullPath);
+                return !relativePath.StartsWith("..", StringComparison.Ordinal)
+                       && !Path.IsPathRooted(relativePath);
+            }
+            catch
+            {
+                return false;
+            }
+        });
     }
 
     private static bool TryAddLocation(ICollection<string> locations, string? path)

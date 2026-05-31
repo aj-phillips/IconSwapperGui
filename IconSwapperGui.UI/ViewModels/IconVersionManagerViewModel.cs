@@ -13,6 +13,7 @@ public partial class IconVersionManagerViewModel : ObservableObject
     private readonly INotificationService _notificationService;
     private readonly ILoggingService _loggingService;
     private readonly IDialogService _dialogService;
+    private readonly IShellIconRefreshService _shellIconRefreshService;
 
     // Properties
     private IconHistory _iconHistory;
@@ -42,12 +43,14 @@ public partial class IconVersionManagerViewModel : ObservableObject
         ILoggingService loggingService,
         INotificationService notificationService,
         IDialogService dialogService,
+        IShellIconRefreshService shellIconRefreshService,
         string filePath)
     {
         _iconHistoryService = iconHistoryService;
         _notificationService = notificationService;
         _loggingService = loggingService;
         _dialogService = dialogService;
+        _shellIconRefreshService = shellIconRefreshService;
 
         Versions = new ObservableCollection<IconVersion>();
 
@@ -95,6 +98,7 @@ public partial class IconVersionManagerViewModel : ObservableObject
                 _notificationService.AddNotification("Icon Version Manager", "Icon reverted successfully!",
                     NotificationType.Success);
 
+                _shellIconRefreshService.RefreshIcon(FilePath);
                 VersionReverted?.Invoke(SelectedVersion);
 
                 await LoadHistoryAsync();

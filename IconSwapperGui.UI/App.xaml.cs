@@ -60,6 +60,7 @@ public partial class App : Application
         services.AddSingleton<IIconHistoryService, IconHistoryService>();
         services.AddSingleton<IIconManagementService, IconManagementService>();
         services.AddSingleton<IShortcutService, ShortcutService>();
+        services.AddSingleton<IShellIconRefreshService, ShellIconRefreshService>();
         services.AddSingleton<ILnkSwapperService, LnkSwapperService>();
         services.AddSingleton<IUrlSwapperService, UrlSwapperService>();
         services.AddSingleton<IIconCreatorService, IconCreatorService>();

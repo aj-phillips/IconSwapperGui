@@ -6,12 +6,14 @@ using File = System.IO.File;
 
 namespace IconSwapperGui.UI.Services.Swapper;
 
-public class LnkSwapperService(IElevationService elevationService) : ILnkSwapperService
+public class LnkSwapperService(
+    IElevationService elevationService,
+    IShellIconRefreshService shellIconRefreshService) : ILnkSwapperService
 {
+    private const string PublicDesktopPath = @"C:\Users\Public\Desktop";
+
     public IconOperationResult Swap(string applicationPath, string iconPath, string applicationName)
     {
-        const string publicDesktopPath = @"C:\Users\Public\Desktop";
-
         if (string.IsNullOrWhiteSpace(applicationPath) || !File.Exists(applicationPath))
             return IconOperationResult.Failure("Shortcut Not Found", "The selected shortcut could not be found.");
 
@@ -24,8 +26,7 @@ public class LnkSwapperService(IElevationService elevationService) : ILnkSwapper
         if (!string.Equals(Path.GetExtension(iconPath), ".ico", StringComparison.OrdinalIgnoreCase))
             return IconOperationResult.Failure("Unsupported Icon", "Windows shortcuts require an .ico file.");
 
-        if (string.Equals(Path.GetDirectoryName(applicationPath), publicDesktopPath, StringComparison.OrdinalIgnoreCase) &&
-            !elevationService.IsRunningAsAdministrator())
+        if (RequiresElevation(applicationPath))
         {
             elevationService.ElevateApplicationViaUac();
             return IconOperationResult.Failure(
@@ -39,6 +40,7 @@ public class LnkSwapperService(IElevationService elevationService) : ILnkSwapper
             var shortcut = (IWshShortcut)wshShell.CreateShortcut(applicationPath);
             shortcut.IconLocation = $"{iconPath},0";
             shortcut.Save();
+            shellIconRefreshService.RefreshIcon(applicationPath);
 
             return IconOperationResult.Success("Icon Updated", "The shortcut icon was updated successfully.");
         }
@@ -47,4 +49,43 @@ public class LnkSwapperService(IElevationService elevationService) : ILnkSwapper
             return IconOperationResult.Failure("Icon Update Failed", "Failed to update the shortcut icon.", ex.Message);
         }
     }
+
+    public IconOperationResult RestoreDefault(string applicationPath, string applicationName)
+    {
+        if (string.IsNullOrWhiteSpace(applicationPath) || !File.Exists(applicationPath))
+            return IconOperationResult.Failure("Shortcut Not Found", "The selected shortcut could not be found.");
+
+        if (!string.Equals(Path.GetExtension(applicationPath), ".lnk", StringComparison.OrdinalIgnoreCase))
+            return IconOperationResult.Failure("Unsupported Shortcut", "Only .lnk shortcuts can be restored by this operation.");
+
+        if (RequiresElevation(applicationPath))
+        {
+            elevationService.ElevateApplicationViaUac();
+            return IconOperationResult.Failure(
+                "Administrator Restart Required",
+                $"To restore the icon of {applicationName}, the application must restart with administrator permissions. Try the restore again after restart.");
+        }
+
+        try
+        {
+            var wshShell = (WshShell)Activator.CreateInstance(Type.GetTypeFromProgID("WScript.Shell")!)!;
+            var shortcut = (IWshShortcut)wshShell.CreateShortcut(applicationPath);
+
+            shortcut.IconLocation = File.Exists(shortcut.TargetPath)
+                ? $"{shortcut.TargetPath},0"
+                : string.Empty;
+            shortcut.Save();
+            shellIconRefreshService.RefreshIcon(applicationPath);
+
+            return IconOperationResult.Success("Icon Restored", "The shortcut icon was restored to its default.");
+        }
+        catch (Exception ex)
+        {
+            return IconOperationResult.Failure("Icon Restore Failed", "Failed to restore the shortcut icon.", ex.Message);
+        }
+    }
+
+    private bool RequiresElevation(string applicationPath)
+        => string.Equals(Path.GetDirectoryName(applicationPath), PublicDesktopPath, StringComparison.OrdinalIgnoreCase) &&
+           !elevationService.IsRunningAsAdministrator();
 }

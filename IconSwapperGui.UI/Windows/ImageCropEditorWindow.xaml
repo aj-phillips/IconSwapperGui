@@ -43,14 +43,21 @@
                     CornerRadius="8"
                     Padding="18">
                 <Grid>
-                    <Border Width="320"
+                    <Border x:Name="CropPreviewSurface"
+                            Width="320"
                             Height="320"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             Background="#20A0A7B3"
                             BorderBrush="{DynamicResource AccentBrush}"
                             BorderThickness="2"
-                            ClipToBounds="True">
+                            ClipToBounds="True"
+                            Cursor="SizeAll"
+                            MouseLeftButtonDown="CropPreviewSurface_MouseLeftButtonDown"
+                            MouseLeftButtonUp="CropPreviewSurface_MouseLeftButtonUp"
+                            MouseMove="CropPreviewSurface_MouseMove"
+                            MouseWheel="CropPreviewSurface_MouseWheel"
+                            AutomationProperties.Name="Drag crop preview to reposition image and scroll to zoom">
                         <Grid>
                             <Image Source="{Binding PreviewImage}"
                                    Stretch="None"
@@ -97,6 +104,13 @@
                     <Slider Minimum="0" Maximum="1" TickFrequency="0.05"
                             Value="{Binding FocusY, Mode=TwoWay}"
                             Style="{StaticResource ModernSliderStyle}" />
+
+                    <Button Content="Center Image"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Padding="12,8"
+                            Margin="0,14,0,0"
+                            AutomationProperties.Name="Center crop image"
+                            Command="{Binding CenterFocusCommand}" />
 
                     <CheckBox Content="Transparent padding"
                               IsChecked="{Binding UseTransparentPadding, Mode=TwoWay}"

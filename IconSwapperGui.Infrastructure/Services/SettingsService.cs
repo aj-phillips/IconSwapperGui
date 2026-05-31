@@ -109,6 +109,7 @@ public class SettingsService : ISettingsService
         settings.Application.IconLocations ??= [];
         settings.Application.FolderShortcutLocations ??= [];
         settings.Application.ConverterIconsLocations ??= [];
+        settings.Application.ConverterExcludedImagePaths ??= [];
         settings.Application.ExportLocation ??= string.Empty;
         settings.Application.ConverterOutputLocation ??= string.Empty;
     }

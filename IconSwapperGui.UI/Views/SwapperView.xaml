@@ -526,6 +526,15 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center">
+                    <Button Command="{Binding RestoreSelectedIconCommand}"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            MinWidth="150"
+                            Height="44"
+                            Margin="0,0,10,0"
+                            AutomationProperties.Name="Restore selected item default icon">
+                        <TextBlock Text="Restore Default" FontWeight="SemiBold" />
+                    </Button>
+
                     <Button Command="{Binding DualSwapCommand}"
                             Style="{StaticResource PrimaryButtonStyle}"
                             MinWidth="140"
