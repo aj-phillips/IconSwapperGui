@@ -57,6 +57,29 @@ public sealed class FolderManagementServiceTests
         });
     }
 
+    [Test]
+    public async Task RestoreDefaultFolderIconAsync_RemovesDesktopIniIconOverride()
+    {
+        var service = CreateService();
+        var folderPath = Path.Combine(_tempDir, "folder");
+        Directory.CreateDirectory(folderPath);
+        var desktopIniPath = Path.Combine(folderPath, "desktop.ini");
+        await File.WriteAllLinesAsync(desktopIniPath,
+        [
+            "[.ShellClassInfo]",
+            @"IconResource=C:\Icons\custom.ico,0"
+        ]);
+        File.SetAttributes(desktopIniPath, FileAttributes.Hidden | FileAttributes.System);
+
+        var result = await service.RestoreDefaultFolderIconAsync(folderPath);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Succeeded, Is.True);
+            Assert.That(File.Exists(desktopIniPath), Is.False);
+        });
+    }
+
     private static FolderManagementService CreateService()
         => new(new Mock<ILoggingService>().Object);
 }

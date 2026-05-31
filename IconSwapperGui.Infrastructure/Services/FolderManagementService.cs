@@ -133,6 +133,59 @@ public class FolderManagementService(ILoggingService logger) : IFolderManagement
         }
     }
 
+    public async Task<IconOperationResult> RestoreDefaultFolderIconAsync(string folderPath)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(folderPath) || !Directory.Exists(folderPath))
+            {
+                logger.LogWarning($"Folder does not exist for default restore: {folderPath}");
+                return IconOperationResult.Failure("Folder Not Found", "The selected folder could not be found.");
+            }
+
+            var iniPath = Path.Combine(folderPath, "desktop.ini");
+            if (File.Exists(iniPath))
+            {
+                File.SetAttributes(iniPath, FileAttributes.Normal);
+                var remainingLines = (await File.ReadAllLinesAsync(iniPath).ConfigureAwait(false))
+                    .Where(line => !line.StartsWith("IconResource=", StringComparison.OrdinalIgnoreCase)
+                                   && !line.StartsWith("IconFile=", StringComparison.OrdinalIgnoreCase)
+                                   && !line.StartsWith("IconIndex=", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+                if (remainingLines.Any(line => !string.IsNullOrWhiteSpace(line) && line != "[.ShellClassInfo]"))
+                {
+                    await File.WriteAllLinesAsync(iniPath, remainingLines).ConfigureAwait(false);
+                    new FileInfo(iniPath).Attributes |= FileAttributes.Hidden | FileAttributes.System;
+                }
+                else
+                {
+                    File.Delete(iniPath);
+                }
+            }
+
+            var dirInfo = new DirectoryInfo(folderPath);
+            dirInfo.Attributes &= ~FileAttributes.ReadOnly;
+            dirInfo.Attributes &= ~FileAttributes.System;
+
+            try
+            {
+                SHChangeNotify(0x08000000, 0x0000, IntPtr.Zero, IntPtr.Zero);
+            }
+            catch
+            {
+            }
+
+            logger.LogInfo($"Folder icon restored for {folderPath}");
+            return IconOperationResult.Success("Folder Icon Restored", "The folder icon was restored to its default.");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError($"Failed to restore folder icon for {folderPath}", ex);
+            return IconOperationResult.Failure("Folder Icon Restore Failed", "Failed to restore the folder icon.", ex.Message);
+        }
+    }
+
     private void TryPrepareFolderForDesktopIni(string folderPath, string iniPath)
     {
         try

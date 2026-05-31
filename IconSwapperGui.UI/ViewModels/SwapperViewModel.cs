@@ -29,6 +29,7 @@ namespace IconSwapperGui.UI.ViewModels
         private readonly IDispatcher _dispatcher;
         private readonly IWindowService _windowService;
         private readonly IFileDialogService _fileDialogService;
+        private readonly IShellIconRefreshService _shellIconRefreshService;
         private readonly Func<string, IconVersionManagerViewModel> _iconVersionManagerViewModelFactory;
 
         // Properties
@@ -73,6 +74,7 @@ namespace IconSwapperGui.UI.ViewModels
             IDispatcher dispatcher,
             IWindowService windowService,
             IFileDialogService fileDialogService,
+            IShellIconRefreshService shellIconRefreshService,
             Func<string, IconVersionManagerViewModel> iconVersionManagerViewModelFactory)
         {
             _settingsService = settingsService;
@@ -88,6 +90,7 @@ namespace IconSwapperGui.UI.ViewModels
             _dispatcher = dispatcher;
             _windowService = windowService;
             _fileDialogService = fileDialogService;
+            _shellIconRefreshService = shellIconRefreshService;
             _iconVersionManagerViewModelFactory = iconVersionManagerViewModelFactory;
 
             _loggingService.LogInfo("SwapperViewModel initialising");
@@ -141,6 +144,9 @@ namespace IconSwapperGui.UI.ViewModels
             if (ManageVersionsContextCommand is { } manage)
                 manage.NotifyCanExecuteChanged();
 
+            if (RestoreSelectedIconCommand is { } restore)
+                restore.NotifyCanExecuteChanged();
+
             CommandManager.InvalidateRequerySuggested();
         }
 
@@ -160,6 +166,9 @@ namespace IconSwapperGui.UI.ViewModels
             if (ManageVersionsContextCommand is { } manage)
                 manage.NotifyCanExecuteChanged();
 
+            if (RestoreSelectedIconCommand is { } restore)
+                restore.NotifyCanExecuteChanged();
+
             CommandManager.InvalidateRequerySuggested();
         }
 
@@ -176,6 +185,9 @@ namespace IconSwapperGui.UI.ViewModels
             if (SwapFolderIconCommand is { } swapFolder)
                 swapFolder.NotifyCanExecuteChanged();
 
+            if (RestoreSelectedIconCommand is { } restore)
+                restore.NotifyCanExecuteChanged();
+
             CommandManager.InvalidateRequerySuggested();
         }
 
@@ -188,6 +200,9 @@ namespace IconSwapperGui.UI.ViewModels
 
             if (SwapFolderIconCommand is { } swapFolder)
                 swapFolder.NotifyCanExecuteChanged();
+
+            if (RestoreSelectedIconCommand is { } restore)
+                restore.NotifyCanExecuteChanged();
 
             CommandManager.InvalidateRequerySuggested();
         }
@@ -716,6 +731,87 @@ namespace IconSwapperGui.UI.ViewModels
 
         private bool CanSwapExecute() => (SelectedShortcut != null && SelectedIcon != null) ||
                                          (SelectedFolder != null && SelectedIcon != null);
+
+        private bool CanRestoreSelectedIcon() => IsFolderTabSelected ? SelectedFolder != null : SelectedShortcut != null;
+
+        [RelayCommand(CanExecute = nameof(CanRestoreSelectedIcon))]
+        private async Task RestoreSelectedIconAsync()
+        {
+            try
+            {
+                IconOperationResult result;
+                string restoredPath;
+
+                if (IsFolderTabSelected)
+                {
+                    if (SelectedFolder == null)
+                    {
+                        _dialogService.ShowWarning("No Folder Selected", "Please select a folder to restore.");
+                        return;
+                    }
+
+                    restoredPath = SelectedFolder.Path;
+                    result = await _folderManagementService.RestoreDefaultFolderIconAsync(SelectedFolder.Path);
+                }
+                else
+                {
+                    if (SelectedShortcut == null)
+                    {
+                        _dialogService.ShowWarning("No Shortcut Selected", "Please select a shortcut to restore.");
+                        return;
+                    }
+
+                    restoredPath = SelectedShortcut.Path;
+                    var extension = Path.GetExtension(SelectedShortcut.Path)?.ToLowerInvariant();
+                    result = extension switch
+                    {
+                        ".lnk" => _lnkSwapperService.RestoreDefault(SelectedShortcut.Path, SelectedShortcut.Name),
+                        ".url" => _urlSwapperService.RestoreDefault(
+                            SelectedShortcut.Path,
+                            await GetOriginalIconPathAsync(SelectedShortcut.Path)),
+                        _ => IconOperationResult.Failure("Unsupported Shortcut", "Only .lnk and .url shortcuts can be restored.")
+                    };
+                }
+
+                if (result.Succeeded)
+                {
+                    _shellIconRefreshService.RefreshIcon(restoredPath);
+                    await ShowSuccessTick();
+                    _notificationService.AddNotification(result.Title, result.Message, NotificationType.Success);
+                    await RefreshGuiAsync();
+                }
+                else
+                {
+                    _notificationService.AddNotification(result.Title, result.Message, NotificationType.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                _loggingService.LogError("Error restoring default icon", ex);
+                _dialogService.ShowError("Error", "Failed to restore the default icon.");
+            }
+        }
+
+        private async Task<string?> GetOriginalIconPathAsync(string filePath)
+        {
+            try
+            {
+                var history = await _iconHistoryService.GetHistoryAsync(filePath);
+                var originalVersion = history?.Versions
+                    .OrderBy(version => version.Timestamp)
+                    .FirstOrDefault(version => version.IsOriginal)
+                    ?? history?.Versions.OrderBy(version => version.Timestamp).FirstOrDefault();
+
+                return originalVersion is { IconPath: { Length: > 0 } iconPath } && File.Exists(iconPath)
+                    ? iconPath
+                    : null;
+            }
+            catch (Exception ex)
+            {
+                _loggingService.LogError($"Failed to retrieve original icon path for {filePath}", ex);
+                return null;
+            }
+        }
 
         [RelayCommand(CanExecute = nameof(CanSwapExecute))]
         private async Task Swap()

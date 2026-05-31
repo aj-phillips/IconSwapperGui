@@ -9,7 +9,9 @@ using File = System.IO.File;
 
 namespace IconSwapperGui.UI.Services.Swapper;
 
-public class IconManagementService(ILoggingService logger) : IIconManagementService
+public class IconManagementService(
+    ILoggingService logger,
+    IShellIconRefreshService shellIconRefreshService) : IIconManagementService
 {
     private readonly List<string> _supportedExtensions = new() { ".png", ".jpg", ".jpeg" };
 
@@ -255,6 +257,7 @@ public class IconManagementService(ILoggingService logger) : IIconManagementServ
 
             shortcut.IconLocation = $"{icoPath},0";
             shortcut.Save();
+            shellIconRefreshService.RefreshIcon(shortcutPath);
 
             logger.LogInfo($"Successfully changed icon for shortcut: {shortcutPath}");
             return IconOperationResult.Success("Icon Updated", "The shortcut icon was updated successfully.");
@@ -288,6 +291,7 @@ public class IconManagementService(ILoggingService logger) : IIconManagementServ
             }
 
             await File.WriteAllLinesAsync(urlPath, content).ConfigureAwait(false);
+            shellIconRefreshService.RefreshIcon(urlPath);
 
             logger.LogInfo($"Successfully changed icon for URL file: {urlPath}");
             return IconOperationResult.Success("Icon Updated", "The URL shortcut icon was updated successfully.");

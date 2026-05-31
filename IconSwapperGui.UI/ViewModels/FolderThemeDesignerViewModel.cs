@@ -17,10 +17,18 @@ public partial class FolderThemeDesignerViewModel : ObservableObject
     private readonly ILoggingService _loggingService;
     private readonly IconToolExportService _exportService;
 
-    [ObservableProperty] private string _folderColorName = "Blue";
+    [ObservableProperty] private string _folderColorName = "Windows Yellow";
     [ObservableProperty] private string _accentColorName = "Indigo";
+    [ObservableProperty] private string _folderStyleName = "Windows";
+    [ObservableProperty] private string _tabStyleName = "Angled";
+    [ObservableProperty] private string _labelPlacementName = "Front";
+    [ObservableProperty] private bool _isBadgeEnabled = true;
+    [ObservableProperty] private bool _showDocument = true;
     [ObservableProperty] private string _badge = "★";
     [ObservableProperty] private string _label = "Work";
+    [ObservableProperty] private double _labelFontSize = 24;
+    [ObservableProperty] private double _folderDepth = 0.65;
+    [ObservableProperty] private double _cornerSoftness = 10;
     [ObservableProperty] private string _fileName = "CustomFolder";
     [ObservableProperty] private string _outputFolder = string.Empty;
     [ObservableProperty] private BitmapSource? _previewImage;
@@ -41,8 +49,11 @@ public partial class FolderThemeDesignerViewModel : ObservableObject
         UpdatePreview();
     }
 
-    public IReadOnlyList<string> FolderColors { get; } = ["Blue", "Green", "Purple", "Pink", "Amber", "Slate"];
+    public IReadOnlyList<string> FolderColors { get; } = ["Windows Yellow", "Blue", "Green", "Purple", "Pink", "Amber", "Slate"];
     public IReadOnlyList<string> AccentColors { get; } = ["Indigo", "Emerald", "Rose", "Amber", "Cyan", "White"];
+    public IReadOnlyList<string> FolderStyles { get; } = ["Windows", "Glass", "Project", "Archive"];
+    public IReadOnlyList<string> TabStyles { get; } = ["Angled", "Rounded"];
+    public IReadOnlyList<string> LabelPlacements { get; } = ["Front", "Tab", "None"];
     public string OutputPath => string.IsNullOrWhiteSpace(OutputFolder) ? string.Empty : Path.Combine(OutputFolder, $"{GetSafeFileName(FileName)}.ico");
 
     [RelayCommand]
@@ -65,7 +76,7 @@ public partial class FolderThemeDesignerViewModel : ObservableObject
     {
         try
         {
-            _exportService.ExportFolderTheme(OutputPath, GetColor(FolderColorName), GetColor(AccentColorName), Badge, Label);
+            _exportService.ExportFolderTheme(OutputPath, CreateRenderOptions());
             _notificationService.AddNotification("Folder Theme Designer", $"Exported {Path.GetFileName(OutputPath)}.", NotificationType.Success);
         }
         catch (Exception ex)
@@ -77,8 +88,16 @@ public partial class FolderThemeDesignerViewModel : ObservableObject
 
     partial void OnFolderColorNameChanged(string value) => UpdatePreview();
     partial void OnAccentColorNameChanged(string value) => UpdatePreview();
+    partial void OnFolderStyleNameChanged(string value) => UpdatePreview();
+    partial void OnTabStyleNameChanged(string value) => UpdatePreview();
+    partial void OnLabelPlacementNameChanged(string value) => UpdatePreview();
+    partial void OnIsBadgeEnabledChanged(bool value) => UpdatePreview();
+    partial void OnShowDocumentChanged(bool value) => UpdatePreview();
     partial void OnBadgeChanged(string value) => UpdatePreview();
     partial void OnLabelChanged(string value) => UpdatePreview();
+    partial void OnLabelFontSizeChanged(double value) => UpdatePreview();
+    partial void OnFolderDepthChanged(double value) => UpdatePreview();
+    partial void OnCornerSoftnessChanged(double value) => UpdatePreview();
     partial void OnFileNameChanged(string value)
     {
         OnPropertyChanged(nameof(OutputPath));
@@ -92,11 +111,28 @@ public partial class FolderThemeDesignerViewModel : ObservableObject
 
     private void UpdatePreview()
     {
-        PreviewImage = _exportService.RenderFolderThemeBitmap(256, GetColor(FolderColorName), GetColor(AccentColorName), Badge, Label);
+        PreviewImage = _exportService.RenderFolderThemeBitmap(256, CreateRenderOptions());
     }
+
+    private FolderThemeRenderOptions CreateRenderOptions() => new()
+    {
+        FolderColor = GetColor(FolderColorName),
+        AccentColor = GetColor(AccentColorName),
+        Badge = Badge,
+        Label = Label,
+        ShowBadge = IsBadgeEnabled,
+        ShowDocument = ShowDocument,
+        StyleName = FolderStyleName,
+        TabStyleName = TabStyleName,
+        LabelPlacementName = LabelPlacementName,
+        LabelFontSize = LabelFontSize,
+        Depth = FolderDepth,
+        CornerSoftness = CornerSoftness
+    };
 
     private static Color GetColor(string name) => name switch
     {
+        "Windows Yellow" => Color.FromRgb(255, 190, 45),
         "Green" or "Emerald" => Color.FromRgb(34, 197, 94),
         "Purple" or "Indigo" => Color.FromRgb(99, 102, 241),
         "Pink" or "Rose" => Color.FromRgb(244, 114, 182),

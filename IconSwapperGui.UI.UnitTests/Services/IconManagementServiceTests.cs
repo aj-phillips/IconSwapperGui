@@ -73,5 +73,5 @@ public sealed class IconManagementServiceTests
     }
 
     private static IconManagementService CreateService()
-        => new(new Mock<ILoggingService>().Object);
+        => new(new Mock<ILoggingService>().Object, new Mock<IShellIconRefreshService>().Object);
 }

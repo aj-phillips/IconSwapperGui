@@ -46,6 +46,21 @@ public partial class ImageCropEditorViewModel : ObservableObject
 
     public event Action<bool?>? RequestClose;
 
+    public void PanFocus(double deltaX, double deltaY)
+    {
+        FocusX = Math.Clamp(FocusX - (deltaX / PreviewSize), 0.0, 1.0);
+        FocusY = Math.Clamp(FocusY - (deltaY / PreviewSize), 0.0, 1.0);
+    }
+
+    public void AdjustZoom(double wheelDelta)
+    {
+        var direction = Math.Sign(wheelDelta);
+        if (direction == 0)
+            return;
+
+        Zoom = Math.Clamp(Zoom + direction * 0.12, 1.0, 4.0);
+    }
+
     partial void OnCropModeChanged(ImageCropMode value) => UpdatePreview();
     partial void OnUseTransparentPaddingChanged(bool value) => UpdatePreview();
     partial void OnZoomChanged(double value) => UpdatePreview();
@@ -62,6 +77,13 @@ public partial class ImageCropEditorViewModel : ObservableObject
     private void Cancel()
     {
         RequestClose?.Invoke(false);
+    }
+
+    [RelayCommand]
+    private void CenterFocus()
+    {
+        FocusX = 0.5;
+        FocusY = 0.5;
     }
 
     private static BitmapSource? LoadPreview(string imagePath)

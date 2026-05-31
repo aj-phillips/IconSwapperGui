@@ -15,7 +15,7 @@
                 <ResourceDictionary Source="../Themes/SharedStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <converters:BoolToVisibilityConverter x:Key="BoolToVisibility" />
-            <converters:IconPathToImageConverter x:Key="IconPathToImageConverter" />
+            <converters:ImagePathToImageConverter x:Key="ImagePathToImageConverter" />
         </ResourceDictionary>
     </UserControl.Resources>
 
@@ -159,12 +159,20 @@
                                     Content="Edit Crop"
                                     Padding="12,8"
                                     Margin="0,0,8,0"
+                                    AutomationProperties.Name="Edit crop for selected image"
                                     Command="{Binding EditImageCropCommand}" />
                             <Button Style="{StaticResource SecondaryButtonStyle}"
                                     Content="Remove"
                                     Padding="12,8"
+                                    Margin="0,0,8,0"
+                                    AutomationProperties.Name="Remove selected image from converter queue"
                                     Command="{Binding RemoveConverterImageCommand}"
                                     CommandParameter="{Binding SelectedImage}" />
+                            <Button Style="{StaticResource SecondaryButtonStyle}"
+                                    Content="Clear Queue"
+                                    Padding="12,8"
+                                    AutomationProperties.Name="Clear converter queue"
+                                    Command="{Binding RemoveAllConverterImagesCommand}" />
                         </StackPanel>
                     </Grid>
 
@@ -196,7 +204,7 @@
                                                 BorderThickness="1"
                                                 CornerRadius="8"
                                                 Margin="0,0,12,0">
-                                            <Image Source="{Binding Path, Converter={StaticResource IconPathToImageConverter}}"
+                                            <Image Source="{Binding Path, Converter={StaticResource ImagePathToImageConverter}}"
                                                    Width="42"
                                                    Height="42"
                                                    Stretch="Uniform"
@@ -269,13 +277,22 @@
                                  Value="{Binding ConversionProgress}"
                                  Visibility="{Binding IsConverting, Converter={StaticResource BoolToVisibility}}" />
                 </StackPanel>
-                <Button Grid.Column="1"
-                        Style="{StaticResource PrimaryButtonStyle}"
-                        Content="Convert Queue"
-                        Padding="24,12"
-                        MinWidth="150"
-                        Command="{Binding ConvertIconCommand}"
-                        IsEnabled="{Binding CanConvertImages}" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
+                    <Button Style="{StaticResource SecondaryButtonStyle}"
+                            Content="Convert Selected"
+                            Padding="18,12"
+                            MinWidth="150"
+                            Margin="0,0,8,0"
+                            AutomationProperties.Name="Convert selected image"
+                            Command="{Binding ConvertSelectedImageCommand}" />
+                    <Button Style="{StaticResource PrimaryButtonStyle}"
+                            Content="Convert Queue"
+                            Padding="24,12"
+                            MinWidth="150"
+                            AutomationProperties.Name="Convert all queued images"
+                            Command="{Binding ConvertIconCommand}"
+                            IsEnabled="{Binding CanConvertImages}" />
+                </StackPanel>
             </Grid>
         </Border>
     </Grid>

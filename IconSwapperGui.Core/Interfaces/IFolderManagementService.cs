@@ -8,4 +8,5 @@ public interface IFolderManagementService
 {
     ObservableCollection<FolderShortcut> GetFolders(string? folderPath);
     Task<IconOperationResult> ChangeFolderIconAsync(string folderPath, string iconPath);
+    Task<IconOperationResult> RestoreDefaultFolderIconAsync(string folderPath);
 }
